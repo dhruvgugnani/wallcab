@@ -54,6 +54,7 @@ export type BackgroundAttribution = SourceAttribution & {
 
 export type BackgroundAsset = {
   bytes: Uint8Array;
+  contentType: "image/jpeg" | "image/svg+xml";
   attribution: BackgroundAttribution;
 };
 
