@@ -10,10 +10,10 @@
   "kv_namespaces": [
     {
       "binding": "WALLPAPERS",
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      "id": "f6d3f15691394b879a3ef11d3300abe6"
     }
   ],
   "vars": {
-    "ALLOWED_ORIGINS": "https://wallcab.dhruvdev.me,http://localhost:3000"
+    "ALLOWED_ORIGINS": "https://wallcab.vercel.app,https://wallcab.dhruvdev.me,http://localhost:3000"
   }
 }
