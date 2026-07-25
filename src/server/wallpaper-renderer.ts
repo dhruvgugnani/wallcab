@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { Resvg } from "@resvg/resvg-js";
 import sharp from "sharp";
 import { toUtcDateKey } from "@/features/wallpaper/daily";
 import {
@@ -13,8 +15,17 @@ import {
   resolveDailyLesson,
 } from "@/server/daily-manifest";
 
-export const RENDERER_VERSION = "v1";
+export const RENDERER_VERSION = "v2";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
+
+function getRendererFontFiles(): string[] {
+  const fontDirectory = join(process.cwd(), "src", "server", "fonts");
+  return [
+    join(fontDirectory, "manrope-variable.ttf"),
+    join(fontDirectory, "fraunces-variable.ttf"),
+    join(fontDirectory, "fraunces-variable-italic.ttf"),
+  ];
+}
 
 export function wallpaperCacheKey(
   request: WallpaperRequest,
@@ -127,26 +138,41 @@ function createOverlay(
           <rect width="${Math.round(48 * scale)}" height="${Math.round(61 * scale)}" rx="${Math.round(3 * scale)}" fill="none" stroke="#f4f0e8" stroke-width="${Math.max(2, Math.round(3 * scale))}"/>
           <path d="M${Math.round(14 * scale)} ${Math.round(17 * scale)}H${Math.round(34 * scale)}M${Math.round(14 * scale)} ${Math.round(31 * scale)}H${Math.round(34 * scale)}M${Math.round(14 * scale)} ${Math.round(45 * scale)}H${Math.round(27 * scale)}" stroke="#f4f0e8" stroke-width="${Math.max(2, Math.round(3 * scale))}"/>
         </g>
-        <text x="${left + Math.round(68 * scale)}" y="${Math.round(688 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(27 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}">WALLCAB / ${escapeXml(category)}</text>
-        <text x="${left}" y="${Math.round(1080 * scale)}" font-family="Georgia, 'Times New Roman', serif" font-size="${termSize}" font-weight="600" letter-spacing="${Math.round(-3 * scale)}">${escapeXml(output.lesson.term)}</text>
-        <text font-family="Arial, sans-serif" font-size="${Math.round(39 * scale)}" font-weight="500" fill="#f4f0e8" fill-opacity=".92">
+        <text x="${left + Math.round(68 * scale)}" y="${Math.round(688 * scale)}" font-family="Manrope" font-size="${Math.round(27 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}">WALLCAB / ${escapeXml(category)}</text>
+        <text x="${left}" y="${Math.round(1080 * scale)}" font-family="Fraunces" font-size="${termSize}" font-weight="600" letter-spacing="${Math.round(-3 * scale)}">${escapeXml(output.lesson.term)}</text>
+        <text font-family="Manrope" font-size="${Math.round(39 * scale)}" font-weight="500" fill="#f4f0e8" fill-opacity=".92">
           ${tspans(definitionLines, left, Math.round(1170 * scale), Math.round(54 * scale))}
         </text>
         <line x1="${left}" x2="${right}" y1="${Math.round(1450 * scale)}" y2="${Math.round(1450 * scale)}" stroke="#f4f0e8" stroke-opacity=".36"/>
-        <text x="${left}" y="${Math.round(1535 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">A THOUGHT FOR TODAY</text>
-        <text font-family="Georgia, 'Times New Roman', serif" font-size="${Math.round(49 * scale)}" font-style="italic">
+        <text x="${left}" y="${Math.round(1535 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">A THOUGHT FOR TODAY</text>
+        <text font-family="Fraunces" font-size="${Math.round(49 * scale)}" font-style="italic">
           ${tspans(quoteLines, left, Math.round(1620 * scale), Math.round(65 * scale))}
         </text>
-        <text x="${left}" y="${Math.round(1855 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(25 * scale)}" fill="#d8d1c5">— ${escapeXml(output.lesson.quote.author)}</text>
-        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">ONE MORE THING</text>
-        <text font-family="Arial, sans-serif" font-size="${Math.round(34 * scale)}" fill="#f4f0e8" fill-opacity=".9">
+        <text x="${left}" y="${Math.round(1855 * scale)}" font-family="Manrope" font-size="${Math.round(25 * scale)}" fill="#d8d1c5">— ${escapeXml(output.lesson.quote.author)}</text>
+        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">ONE MORE THING</text>
+        <text font-family="Manrope" font-size="${Math.round(34 * scale)}" fill="#f4f0e8" fill-opacity=".9">
           ${tspans(factLines, left, Math.round(2085 * scale), Math.round(49 * scale))}
         </text>
         <line x1="${left}" x2="${right}" y1="${height - Math.round(180 * scale)}" y2="${height - Math.round(180 * scale)}" stroke="#f4f0e8" stroke-opacity=".24"/>
-        <text x="${left}" y="${height - Math.round(115 * scale)}" font-family="Arial, sans-serif" font-size="${Math.round(19 * scale)}" letter-spacing="${Math.round(2 * scale)}" fill="#d8d1c5">${escapeXml(output.date)} UTC · ${escapeXml(sourceCredit)}</text>
+        <text x="${left}" y="${height - Math.round(115 * scale)}" font-family="Manrope" font-size="${Math.round(19 * scale)}" letter-spacing="${Math.round(2 * scale)}" fill="#d8d1c5">${escapeXml(output.date)} UTC · ${escapeXml(sourceCredit)}</text>
       </g>
     </svg>
   `);
+}
+
+export function rasterizeSvgWithBundledFonts(svg: Buffer | string): Buffer {
+  const renderer = new Resvg(svg, {
+    fitTo: { mode: "original" },
+    font: {
+      defaultFontFamily: "Manrope",
+      fontFiles: getRendererFontFiles(),
+      loadSystemFonts: false,
+      sansSerifFamily: "Manrope",
+      serifFamily: "Fraunces",
+    },
+  });
+
+  return Buffer.from(renderer.render().asPng());
 }
 
 export async function renderWallpaper(
@@ -166,7 +192,12 @@ export async function renderWallpaper(
     lesson,
     background: background.attribution,
   };
-  const overlay = createOverlay(details, dimensions.width, dimensions.height);
+  const overlaySvg = createOverlay(
+    details,
+    dimensions.width,
+    dimensions.height,
+  );
+  const overlay = rasterizeSvgWithBundledFonts(overlaySvg);
   const pipeline = sharp(background.bytes)
     .rotate()
     .resize(dimensions.width, dimensions.height, {

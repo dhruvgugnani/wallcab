@@ -6,6 +6,7 @@ import {
 } from "@/features/wallpaper/types";
 import {
   MAX_WALLPAPER_BYTES,
+  rasterizeSvgWithBundledFonts,
   renderWallpaper,
   wrapText,
 } from "@/server/wallpaper-renderer";
@@ -23,6 +24,31 @@ describe("wallpaper renderer", () => {
     );
     expect(lines).toHaveLength(3);
     expect(lines.at(-1)).toMatch(/…$/);
+  });
+
+  it("renders text using bundled fonts without system fonts", async () => {
+    const png = rasterizeSvgWithBundledFonts(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="120">
+        <text x="20" y="80" font-family="Manrope" font-size="64" fill="#fff">
+          WALLCAB
+        </text>
+      </svg>
+    `);
+    const { data, info } = await sharp(png)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    let visiblePixels = 0;
+
+    for (let index = 3; index < data.length; index += 4) {
+      if (data[index]! > 0) {
+        visiblePixels += 1;
+      }
+    }
+
+    expect(info.width).toBe(400);
+    expect(info.height).toBe(120);
+    expect(visiblePixels).toBeGreaterThan(100);
   });
 
   it.each(devicePresets)(

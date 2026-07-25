@@ -4,7 +4,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   poweredByHeader: false,
-  serverExternalPackages: ["sharp"],
+  serverExternalPackages: ["@resvg/resvg-js", "sharp"],
+  outputFileTracingIncludes: {
+    "/api/wallpaper": ["./src/server/fonts/**/*"],
+  },
   async headers() {
     const contentSecurityPolicy = [
       "default-src 'self'",
