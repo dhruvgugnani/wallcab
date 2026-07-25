@@ -23,12 +23,16 @@ An OpenAPI description is available at [`/openapi.json`](/openapi.json).
 | Name | Default | Allowed values |
 | --- | --- | --- |
 | `categories` | `vocabulary` | One to eight comma-separated values from `vocabulary`, `coding`, `finance`, `stoicism`, `science`, `history`, `psychology`, `productivity` |
-| `theme` | `nature` | `nature`, `mountains`, `ocean`, `forest`, `space`, `amoled`, `minimal`, `abstract` |
+| `theme` | `nature` | Daily photography: `nature`, `mountains`, `ocean`, `forest`, `space`. Fixed WallCab Originals: `amoled`, `minimal`, `abstract`, `gradient`, `monochrome`, `grid` |
 | `size` | `standard` | `standard`, `air`, `max` |
 
 `standard` is 1206×2622, `air` is 1260×2736, and `max` is 1320×2868. Older iPhones can use `standard`; iOS will scale or crop the image.
 
 WallCab normalizes the selected interests and chooses one for each UTC day. The choice looks varied but remains stable for the whole day. Across complete cycles, every selected interest gets a turn. The old singular `category` parameter has been replaced and returns a descriptive `400`.
+
+The five photography themes resolve a new source-checked image each UTC day.
+The six WallCab Original SVG themes remain visually constant; only the lesson
+changes each day.
 
 ## Successful response
 
@@ -99,6 +103,16 @@ GET /api/wallpaper/status?categories=coding,science,history&theme=space&size=max
 ```
 
 The status lookup and image renderer share the same active-day KV lesson. This avoids extra provider calls and ensures the reported source matches the wallpaper.
+
+## Production logs
+
+In Vercel, open the WallCab project, choose **Logs**, and search for
+`wallcab.wallpaper`. Each wallpaper request writes one structured entry with
+`contentMode` (`external` or `fallback`), `contentProvider`, `fallbackReason`,
+the resolved category, and cache status. Search for `wallcab.content` to see
+the original daily provider decision when a lesson is first accepted.
+
+No client IP address is written into these application log entries.
 
 ## Examples
 

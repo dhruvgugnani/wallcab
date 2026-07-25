@@ -531,9 +531,73 @@ label {
   font-size: .72rem;
 }
 
+.theme-groups {
+  display: grid;
+  gap: 1.65rem;
+}
+
+.theme-group {
+  min-width: 0;
+}
+
+.theme-group-heading {
+  display: grid;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  margin-bottom: .65rem;
+}
+
+.theme-group-heading p,
+.theme-group-heading small {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: .6rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.theme-group-heading p {
+  color: var(--paper);
+  font-weight: 750;
+}
+
+.theme-group-heading > span {
+  height: 1px;
+  background: var(--line);
+}
+
+.theme-group-heading small {
+  color: #77746d;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+
 .theme-choices label:has(input:checked) {
   border-color: var(--line-strong);
   color: var(--paper);
+}
+
+.theme-copy {
+  display: grid;
+  gap: .12rem;
+}
+
+.theme-copy strong {
+  color: inherit;
+  font-size: .72rem;
+  font-weight: 650;
+}
+
+.theme-copy small {
+  color: #77746d;
+  font-size: .55rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.theme-choices label:has(input:checked) .theme-copy small {
+  color: #aaa69d;
 }
 
 .theme-swatch {
@@ -550,6 +614,9 @@ label {
 [data-theme="amoled"] .theme-swatch { background: #000; border: 1px solid #343434; }
 [data-theme="minimal"] .theme-swatch { background: linear-gradient(145deg, #e8e3d8 50%, #1b1b19 51%); }
 [data-theme="abstract"] .theme-swatch { background: conic-gradient(from 45deg, #783a24, #a59c83, #263d41, #783a24); }
+[data-theme="gradient"] .theme-swatch { background: radial-gradient(circle at 70% 28%, #b75f43, transparent 45%), radial-gradient(circle at 20% 75%, #38716d, #08090b 65%); }
+[data-theme="monochrome"] .theme-swatch { background: linear-gradient(135deg, #f0ede5 0 48%, #090909 49% 100%); border: 1px solid #5b5954; }
+[data-theme="grid"] .theme-swatch { background-color: #090a09; background-image: linear-gradient(rgba(232,227,216,.32) 1px, transparent 1px), linear-gradient(90deg, rgba(232,227,216,.32) 1px, transparent 1px); background-size: 7px 7px; }
 
 .device-choices {
   display: grid;

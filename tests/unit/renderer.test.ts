@@ -105,4 +105,28 @@ describe("wallpaper renderer", () => {
     },
     60_000,
   );
+
+  it(
+    "renders a fixed Grid original as a bounded full-resolution PNG",
+    async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
+      );
+      const wallpaper = await renderWallpaper(
+        { category: "history", theme: "grid", size: "standard" },
+        new Date("2026-07-25T12:00:00Z"),
+      );
+      const metadata = await sharp(wallpaper.bytes).metadata();
+
+      expect(metadata).toMatchObject({
+        format: "png",
+        width: deviceDimensions.standard.width,
+        height: deviceDimensions.standard.height,
+      });
+      expect(wallpaper.background.source).toBe("WallCab Original");
+      expect(wallpaper.byteLength).toBeLessThanOrEqual(MAX_WALLPAPER_BYTES);
+    },
+    60_000,
+  );
 });

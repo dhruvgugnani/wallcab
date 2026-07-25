@@ -41,7 +41,12 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   await configurator.getByLabel("Science").locator("..").click();
   await configurator.getByLabel("History").locator("..").click();
   await configurator.getByLabel("Vocabulary").locator("..").click();
-  await configurator.getByLabel("Space").locator("..").click();
+  await expect(configurator.getByText("Daily photography")).toBeVisible();
+  await expect(configurator.getByText("WallCab Originals")).toBeVisible();
+  await configurator.getByLabel("Grid").locator("..").click();
+  await expect(
+    configurator.getByLabel("Grid").locator("..").getByText("Fixed design"),
+  ).toBeVisible();
   await configurator
     .getByLabel("iPhone 17 Pro Max")
     .locator("..")
@@ -52,13 +57,13 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
     .toContain(
-      "/api/wallpaper?categories=science,history&theme=space&size=max",
+      "/api/wallpaper?categories=science,history&theme=grid&size=max",
     );
   await page.reload();
   await expect(page.getByLabel("Science")).toBeChecked();
   await expect(page.getByLabel("History")).toBeChecked();
   await expect(page.getByLabel("Vocabulary")).not.toBeChecked();
-  await expect(page.getByLabel("Space")).toBeChecked();
+  await expect(page.getByLabel("Grid")).toBeChecked();
   await expect(page.getByLabel("iPhone 17 Pro Max")).toBeChecked();
 });
 

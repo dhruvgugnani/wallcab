@@ -7,6 +7,9 @@ import {
   deviceDimensions,
   devicePresets,
   learningCategories,
+  originalThemes,
+  photographicThemes,
+  themeCadence,
   themeLabels,
   visualThemes,
   type DevicePreset,
@@ -41,6 +44,21 @@ type SourceStatus =
   | { state: "unavailable" };
 
 const storageKey = "wallcab:preferences:v2";
+
+const themeGroups = [
+  {
+    id: "photography",
+    label: "Daily photography",
+    note: "A new source-checked image each day",
+    themes: photographicThemes,
+  },
+  {
+    id: "originals",
+    label: "WallCab Originals",
+    note: "Fixed SVG art; the lesson still changes daily",
+    themes: originalThemes,
+  },
+] as const;
 
 function isSelections(value: unknown): value is Selections {
   if (!value || typeof value !== "object") return false;
@@ -248,19 +266,42 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
             <span>02</span>
             Choose a visual direction
           </legend>
-          <div className="choice-grid theme-choices">
-            {visualThemes.map((theme) => (
-              <label key={theme} data-theme={theme}>
-                <input
-                  type="radio"
-                  name="theme"
-                  value={theme}
-                  checked={selections.theme === theme}
-                  onChange={() => updateSelections({ theme })}
-                />
-                <span className="theme-swatch" aria-hidden="true" />
-                <span>{themeLabels[theme]}</span>
-              </label>
+          <div className="theme-groups">
+            {themeGroups.map((group) => (
+              <section
+                className="theme-group"
+                aria-labelledby={`theme-group-${group.id}`}
+                key={group.id}
+              >
+                <div className="theme-group-heading">
+                  <p id={`theme-group-${group.id}`}>{group.label}</p>
+                  <span aria-hidden="true" />
+                  <small>{group.note}</small>
+                </div>
+                <div className="choice-grid theme-choices">
+                  {group.themes.map((theme) => (
+                    <label key={theme} data-theme={theme}>
+                      <input
+                        type="radio"
+                        name="theme"
+                        value={theme}
+                        aria-label={themeLabels[theme]}
+                        checked={selections.theme === theme}
+                        onChange={() => updateSelections({ theme })}
+                      />
+                      <span className="theme-swatch" aria-hidden="true" />
+                      <span className="theme-copy">
+                        <strong>{themeLabels[theme]}</strong>
+                        <small>
+                          {themeCadence[theme] === "daily"
+                            ? "Daily photo"
+                            : "Fixed design"}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </fieldset>

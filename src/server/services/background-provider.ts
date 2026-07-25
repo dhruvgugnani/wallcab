@@ -3,22 +3,22 @@ import { z } from "zod";
 import { hashString, toUtcDateKey } from "@/features/wallpaper/daily";
 import type {
   BackgroundAsset,
+  PhotographicTheme,
   VisualTheme,
 } from "@/features/wallpaper/types";
+import { isPhotographicTheme } from "@/features/wallpaper/types";
+import { createOriginalBackground } from "@/server/services/original-backgrounds";
 
-const themeQueries: Record<VisualTheme, string> = {
+const themeQueries: Record<PhotographicTheme, string> = {
   nature: "nature vertical",
   mountains: "mountains vertical",
   ocean: "ocean vertical",
   forest: "forest vertical",
   space: "space vertical",
-  amoled: "night vertical",
-  minimal: "architecture vertical",
-  abstract: "abstract vertical",
 };
 
 const paletteByTheme: Record<
-  VisualTheme,
+  PhotographicTheme,
   readonly [string, string, string]
 > = {
   nature: ["#0b1610", "#284532", "#a4aa79"],
@@ -26,9 +26,6 @@ const paletteByTheme: Record<
   ocean: ["#020a0e", "#083047", "#40798b"],
   forest: ["#050b08", "#102a1d", "#56705d"],
   space: ["#020205", "#13182a", "#554c6b"],
-  amoled: ["#000000", "#080808", "#303030"],
-  minimal: ["#0a0a09", "#34322f", "#b8ad9b"],
-  abstract: ["#080808", "#292323", "#796050"],
 };
 
 const openverseSchema = z.object({
@@ -64,7 +61,7 @@ function isAllowedImageUrl(value: string): boolean {
   }
 }
 
-function fallbackBackground(theme: VisualTheme): BackgroundAsset {
+function fallbackBackground(theme: PhotographicTheme): BackgroundAsset {
   const [dark, mid, accent] = paletteByTheme[theme];
   const ring =
     theme === "space"
@@ -108,6 +105,10 @@ export async function getBackgroundAsset(
   theme: VisualTheme,
   date = new Date(),
 ): Promise<BackgroundAsset> {
+  if (!isPhotographicTheme(theme)) {
+    return createOriginalBackground(theme);
+  }
+
   try {
     const query = new URLSearchParams({
       q: themeQueries[theme],

@@ -7,7 +7,7 @@ const posts = [
   },
   {
     slug: "one-url-many-wallpapers",
-    title: "One URL, 192 possible wallpapers",
+    title: "One URL, 264 possible wallpapers",
     description:
       "Inside WallCab’s deterministic content, rendering, and edge cache architecture.",
     date: "2026-07-24T00:00:00.000Z",

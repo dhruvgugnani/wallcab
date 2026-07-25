@@ -22,7 +22,7 @@ const posts = [
   {
     slug: "one-url-many-wallpapers",
     number: "02",
-    title: "One URL, 192 possible wallpapers",
+    title: "One URL, 264 possible wallpapers",
     description:
       "Inside the small API, deterministic content system, and edge cache behind WallCab.",
     date: "July 24, 2026",

@@ -41,9 +41,13 @@ The accepted lesson and its provenance are stored in Workers KV until the next U
 
 ## Background pipeline
 
-Openverse searches for CC0 and public-domain images with mature content disabled. The server validates the returned source host, redirect destination, content type, byte length, image dimensions, and attribution. Eight optimized source backgrounds can be prepared ahead of the daily rollover.
+The five photography themes use Openverse searches restricted to CC0 and public-domain images with mature content disabled. The server validates the returned source host, redirect destination, content type, byte length, image dimensions, and attribution. Those photography backgrounds change at the UTC rollover.
 
-When no eligible remote image is available, the selected visual theme has a bundled procedural SVG background. This keeps rendering functional without making an unverifiable license claim.
+Six WallCab Original themes use bundled SVG artwork: AMOLED, Minimal,
+Abstract, Gradient, Black & White, and Grid. Their artwork remains fixed while
+the lesson changes each day. When no eligible remote photograph is available,
+the selected photography theme uses a bundled procedural SVG fallback. This
+keeps rendering functional without making an unverifiable license claim.
 
 ## Image composition
 

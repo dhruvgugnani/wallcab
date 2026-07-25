@@ -17,6 +17,9 @@ const showcases = [
   { slug: "stoicism-mountains", category: "Stoicism", theme: "Mountains", term: "DICHOTOMY" },
   { slug: "science-space", category: "Science", theme: "Space", term: "ENTROPY" },
   { slug: "psychology-abstract", category: "Psychology", theme: "Abstract", term: "PRIMING" },
+  { slug: "history-grid", category: "History", theme: "Grid", term: "PALIMPSEST" },
+  { slug: "productivity-gradient", category: "Productivity", theme: "Gradient", term: "TIMEBOXING" },
+  { slug: "stoicism-monochrome", category: "Stoicism", theme: "Black & White", term: "EQUANIMITY" },
 ] as const;
 
 export default function GalleryPage() {
@@ -26,7 +29,7 @@ export default function GalleryPage() {
         eyebrow="The daily archive"
         title="Ideas, held in a frame."
         description="A selection of permanent compositions alongside links to today’s live editions. Every generated image carries its own source credit."
-        meta="Six studies / live daily"
+        meta="Nine studies / live daily"
       />
       <section className="gallery-grid section-shell" aria-label="Wallpaper gallery">
         {showcases.map((item, index) => (

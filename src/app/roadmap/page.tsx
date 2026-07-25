@@ -13,7 +13,7 @@ const roadmap = [
     title: "MVP foundation",
     items: [
       "Eight external-first learning feeds",
-      "Eight source-validated visual themes",
+      "Five daily photo themes and six fixed SVG originals",
       "Three current iPhone canvases",
       "Universal Apple Shortcut setup",
       "Public wallpaper API and source manifest",

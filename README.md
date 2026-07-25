@@ -6,10 +6,11 @@ The production interface is always dark, account-free, and deliberately small. E
 
 ## Product surface
 
-- eight learning categories and eight visual themes;
+- eight learning categories and eleven visual themes;
 - exact presets for iPhone 17/17 Pro, iPhone Air, and iPhone 17 Pro Max;
 - deterministic, fair daily rotation across the user’s selected interests;
-- source-validated Openverse imagery with procedural fallbacks;
+- five daily Openverse photo themes, six fixed WallCab Original SVG themes,
+  and procedural photo fallbacks;
 - Sharp-rendered, indexed-palette PNGs capped at 2.2 MiB;
 - signed Cloudflare Worker/KV cache with direct-generation fallback;
 - complete Apple Shortcuts guide, public API docs, gallery, journal, sources, privacy, roadmap, RSS, OpenAPI, and SEO metadata.

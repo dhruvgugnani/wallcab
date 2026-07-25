@@ -9,20 +9,33 @@ export const learningCategories = [
   "productivity",
 ] as const;
 
-export const visualThemes = [
+export const photographicThemes = [
   "nature",
   "mountains",
   "ocean",
   "forest",
   "space",
+] as const;
+
+export const originalThemes = [
   "amoled",
   "minimal",
   "abstract",
+  "gradient",
+  "monochrome",
+  "grid",
+] as const;
+
+export const visualThemes = [
+  ...photographicThemes,
+  ...originalThemes,
 ] as const;
 
 export const devicePresets = ["standard", "air", "max"] as const;
 
 export type LearningCategory = (typeof learningCategories)[number];
+export type PhotographicTheme = (typeof photographicThemes)[number];
+export type OriginalTheme = (typeof originalThemes)[number];
 export type VisualTheme = (typeof visualThemes)[number];
 export type DevicePreset = (typeof devicePresets)[number];
 
@@ -133,6 +146,23 @@ export const themeLabels: Record<VisualTheme, string> = {
   amoled: "AMOLED",
   minimal: "Minimal",
   abstract: "Abstract",
+  gradient: "Gradient",
+  monochrome: "Black & White",
+  grid: "Grid",
+};
+
+export const themeCadence: Record<VisualTheme, "daily" | "fixed"> = {
+  nature: "daily",
+  mountains: "daily",
+  ocean: "daily",
+  forest: "daily",
+  space: "daily",
+  amoled: "fixed",
+  minimal: "fixed",
+  abstract: "fixed",
+  gradient: "fixed",
+  monochrome: "fixed",
+  grid: "fixed",
 };
 
 export function isLearningCategory(value: string): value is LearningCategory {
@@ -141,6 +171,16 @@ export function isLearningCategory(value: string): value is LearningCategory {
 
 export function isVisualTheme(value: string): value is VisualTheme {
   return visualThemes.includes(value as VisualTheme);
+}
+
+export function isPhotographicTheme(
+  value: VisualTheme,
+): value is PhotographicTheme {
+  return photographicThemes.includes(value as PhotographicTheme);
+}
+
+export function isOriginalTheme(value: VisualTheme): value is OriginalTheme {
+  return originalThemes.includes(value as OriginalTheme);
 }
 
 export function isDevicePreset(value: string): value is DevicePreset {

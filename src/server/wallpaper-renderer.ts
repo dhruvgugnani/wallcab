@@ -17,7 +17,7 @@ import {
   type DailyManifest,
 } from "@/server/daily-manifest";
 
-export const RENDERER_VERSION = "v3";
+export const RENDERER_VERSION = "v4";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {

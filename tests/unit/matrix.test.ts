@@ -3,6 +3,8 @@ import {
   deviceDimensions,
   devicePresets,
   learningCategories,
+  originalThemes,
+  photographicThemes,
   visualThemes,
 } from "@/features/wallpaper/types";
 import { wallpaperCacheKey } from "@/server/wallpaper-renderer";
@@ -23,7 +25,9 @@ describe("daily wallpaper matrix", () => {
       }
     }
 
-    expect(keys.size).toBe(8 * 8 * 3);
+    expect(keys.size).toBe(8 * 11 * 3);
+    expect(photographicThemes).toHaveLength(5);
+    expect(originalThemes).toHaveLength(6);
   });
 
   it("keeps the exact dimensions for every device preset", () => {

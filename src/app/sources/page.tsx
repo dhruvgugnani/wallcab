@@ -80,11 +80,18 @@ export default function SourcesPage() {
         </p>
         <h2>Image selection</h2>
         <p>
-          Openverse searches are restricted to CC0 and public-domain material
-          with mature content disabled. WallCab verifies the final image host,
-          media type, dimensions, byte size, and attribution metadata before
-          rendering. A bundled procedural composition is the last resort for
-          each theme.
+          The five daily photography themes use Openverse searches restricted
+          to CC0 and public-domain material with mature content disabled.
+          WallCab verifies the final image host, media type, dimensions, byte
+          size, and attribution metadata before rendering. A bundled
+          procedural composition is the last resort for each photo theme.
+        </p>
+        <p>
+          AMOLED, Minimal, Abstract, Gradient, Black & White, and Grid are
+          fixed SVG compositions made by WallCab and released under CC0 1.0.
+          Their background art remains constant while the lesson changes each
+          UTC day. Every generated image identifies the selected study in its
+          footer credit.
         </p>
         <h2>Licensing boundary</h2>
         <p>

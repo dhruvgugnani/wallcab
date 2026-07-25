@@ -1,3 +1,5 @@
+import { visualThemes } from "@/features/wallpaper/types";
+
 const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const categoryValues = [
   "vocabulary",
@@ -54,19 +56,7 @@ const specification = {
           {
             name: "theme",
             in: "query",
-            schema: optionSchema(
-              [
-                "nature",
-                "mountains",
-                "ocean",
-                "forest",
-                "space",
-                "amoled",
-                "minimal",
-                "abstract",
-              ],
-              "nature",
-            ),
+            schema: optionSchema(visualThemes, "nature"),
           },
           {
             name: "size",
@@ -164,19 +154,7 @@ const specification = {
           {
             name: "theme",
             in: "query",
-            schema: optionSchema(
-              [
-                "nature",
-                "mountains",
-                "ocean",
-                "forest",
-                "space",
-                "amoled",
-                "minimal",
-                "abstract",
-              ],
-              "nature",
-            ),
+            schema: optionSchema(visualThemes, "nature"),
           },
           {
             name: "size",

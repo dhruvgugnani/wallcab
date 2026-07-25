@@ -131,6 +131,8 @@ describe("wallpaper route", () => {
     expect(body.code).toBe("INVALID_WALLPAPER_OPTIONS");
     expect(body.allowed.categories).toContain("vocabulary");
     expect(body.allowed.theme).toContain("abstract");
+    expect(body.allowed.theme).toContain("grid");
+    expect(body.allowed.theme).toContain("monochrome");
     expect(body.allowed.size).toEqual(["standard", "air", "max"]);
   });
 

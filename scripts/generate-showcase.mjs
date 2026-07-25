@@ -48,6 +48,27 @@ const studies = [
     definition: "when earlier exposure quietly shapes a later response",
     colors: ["#8b513c", "#3f5753", "#121411"],
   },
+  {
+    slug: "history-grid",
+    term: "PALIMPSEST",
+    category: "HISTORY",
+    definition: "a surface whose earlier marks remain beneath later writing",
+    colors: ["#909d83", "#222823", "#090a09"],
+  },
+  {
+    slug: "productivity-gradient",
+    term: "TIMEBOXING",
+    category: "PRODUCTIVITY",
+    definition: "giving a task a fixed window instead of an open-ended day",
+    colors: ["#a75a41", "#326662", "#08090b"],
+  },
+  {
+    slug: "stoicism-monochrome",
+    term: "EQUANIMITY",
+    category: "STOICISM",
+    definition: "steadiness of mind when circumstances refuse to cooperate",
+    colors: ["#e5e2da", "#3b3b38", "#080808"],
+  },
 ];
 
 function escape(value) {
@@ -63,7 +84,18 @@ function artwork(study, index) {
       : index === 5
         ? `<path d="M-100 500C140 160 390 820 820 300V0H-100Z" fill="#d6cbb7" opacity=".13"/>
            <circle cx="560" cy="360" r="270" fill="#b96c4f" opacity=".12"/>`
-        : `<path d="M0 700 260 370 410 560 590 250 720 430V0H0Z" fill="#fff" opacity=".09"/>`;
+        : index === 6
+          ? `<rect y="180" width="720" height="720" fill="url(#study-grid)"/>
+             <rect x="420" y="310" width="180" height="300" fill="#a6b39a" opacity=".18" stroke="#dce6d2" stroke-opacity=".5"/>`
+          : index === 7
+            ? `<circle cx="585" cy="320" r="390" fill="#c76c4e" opacity=".24"/>
+               <circle cx="80" cy="760" r="460" fill="#3c8b84" opacity=".25"/>`
+            : index === 8
+              ? `<g transform="rotate(-12 360 520)">
+                   <rect x="-120" y="290" width="720" height="130" fill="#f1eee6" opacity=".74"/>
+                   <circle cx="560" cy="680" r="190" fill="none" stroke="#f1eee6" stroke-width="54" opacity=".54"/>
+                 </g>`
+              : `<path d="M0 700 260 370 410 560 590 250 720 430V0H0Z" fill="#fff" opacity=".09"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280">
     <defs>
@@ -77,6 +109,9 @@ function artwork(study, index) {
         <stop offset=".7" stop-color="#000" stop-opacity=".56"/>
         <stop offset="1" stop-color="#000" stop-opacity=".9"/>
       </linearGradient>
+      <pattern id="study-grid" width="42" height="42" patternUnits="userSpaceOnUse">
+        <path d="M42 0H0V42" fill="none" stroke="#eee9df" stroke-opacity=".2"/>
+      </pattern>
     </defs>
     <rect width="720" height="1280" fill="url(#bg)"/>
     ${geometry}
