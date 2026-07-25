@@ -63,6 +63,7 @@ describe("wallpaper route", () => {
     expect(response.headers.get("x-wallcab-category")).toBe("science");
     expect(response.headers.get("x-wallcab-theme")).toBe("space");
     expect(response.headers.get("x-wallcab-size")).toBe("max");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(pngBytes);
   });
 

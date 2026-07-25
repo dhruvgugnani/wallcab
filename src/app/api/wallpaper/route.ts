@@ -131,7 +131,7 @@ async function handleWallpaper(
 
     const responseHeaders: HeadersInit = {
       ...throttlingHeaders,
-      "Cache-Control": "public, max-age=60, s-maxage=300",
+      "Cache-Control": "private, no-store",
       "Content-Disposition": `inline; filename="wallcab-${dateKey}-${wallpaper.category}-${wallpaper.theme}-${wallpaper.size}.png"`,
       "Content-Length": String(wallpaper.byteLength),
       "Content-Type": "image/png",
