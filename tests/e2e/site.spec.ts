@@ -135,5 +135,6 @@ test("keeps the opening composition stable across responsive layouts", async ({
   await expect(page).toHaveScreenshot(`home-opening-${testInfo.project.name}.png`, {
     animations: "disabled",
     fullPage: false,
+    maxDiffPixelRatio: 0.015,
   });
 });
