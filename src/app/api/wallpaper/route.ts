@@ -3,9 +3,9 @@ import {
   devicePresets,
   learningCategories,
   visualThemes,
-  wallpaperQuerySchema,
   type WallpaperRequest,
 } from "@/features/wallpaper/types";
+import { wallpaperQuerySchema } from "@/features/wallpaper/validation";
 import {
   getCachedWallpaperUrl,
   putCacheValue,

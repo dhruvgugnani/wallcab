@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export const learningCategories = [
   "vocabulary",
   "coding",
@@ -119,27 +117,6 @@ export const themeLabels: Record<VisualTheme, string> = {
   minimal: "Minimal",
   abstract: "Abstract",
 };
-
-export const wallpaperQuerySchema = z.object({
-  category: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(z.enum(learningCategories))
-    .default("vocabulary"),
-  theme: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(z.enum(visualThemes))
-    .default("nature"),
-  size: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(z.enum(devicePresets))
-    .default("standard"),
-});
 
 export function isLearningCategory(value: string): value is LearningCategory {
   return learningCategories.includes(value as LearningCategory);
