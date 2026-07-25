@@ -16,6 +16,13 @@ type CustomBackgroundMetadata = {
   lastUsedDate: string;
 };
 
+type CustomBackgroundObjectMetadata = {
+  byteLength: number;
+  createdAt: string;
+  deleteTokenHash: string;
+  etag: string;
+};
+
 const MAX_CACHE_BYTES = 5 * 1024 * 1024;
 const MAX_CUSTOM_BACKGROUND_BYTES = 4 * 1024 * 1024;
 const MAX_AUTH_SKEW_SECONDS = 300;
@@ -308,6 +315,26 @@ function isCustomMetadata(
   );
 }
 
+function isCustomObjectMetadata(
+  value: unknown,
+): value is CustomBackgroundObjectMetadata {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const metadata = value as Partial<CustomBackgroundObjectMetadata>;
+  return Boolean(
+    metadata.createdAt &&
+      Number.isFinite(Date.parse(metadata.createdAt)) &&
+      metadata.deleteTokenHash &&
+      validDeleteTokenHash(metadata.deleteTokenHash) &&
+      metadata.etag &&
+      /^[a-f0-9]{64}$/.test(metadata.etag) &&
+      Number.isInteger(metadata.byteLength) &&
+      Number(metadata.byteLength) > 0 &&
+      Number(metadata.byteLength) <= MAX_CUSTOM_BACKGROUND_BYTES,
+  );
+}
+
 async function putCustomMetadata(
   env: WorkerEnv,
   id: string,
@@ -384,7 +411,7 @@ async function deleteCustomBackgroundValue(
   id: string,
 ): Promise<void> {
   await Promise.all([
-    env.CUSTOM_BACKGROUNDS.delete(customObjectKey(id)),
+    env.WALLPAPERS.delete(customObjectKey(id)),
     env.WALLPAPERS.delete(customMetadataKey(id)),
     purgeCustomWallpaperCache(env, id),
   ]);
@@ -431,40 +458,46 @@ async function handleCustomBackground(
   }
 
   if (request.method === "GET" || request.method === "HEAD") {
-    let object: R2Object | null;
-    let responseBody: ReadableStream | null = null;
-    if (request.method === "HEAD") {
-      object = await env.CUSTOM_BACKGROUNDS.head(customObjectKey(id));
-    } else {
-      const objectWithBody =
-        await env.CUSTOM_BACKGROUNDS.get(customObjectKey(id));
-      object = objectWithBody;
-      responseBody = objectWithBody?.body ?? null;
-    }
-    if (!object) {
+    const stored =
+      await env.WALLPAPERS.getWithMetadata<CustomBackgroundObjectMetadata>(
+        customObjectKey(id),
+        "arrayBuffer",
+      );
+    if (
+      !stored.value ||
+      !isCustomObjectMetadata(stored.metadata)
+    ) {
       return json(request, env, { code: "NOT_FOUND" }, 404);
     }
 
-    const createdAt =
-      object.customMetadata?.createdAt ?? object.uploaded.toISOString();
-    const deleteTokenHash =
-      object.customMetadata?.deleteTokenHash ?? "";
-    if (validDeleteTokenHash(deleteTokenHash)) {
-      ctx.waitUntil(
-        touchCustomBackground(env, id, createdAt, deleteTokenHash),
-      );
-    }
+    ctx.waitUntil(
+      touchCustomBackground(
+        env,
+        id,
+        stored.metadata.createdAt,
+        stored.metadata.deleteTokenHash,
+      ).catch((error: unknown) => {
+        console.warn(
+          JSON.stringify({
+            event: "wallcab.custom_background",
+            action: "touch_failed",
+            reason:
+              error instanceof Error ? error.message : "unknown",
+          }),
+        );
+      }),
+    );
 
     const headers = new Headers({
       ...corsHeaders(request, env),
       "Cache-Control": "private, no-store",
-      "Content-Length": String(object.size),
-      "Content-Type": object.httpMetadata?.contentType ?? "image/webp",
-      ETag: object.httpEtag,
+      "Content-Length": String(stored.value.byteLength),
+      "Content-Type": "image/webp",
+      ETag: `"${stored.metadata.etag}"`,
       "X-Content-Type-Options": "nosniff",
     });
     return new Response(
-      responseBody,
+      request.method === "HEAD" ? null : stored.value,
       { status: 200, headers },
     );
   }
@@ -498,24 +531,22 @@ async function handleCustomBackground(
       lastUsedDate: now.toISOString().slice(0, 10),
     };
 
-    await env.CUSTOM_BACKGROUNDS.put(
+    await env.WALLPAPERS.put(
       customObjectKey(id),
       requestBody!,
       {
-        httpMetadata: {
-          contentType: "image/webp",
-          cacheControl: "private, no-store",
-        },
-        customMetadata: {
+        metadata: {
+          byteLength: requestBody!.byteLength,
           createdAt: metadata.createdAt,
           deleteTokenHash,
+          etag: bodyHash,
         },
       },
     );
     try {
       await putCustomMetadata(env, id, metadata, nowSeconds);
     } catch (error) {
-      await env.CUSTOM_BACKGROUNDS.delete(customObjectKey(id));
+      await env.WALLPAPERS.delete(customObjectKey(id));
       throw error;
     }
 
@@ -535,7 +566,10 @@ async function handleCustomBackground(
     }
 
     const [object, stored] = await Promise.all([
-      env.CUSTOM_BACKGROUNDS.head(customObjectKey(id)),
+      env.WALLPAPERS.getWithMetadata<CustomBackgroundObjectMetadata>(
+        customObjectKey(id),
+        "arrayBuffer",
+      ),
       env.WALLPAPERS.getWithMetadata<CustomBackgroundMetadata>(
         customMetadataKey(id),
         "text",
@@ -543,9 +577,11 @@ async function handleCustomBackground(
     ]);
     const expectedHash = isCustomMetadata(stored.metadata)
       ? stored.metadata.deleteTokenHash
-      : object?.customMetadata?.deleteTokenHash ?? "";
+      : isCustomObjectMetadata(object.metadata)
+        ? object.metadata.deleteTokenHash
+        : "";
     if (
-      !object ||
+      !object.value ||
       !validDeleteTokenHash(expectedHash) ||
       !constantTimeEqual(providedHash, expectedHash)
     ) {
@@ -596,32 +632,35 @@ async function cleanupCustomBackgrounds(
   } while (kvCursor);
 
   let orphans = 0;
-  let r2Cursor: string | undefined;
+  let objectCursor: string | undefined;
   do {
-    const page = await env.CUSTOM_BACKGROUNDS.list({
-      prefix: CUSTOM_OBJECT_PREFIX,
-      include: ["customMetadata"],
-      ...(r2Cursor ? { cursor: r2Cursor } : {}),
-    });
-    const expiredOrphans = page.objects.filter((object) => {
-      const filename = object.key.slice(CUSTOM_OBJECT_PREFIX.length);
+    const page =
+      await env.WALLPAPERS.list<CustomBackgroundObjectMetadata>({
+        prefix: CUSTOM_OBJECT_PREFIX,
+        ...(objectCursor ? { cursor: objectCursor } : {}),
+      });
+    const expiredOrphans = page.keys.filter((object) => {
+      const filename = object.name.slice(CUSTOM_OBJECT_PREFIX.length);
       const id = filename.endsWith(".webp")
         ? filename.slice(0, -5)
         : "";
       return (
-        /^[A-Za-z0-9_-]{22}$/.test(id) &&
-        !activeIds.has(id) &&
-        object.uploaded.getTime() <= orphanCutoff
+        !/^[A-Za-z0-9_-]{22}$/.test(id) ||
+        (!activeIds.has(id) &&
+          (!isCustomObjectMetadata(object.metadata) ||
+            Date.parse(object.metadata.createdAt) <= orphanCutoff))
       );
     });
     if (expiredOrphans.length > 0) {
-      await env.CUSTOM_BACKGROUNDS.delete(
-        expiredOrphans.map((object) => object.key),
+      await Promise.all(
+        expiredOrphans.map((object) =>
+          env.WALLPAPERS.delete(object.name),
+        ),
       );
     }
     orphans += expiredOrphans.length;
-    r2Cursor = page.truncated ? page.cursor : undefined;
-  } while (r2Cursor);
+    objectCursor = page.list_complete ? undefined : page.cursor;
+  } while (objectCursor);
 
   return { inactive, orphans };
 }

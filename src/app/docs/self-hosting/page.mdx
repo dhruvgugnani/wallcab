@@ -2,7 +2,7 @@ import { DocsLayout } from "@/components/docs-layout";
 
 export const metadata = {
   title: "Self-hosting",
-  description: "Deploy WallCab with Vercel, a Cloudflare Worker, KV, R2, and Turnstile.",
+  description: "Deploy WallCab with Vercel, a Cloudflare Worker, KV, and Turnstile.",
   alternates: { canonical: "/docs/self-hosting" },
 };
 
@@ -10,18 +10,18 @@ export const metadata = {
 
 # Self-hosting
 
-The MVP deployment uses Vercel for Next.js, a Cloudflare Worker with KV for generated image caching, private R2 storage for optional user backgrounds, and Turnstile for upload verification. Built-in wallpapers can run without the Worker, but custom uploads cannot.
+The MVP deployment uses Vercel for Next.js, a Cloudflare Worker with KV for generated image caching and private optional user backgrounds, and Turnstile for upload verification. Built-in wallpapers can run without the Worker, but custom uploads cannot.
 
 ## Requirements
 
 - Node.js 24.x and npm
 - a Vercel account
-- a Cloudflare account with Workers, KV, R2, and Turnstile
+- a Cloudflare account with Workers, KV, and Turnstile
 - Git
 
 No application database or content-provider key is required for the MVP.
-Active-day KV records hold public lesson, attribution, cache data, and minimal
-custom-upload lifecycle metadata. R2 holds normalized custom images privately.
+KV holds active-day lesson and cache records, normalized custom images, and
+minimal custom-upload lifecycle metadata.
 
 ## Local development
 
@@ -50,16 +50,18 @@ Open `http://localhost:3000`. Without cache environment variables, the wallpaper
 
 Generate long, independent random values for each secret. Never prefix a secret with `NEXT_PUBLIC_`.
 
-## Cloudflare Worker, KV, and R2
+## Cloudflare Worker and KV
 
 1. Create a KV namespace.
 2. Replace the placeholder namespace ID in `worker/wrangler.jsonc`.
-3. Create the private `wallcab-custom-backgrounds` R2 bucket.
-4. Add `CACHE_WORKER_SECRET` and `CACHE_SIGNING_SECRET` with `wrangler secret put`.
-5. Run `npm.cmd run worker:deploy`.
-6. Save the returned Worker URL for Vercel.
+3. Add `CACHE_WORKER_SECRET` and `CACHE_SIGNING_SECRET` with `wrangler secret put`.
+4. Run `npm.cmd run worker:deploy`.
+5. Save the returned Worker URL for Vercel.
 
-The Worker defaults to `workers.dev`. Restrict or move it behind a custom route if your deployment policy requires it.
+The Worker defaults to `workers.dev`. Restrict or move it behind a custom route
+if your deployment policy requires it. No R2 subscription or database is
+needed. On the Workers Free plan, KV operations fail after a free allowance is
+exhausted rather than becoming usage charges.
 
 Create a managed Turnstile widget restricted to the real WallCab hostnames.
 The client action is `custom_background_upload`; the server rejects another

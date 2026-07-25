@@ -12,7 +12,7 @@ The production interface is always dark, account-free, and deliberately small. E
 - five daily Openverse photo themes, six fixed WallCab Original SVG themes,
   and procedural photo fallbacks;
 - optional private custom backgrounds protected by Turnstile, normalized by
-  Sharp, stored in R2, and removed after 30 inactive days;
+  Sharp, stored in Workers KV, and removed after 30 inactive days;
 - Sharp-rendered, indexed-palette PNGs capped at 2.2 MiB;
 - signed Cloudflare Worker/KV cache with direct-generation fallback;
 - complete Apple Shortcuts guide, public API docs, gallery, journal, sources, privacy, roadmap, RSS, OpenAPI, and SEO metadata.
@@ -22,7 +22,7 @@ The production interface is always dark, account-free, and deliberately small. E
 - Next.js 16.2.11 and React 19
 - strict TypeScript and Tailwind CSS v4
 - Sharp for image composition
-- Cloudflare Workers and KV for active-day caching, plus R2 for private uploads
+- Cloudflare Workers and KV for active-day caching and private uploads
 - Vitest, Miniflare, Playwright, axe, and Lighthouse CI
 - Vercel as the primary deployment target
 
@@ -36,7 +36,7 @@ Copy-Item .env.example .env.local
 npm.cmd run dev
 ```
 
-Visit `http://localhost:3000`. Cache variables are optional locally; without them, `/api/wallpaper` renders and returns the first image directly. Custom uploads require the Worker R2 binding and Turnstile variables. Cloudflare's public test keys can be used only for local development; production must use a real widget restricted to the WallCab domains.
+Visit `http://localhost:3000`. Cache variables are optional locally; without them, `/api/wallpaper` renders and returns the first image directly. Custom uploads require the Worker KV binding and Turnstile variables. Cloudflare's public test keys can be used only for local development; production must use a real widget restricted to the WallCab domains.
 
 Generate the permanent gallery studies after changing their source template:
 
@@ -79,7 +79,7 @@ A wallpaper miss returns `200 image/png`; a hit may return a temporary `307` to 
 src/app/                 routes, metadata, docs, and journal
 src/features/wallpaper/  shared taxonomy and reviewed fallback catalog
 src/server/              providers, renderer, signing, cache client, cron
-worker/                  Cloudflare Worker, KV, R2, and cleanup implementation
+worker/                  Cloudflare Worker, KV, and cleanup implementation
 tests/                   unit, integration, Miniflare, E2E, and visual checks
 public/showcase/         permanent optimized WebP gallery studies
 docs/                    deployment and architectural decisions

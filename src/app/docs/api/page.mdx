@@ -137,7 +137,7 @@ POST /api/custom-backgrounds
 
 The prepared file must be at most 4 MiB and at least 600×600 pixels. WallCab
 validates the real image format, removes metadata, rotates it correctly,
-normalizes it to a portrait WebP, and stores it in a private R2 bucket. The
+normalizes it to a portrait WebP, and stores it privately in Workers KV. The
 successful response contains an opaque `backgroundId` and a private
 `deletionUrl`. It contains no public raw-image URL.
 

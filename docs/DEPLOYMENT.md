@@ -1,6 +1,6 @@
 # Deployment runbook
 
-WallCab uses Cloudflare Workers/KV for the active-day image cache, private R2 storage for optional user backgrounds, and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise cache and upload paths.
+WallCab uses Cloudflare Workers KV for the active-day image cache and private optional user backgrounds, and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise cache and upload paths.
 
 Creating external resources changes account state. Run these commands only in the intended Cloudflare and Vercel accounts.
 
@@ -15,7 +15,7 @@ npm.cmd run test:e2e
 
 The installed Node version must be 24.x. Do not deploy when the lockfile audit, Worker type check, image ceiling, build, or browser tests fail.
 
-## 2. Create Workers KV and R2
+## 2. Create Workers KV
 
 Confirm the active Cloudflare identity:
 
@@ -31,16 +31,17 @@ npx.cmd wrangler kv namespace create WALLPAPERS
 
 Copy the exact opaque namespace ID into `worker/wrangler.jsonc`. Do not derive or reformat it.
 
-Create the private custom-background bucket. The bucket is not connected to a
-public R2 development URL or custom domain:
+The same private namespace stores active-day cache records, normalized custom
+backgrounds, and their lifecycle metadata. It is reachable only through the
+Worker's authenticated routes; there is no public raw-image URL. No R2
+subscription, R2 bucket, database, or storage API key is required.
 
-```powershell
-npx.cmd wrangler r2 bucket create wallcab-custom-backgrounds
-```
-
-The repository already binds that exact bucket name as
-`CUSTOM_BACKGROUNDS`. The Worker schedules a cleanup at 03:17 UTC and removes
-uploads after 30 days without a wallpaper read.
+The Workers Free plan has hard KV allowances, including 1 GB stored data,
+100,000 reads per day, and 1,000 writes per day. Operations fail after a free
+limit is reached instead of creating usage charges. Current limits are listed
+in the [Workers KV pricing documentation](https://developers.cloudflare.com/kv/platform/pricing/).
+The Worker schedules a cleanup at 03:17 UTC and removes uploads after 30 days
+without a wallpaper read.
 
 Generate two independent high-entropy values, then store them:
 

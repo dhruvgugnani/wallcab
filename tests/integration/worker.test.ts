@@ -59,7 +59,6 @@ beforeAll(async () => {
     modules: true,
     script,
     kvNamespaces: ["WALLPAPERS"],
-    r2Buckets: ["CUSTOM_BACKGROUNDS"],
     bindings: {
       CACHE_WORKER_SECRET: serviceSecret,
       CACHE_SIGNING_SECRET: signingSecret,
@@ -185,7 +184,7 @@ describe("Cloudflare Worker cache", () => {
     expect(oversized.status).toBe(413);
   });
 
-  it("privately uploads, reads, and deletes a custom R2 background", async () => {
+  it("privately uploads, reads, and deletes a custom KV background", async () => {
     const id = "A".repeat(22);
     const pathname = `/v1/custom-backgrounds/${id}`;
     const webp = Uint8Array.from([82, 73, 70, 70, 1, 2, 3, 4]);

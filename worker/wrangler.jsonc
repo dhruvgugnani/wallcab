@@ -15,12 +15,6 @@
       "id": "f6d3f15691394b879a3ef11d3300abe6"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "CUSTOM_BACKGROUNDS",
-      "bucket_name": "wallcab-custom-backgrounds"
-    }
-  ],
   "triggers": {
     "crons": ["17 3 * * *"]
   },

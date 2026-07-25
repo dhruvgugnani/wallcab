@@ -53,7 +53,7 @@ An optional custom image replaces only the background layer. The browser first
 resizes it to stay below the Vercel request limit. After Turnstile verification,
 the server validates the decoded format and dimensions, removes metadata,
 applies orientation, and creates a 1320×2868 WebP. Raw custom images live in a
-private R2 binding; there is no public object URL. If the opaque ID is missing
+private Workers KV binding; there is no public object URL. If the opaque ID is missing
 or expired, rendering continues with the URL's selected built-in theme.
 
 ## Image composition
@@ -75,10 +75,10 @@ The Cloudflare Worker exposes a signed public `GET` and `HEAD` endpoint. Private
 
 On a hit, the Next.js route returns a temporary `307` to the signed Worker URL. On a miss, Next.js sends the newly rendered image immediately and schedules the cache upload after the response. If the Worker is unavailable, image generation still succeeds. Active-day lesson and background records reduce repeated upstream requests even when a complete rollover manifest is unavailable.
 
-Custom-object routes share the same timestamped HMAC boundary but stream
-private R2 data only to the renderer. KV metadata records creation time, a hash
-of the deletion token, and a daily-bounded last-use timestamp. A Worker cron
-removes items after 30 inactive days and also cleans old orphaned R2 objects.
+Custom-object routes share the same timestamped HMAC boundary and expose
+private KV data only to the renderer. Separate KV metadata records creation
+time, a hash of the deletion token, and a daily-bounded last-use timestamp. A
+Worker cron removes items after 30 inactive days and cleans old orphaned keys.
 User deletion removes the source object, metadata, and matching active-day PNG
 variants.
 

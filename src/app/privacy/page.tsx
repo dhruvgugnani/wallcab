@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         <p>
           If you choose to upload an image, your browser first resizes it.
           WallCab validates the file, removes embedded metadata, and stores a
-          normalized copy in a private Cloudflare R2 bucket. The image is used
+          normalized copy in private Cloudflare Workers KV. The image is used
           only to generate wallpapers requested with its unguessable ID; there
           is no public raw-image address.
         </p>
