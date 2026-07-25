@@ -43,4 +43,11 @@ jobs:
         run: npx playwright test
 
       - name: Run Lighthouse budgets
-        run: npm run lighthouse
+        run: |
+          set +e
+          npm run lighthouse
+          lighthouse_status=$?
+          if [ "$lighthouse_status" -ne 0 ]; then
+            node scripts/report-lighthouse-failures.mjs
+          fi
+          exit "$lighthouse_status"
