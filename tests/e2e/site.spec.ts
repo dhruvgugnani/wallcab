@@ -139,6 +139,65 @@ test("shows a recovery state when wallpaper generation fails", async ({
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
+test("does not overflow horizontally on narrow phone screens", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await mockWallpaperApi(page);
+  await page.goto("/");
+
+  const width = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+
+  expect(width.content).toBe(width.viewport);
+});
+
+test("keeps the live phone visible through the address builder", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile");
+  await mockWallpaperApi(page);
+  await page.goto("/");
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = "auto";
+  });
+
+  const positions = await page.locator(".configurator").evaluate((element) => {
+    const configurator = element.getBoundingClientRect();
+    const sticky = element.querySelector(".preview-sticky");
+    if (!sticky) throw new Error("Missing sticky preview");
+    const stickyHeight = sticky.getBoundingClientRect().height;
+    const top = configurator.top + window.scrollY;
+    return {
+      first: top + 300,
+      second: Math.min(top + 900, top + configurator.height - stickyHeight - 80),
+    };
+  });
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), positions.first);
+  await expect
+    .poll(() =>
+      page.locator(".preview-sticky").evaluate((element) =>
+        Math.round(element.getBoundingClientRect().top),
+      ),
+    )
+    .toBeLessThan(40);
+  const firstTop = await page
+    .locator(".preview-sticky")
+    .evaluate((element) => Math.round(element.getBoundingClientRect().top));
+
+  await page.evaluate((scrollTop) => window.scrollTo(0, scrollTop), positions.second);
+  await expect
+    .poll(() =>
+      page.locator(".preview-sticky").evaluate((element) =>
+        Math.round(element.getBoundingClientRect().top),
+      ),
+    )
+    .toBe(firstTop);
+});
+
 test("keeps the opening composition stable across responsive layouts", async ({
   page,
 }, testInfo) => {

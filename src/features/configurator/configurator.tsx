@@ -684,65 +684,67 @@ export function Configurator({
       </div>
 
       <aside className="preview-panel" aria-label="Live wallpaper preview">
-        <div className="preview-label">
-          <span>Live edition</span>
-          <span>
-            Today ·{" "}
-            {categoryLabels[
-              sourceStatus.state === "ready"
-                ? sourceStatus.category
-                : resolvedCategory
-            ]}
-          </span>
+        <div className="preview-sticky">
+          <div className="preview-label">
+            <span>Live edition</span>
+            <span>
+              Today ·{" "}
+              {categoryLabels[
+                sourceStatus.state === "ready"
+                  ? sourceStatus.category
+                  : resolvedCategory
+              ]}
+            </span>
+          </div>
+          <div className="phone-frame">
+            <div className="phone-island" aria-hidden="true" />
+            {sourceStatus.state === "loading" ? (
+              <div className="preview-loading" role="status">
+                <span />
+                <p>Choosing today&apos;s lesson</p>
+              </div>
+            ) : !previewFailed ? (
+              <Image
+                key={apiUrl}
+                src={apiUrl}
+                alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
+                  selections.customBackground?.active
+                    ? "your custom background"
+                    : `the ${themeLabels[selections.theme]} theme`
+                }`}
+                width={deviceDimensions[selections.size].width}
+                height={deviceDimensions[selections.size].height}
+                sizes="(max-width: 800px) 78vw, 31vw"
+                unoptimized
+                onError={() => setPreviewFailed(true)}
+              />
+            ) : (
+              <div className="preview-error">
+                <strong>Preview paused</strong>
+                <p>The wallpaper service is temporarily unavailable.</p>
+                <button type="button" onClick={() => setPreviewFailed(false)}>
+                  Try again
+                </button>
+              </div>
+            )}
+          </div>
+          <p className="preview-note">
+            <span>Updated once daily at 00:00 UTC</span>
+            <span
+              className={
+                sourceStatus.state === "ready"
+                  ? `source-mode source-mode-${sourceStatus.mode}`
+                  : "source-mode"
+              }
+            >
+              {sourceStatus.state === "ready"
+                ? sourceStatus.mode === "external"
+                  ? `External · ${sourceStatus.provider}`
+                  : "Fallback · reviewed catalog"
+                : "Source status unavailable"}
+            </span>
+          </p>
         </div>
-        <div className="phone-frame">
-          <div className="phone-island" aria-hidden="true" />
-          {sourceStatus.state === "loading" ? (
-            <div className="preview-loading" role="status">
-              <span />
-              <p>Choosing today&apos;s lesson</p>
-            </div>
-          ) : !previewFailed ? (
-            <Image
-              key={apiUrl}
-              src={apiUrl}
-              alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
-                selections.customBackground?.active
-                  ? "your custom background"
-                  : `the ${themeLabels[selections.theme]} theme`
-              }`}
-              width={deviceDimensions[selections.size].width}
-              height={deviceDimensions[selections.size].height}
-              sizes="(max-width: 800px) 78vw, 31vw"
-              unoptimized
-              onError={() => setPreviewFailed(true)}
-            />
-          ) : (
-            <div className="preview-error">
-              <strong>Preview paused</strong>
-              <p>The wallpaper service is temporarily unavailable.</p>
-              <button type="button" onClick={() => setPreviewFailed(false)}>
-                Try again
-              </button>
-            </div>
-          )}
-        </div>
-        <p className="preview-note">
-          <span>Updated once daily at 00:00 UTC</span>
-          <span
-            className={
-              sourceStatus.state === "ready"
-                ? `source-mode source-mode-${sourceStatus.mode}`
-                : "source-mode"
-            }
-          >
-            {sourceStatus.state === "ready"
-              ? sourceStatus.mode === "external"
-                ? `External · ${sourceStatus.provider}`
-                : "Fallback · reviewed catalog"
-              : "Source status unavailable"}
-          </span>
-        </p>
       </aside>
     </div>
   );
