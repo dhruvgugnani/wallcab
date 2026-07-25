@@ -51,6 +51,29 @@ a {
 }
 
 button,
+a,
+label,
+summary {
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+h1[id],
+h2[id],
+h3[id] {
+  scroll-margin-top: 6rem;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
 input {
   font: inherit;
 }
@@ -569,7 +592,7 @@ label {
 
 .api-output small {
   margin-top: .8rem;
-  color: #79766f;
+  color: #928e85;
 }
 
 .preview-panel {

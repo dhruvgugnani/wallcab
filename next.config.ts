@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       "frame-ancestors 'none'",
       "img-src 'self' data: blob: https:",
       "object-src 'none'",
-      "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://static.cloudflareinsights.com`,
       "style-src 'self' 'unsafe-inline'",
       "connect-src 'self' https://api.openverse.org https://api.dictionaryapi.dev https://en.wikipedia.org https://*.workers.dev",
       "upgrade-insecure-requests",

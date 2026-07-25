@@ -1,15 +1,16 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/features/**/*.ts", "src/server/**/*.ts", "worker/src/**/*.ts"],
     },
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     testTimeout: 15_000,
   },
 });

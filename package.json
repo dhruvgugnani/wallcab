@@ -14,12 +14,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:update": "playwright test --update-snapshots",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:update": "npm run build && playwright test --update-snapshots",
     "assets:showcase": "node scripts/generate-showcase.mjs",
+    "audit": "npm audit --audit-level=high",
+    "lighthouse": "lhci autorun",
     "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
     "worker:deploy": "wrangler deploy --config worker/wrangler.jsonc",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "worker:typecheck": "tsc --noEmit -p worker/tsconfig.json",
+    "check": "npm run lint && npm run typecheck && npm run worker:typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",
@@ -37,6 +40,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@cloudflare/workers-types": "^5.20260724.1",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -49,12 +53,15 @@
     "postcss": "^8.5.18",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10",
     "wrangler": "^4.114.0"
   },
   "overrides": {
+    "brace-expansion": "5.0.8",
+    "minimatch": "10.2.5",
     "postcss": "$postcss",
-    "sharp": "$sharp"
+    "sharp": "$sharp",
+    "tmp": "0.2.7",
+    "uuid": "11.1.1"
   }
 }

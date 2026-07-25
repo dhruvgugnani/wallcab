@@ -1,6 +1,9 @@
 import sharp from "sharp";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { deviceDimensions } from "@/features/wallpaper/types";
+import {
+  deviceDimensions,
+  devicePresets,
+} from "@/features/wallpaper/types";
 import {
   MAX_WALLPAPER_BYTES,
   renderWallpaper,
@@ -22,22 +25,22 @@ describe("wallpaper renderer", () => {
     expect(lines.at(-1)).toMatch(/…$/);
   });
 
-  it(
-    "renders a correctly sized PNG below the KV target",
-    async () => {
+  it.each(devicePresets)(
+    "renders the %s PNG at the correct size below the KV target",
+    async (size) => {
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
       );
       const wallpaper = await renderWallpaper(
-        { category: "science", theme: "space", size: "standard" },
+        { category: "science", theme: "space", size },
         new Date("2026-07-25T12:00:00Z"),
       );
       const metadata = await sharp(wallpaper.bytes).metadata();
 
       expect(metadata.format).toBe("png");
-      expect(metadata.width).toBe(deviceDimensions.standard.width);
-      expect(metadata.height).toBe(deviceDimensions.standard.height);
+      expect(metadata.width).toBe(deviceDimensions[size].width);
+      expect(metadata.height).toBe(deviceDimensions[size].height);
       expect(wallpaper.byteLength).toBeLessThanOrEqual(MAX_WALLPAPER_BYTES);
     },
     60_000,

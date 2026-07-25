@@ -41,7 +41,9 @@ function isSelections(value: unknown): value is Selections {
 export function Configurator({ siteOrigin }: { siteOrigin: string }) {
   const [selections, setSelections] = useState<Selections>(defaults);
   const [hydrated, setHydrated] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<
+    "idle" | "copied" | "failed"
+  >("idle");
   const [previewFailed, setPreviewFailed] = useState(false);
 
   useEffect(() => {
@@ -85,9 +87,14 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
   }, [hydrated, selections, siteOrigin]);
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(apiUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(apiUrl);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 2400);
   }
 
   return (
@@ -166,9 +173,22 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
           <p>Your personal wallpaper address</p>
           <code>{apiUrl}</code>
           <button type="button" onClick={copyUrl}>
-            {copied ? "Copied" : "Copy address"}
-            <span aria-hidden="true">{copied ? "✓" : "↗"}</span>
+            {copyStatus === "copied"
+              ? "Copied"
+              : copyStatus === "failed"
+                ? "Select address manually"
+                : "Copy address"}
+            <span aria-hidden="true">
+              {copyStatus === "copied" ? "✓" : "↗"}
+            </span>
           </button>
+          <span className="sr-only" aria-live="polite">
+            {copyStatus === "copied"
+              ? "Wallpaper address copied to the clipboard."
+              : copyStatus === "failed"
+                ? "Copy failed. Select the wallpaper address and copy it manually."
+                : ""}
+          </span>
           <small>
             This URL contains only these three choices. No account or personal
             information is attached.
