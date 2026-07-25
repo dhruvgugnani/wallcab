@@ -1,0 +1,23 @@
+name: Feature proposal
+description: Propose a focused learning, visual, or platform improvement.
+title: "[Proposal]: "
+labels: ["proposal"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: direction
+    attributes:
+      label: Proposed direction
+      description: Explain the smallest useful version and its trade-offs.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources or licensing notes
+      description: Required for content providers, lessons, fonts, or imagery.
