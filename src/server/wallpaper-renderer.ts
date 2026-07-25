@@ -18,7 +18,7 @@ import {
 } from "@/server/daily-manifest";
 import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v5";
+export const RENDERER_VERSION = "v6";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {
@@ -149,6 +149,8 @@ function createOverlay(
   const termStartY = Math.round(
     (layout.termLines.length > 1 ? 990 : 1080) * scale,
   );
+  const brandLabelY = termStartY - Math.round(190 * scale);
+  const brandMarkY = brandLabelY - Math.round(38 * scale);
   const definitionStartY =
     termStartY +
     (layout.termLines.length - 1) * termLineHeight +
@@ -180,11 +182,11 @@ function createOverlay(
       </defs>
       <rect width="${width}" height="${height}" fill="url(#shade)"/>
       <g fill="#f4f0e8" filter="url(#shadow)" clip-path="url(#content-bounds)">
-        <g transform="translate(${left} ${Math.round(650 * scale)})">
+        <g transform="translate(${left} ${brandMarkY})">
           <rect width="${Math.round(48 * scale)}" height="${Math.round(61 * scale)}" rx="${Math.round(3 * scale)}" fill="none" stroke="#f4f0e8" stroke-width="${Math.max(2, Math.round(3 * scale))}"/>
           <path d="M${Math.round(14 * scale)} ${Math.round(17 * scale)}H${Math.round(34 * scale)}M${Math.round(14 * scale)} ${Math.round(31 * scale)}H${Math.round(34 * scale)}M${Math.round(14 * scale)} ${Math.round(45 * scale)}H${Math.round(27 * scale)}" stroke="#f4f0e8" stroke-width="${Math.max(2, Math.round(3 * scale))}"/>
         </g>
-        <text x="${left + Math.round(68 * scale)}" y="${Math.round(688 * scale)}" font-family="Manrope" font-size="${Math.round(27 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}">WALLCAB / ${escapeXml(category)}</text>
+        <text x="${left + Math.round(68 * scale)}" y="${brandLabelY}" font-family="Manrope" font-size="${Math.round(27 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}">WALLCAB / ${escapeXml(category)}</text>
         <text font-family="Fraunces" font-size="${termSize}" font-weight="600" letter-spacing="${Math.round(-3 * scale)}">
           ${tspans(layout.termLines, left, termStartY, termLineHeight)}
         </text>
