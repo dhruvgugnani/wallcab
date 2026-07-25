@@ -1,0 +1,45 @@
+import { DocsLayout } from "@/components/docs-layout";
+
+export const metadata = {
+  title: "Documentation",
+  description: "Set up, use, understand, and contribute to WallCab.",
+  alternates: { canonical: "/docs" },
+};
+
+<DocsLayout>
+
+# Documentation
+
+WallCab is a small, public wallpaper service built around one stable URL. You choose a learning category, visual theme, and iPhone size; the same address returns a newly composed image each UTC day.
+
+## Start in five minutes
+
+1. Open the [configurator](/#make-yours).
+2. Choose a learning path, visual direction, and device.
+3. Copy the generated `/api/wallpaper` address.
+4. Follow the illustrated [Apple Shortcuts guide](/install).
+5. Schedule it after `00:05 UTC` so the new daily edition is ready.
+
+## How the daily edition works
+
+The calendar date is part of every content and cache decision. WallCab asks an external provider for that category’s concept, validates the result, fetches a licensed background, and composes both into a device-specific PNG. The answer remains stable until the next UTC day.
+
+If a provider is slow, unreachable, or returns content that cannot be safely composed, WallCab immediately uses a reviewed local fallback. The fallback catalog is continuity infrastructure—not the normal source of daily words.
+
+## Pick a guide
+
+- [API reference](/docs/api) documents every public parameter, header, and error.
+- [Architecture](/docs/architecture) explains content selection, rendering, and caching.
+- [Self-hosting](/docs/self-hosting) covers Vercel and Cloudflare setup.
+- [Contributing](/docs/contributing) describes the validation and review bar.
+- [Sources and licenses](/sources) describes provenance and licensing boundaries.
+
+## Guarantees
+
+- No account or database is required.
+- A date, category, theme, and size always identify the same daily edition.
+- Each image includes a compact source and license credit.
+- Invalid options return structured JSON rather than a surprise default.
+- The renderer targets a PNG smaller than 2.2 MiB.
+
+</DocsLayout>

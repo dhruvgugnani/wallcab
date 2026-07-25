@@ -1,0 +1,68 @@
+import { DocsLayout } from "@/components/docs-layout";
+
+export const metadata = {
+  title: "Architecture",
+  description: "How WallCab selects content, renders images, and caches daily editions.",
+  alternates: { canonical: "/docs/architecture" },
+};
+
+<DocsLayout>
+
+# Architecture
+
+WallCab separates the public website and renderer from a deliberately narrow cache service. The Next.js application remains useful when the cache or every upstream provider is unavailable.
+
+```text
+Apple Shortcut / browser
+          |
+          v
+  Next.js wallpaper route
+     |             |
+ cache lookup    daily resolver
+     |             |
+     |      external providers
+     |         or fallback
+     |             |
+     +--------> Sharp renderer
+                    |
+              PNG response now
+                    |
+            background KV upload
+```
+
+## Deterministic daily content
+
+The UTC date and category form a deterministic seed. Vocabulary uses Datamuse to select the daily term and Free Dictionary to enrich its definition. The other categories use Wikimedia search to select a concept and a page summary to enrich it. Themes and device sizes never alter the day’s lesson.
+
+Every provider value passes structural and editorial validation. WallCab rejects excessive text, unsafe titles, missing source links, duplicates, and content that cannot fit the composition. The reviewed fallback record for that date and category is used as a complete unit when validation fails.
+
+## Background pipeline
+
+Openverse searches for CC0 and public-domain images with mature content disabled. The server validates the returned source host, redirect destination, content type, byte length, image dimensions, and attribution. Eight optimized source backgrounds can be prepared ahead of the daily rollover.
+
+When no eligible remote image is available, the selected visual theme has a bundled procedural SVG background. This keeps rendering functional without making an unverifiable license claim.
+
+## Image composition
+
+The Node.js renderer uses Sharp with an SVG overlay:
+
+- the clock and Dynamic Island zone remains quiet;
+- the lesson occupies the middle and lower fields;
+- text wraps inside measured bounds;
+- a contrast gradient protects readability;
+- lesson and image credits are always visible;
+- adaptive indexed-palette compression targets 2.2 MiB.
+
+The renderer version is part of the cache key. A composition change can therefore roll forward without colliding with an earlier file.
+
+## Cache boundary
+
+The Cloudflare Worker exposes a signed public `GET` and `HEAD` endpoint. Private lookup and upload routes require a timestamped HMAC signature covering method, path, and body hash. KV records expire at the next UTC rollover.
+
+On a hit, the Next.js route returns a temporary `307` to the signed Worker URL. On a miss, Next.js sends the newly rendered image immediately and schedules the cache upload after the response. If the Worker is unavailable, image generation still succeeds.
+
+## Trust boundaries
+
+Provider data is untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. User query values are enumerated before they reach the renderer. Secrets are server-only and never enter the public Shortcut URL.
+
+</DocsLayout>

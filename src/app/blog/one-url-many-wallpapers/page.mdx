@@ -1,0 +1,55 @@
+import { ArticleHeader } from "@/components/article-header";
+import { ArticleSchema } from "@/components/article-schema";
+
+export const metadata = {
+  title: "One URL, 192 possible wallpapers",
+  description: "Inside WallCab’s deterministic content, rendering, and edge cache architecture.",
+  alternates: { canonical: "/blog/one-url-many-wallpapers" },
+};
+
+<ArticleSchema
+  title="One URL, 192 possible wallpapers"
+  description="Inside WallCab’s deterministic content, rendering, and edge cache architecture."
+  date="2026-07-24"
+  slug="one-url-many-wallpapers"
+/>
+
+<article className="article prose section-shell">
+<ArticleHeader
+  title="One URL, 192 possible wallpapers"
+  description="Inside the small API, deterministic content system, and edge cache behind WallCab."
+  date="2026-07-24"
+  readingTime="7 min read"
+/>
+
+WallCab’s public interface is intentionally dull: three query parameters go in and a PNG comes out. The machinery behind it has a harder job. It must make provider-driven content feel stable, source-aware photography feel safe, and full-resolution image composition feel immediate.
+
+## One lesson, many presentations
+
+Eight learning categories, eight themes, and three screen sizes produce 192 possible daily images. That does not mean 192 different lessons. The UTC date and category select the content; theme and size affect only its presentation.
+
+This detail matters. A person can switch from Nature to AMOLED—or from a standard iPhone to a Max—without quietly changing what the day was meant to teach.
+
+## External first does not mean external only
+
+Vocabulary begins with daily term discovery through Datamuse and definition enrichment through Free Dictionary. The remaining categories begin with a Wikimedia search scoped by carefully chosen prompts, then use the selected page’s summary and URL.
+
+Every result is untrusted until it passes validation. WallCab checks structural fields, text length, source presence, unsafe titles, and composition fit. If any step fails, a complete reviewed local lesson takes over. Mixing half of a provider result with half of a fallback would create muddled attribution, so the fallback is atomic.
+
+The local catalog is a seat belt, not the engine.
+
+## Rendering is a bounded problem
+
+Sharp turns the chosen background and SVG text layer into a full-size PNG. Each device preset has exact dimensions, but the composition uses proportional safe zones so the hierarchy survives all three.
+
+The encoder tries a descending sequence of indexed palettes. The first output below 2.2 MiB wins. A file that cannot meet the ceiling is an error rather than an unexpectedly enormous response.
+
+## Cache without dependence
+
+A Cloudflare Worker and KV store generated variants for the active day. The public asset URL is signed and short-lived. Private cache reads and writes use an HMAC over the request method, path, timestamp, and body hash.
+
+This is an optimization boundary, not a correctness boundary. On a cache miss, Next.js renders the image and returns it immediately, then uploads it in the background. If the Worker is down, the caller still gets the wallpaper.
+
+That principle appears throughout WallCab: every external service can improve the result, but none should have the power to leave the lock screen empty.
+
+</article>

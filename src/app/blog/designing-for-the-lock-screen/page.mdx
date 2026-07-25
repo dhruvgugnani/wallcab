@@ -1,0 +1,51 @@
+import { ArticleHeader } from "@/components/article-header";
+import { ArticleSchema } from "@/components/article-schema";
+
+export const metadata = {
+  title: "Designing for the quietest screen",
+  description: "How WallCab composes legible, credited learning wallpapers.",
+  alternates: { canonical: "/blog/designing-for-the-lock-screen" },
+};
+
+<ArticleSchema
+  title="Designing for the quietest screen"
+  description="How WallCab composes legible, credited learning wallpapers."
+  date="2026-07-23"
+  slug="designing-for-the-lock-screen"
+/>
+
+<article className="article prose section-shell">
+<ArticleHeader
+  title="Designing for the quietest screen"
+  description="Safe zones, type fitting, contrast, credits, and the odd constraints of a lock screen."
+  date="2026-07-23"
+  readingTime="6 min read"
+/>
+
+A lock screen is not a poster with a clock added later. It is a contested surface: iOS owns the top, notifications rise from the bottom, photography carries its own focal point, and a lesson still needs enough room to breathe.
+
+## Begin with the unavailable space
+
+WallCab keeps the upper portion of every canvas deliberately quiet. The Dynamic Island and clock vary by device and by a person’s own iOS configuration, so the renderer treats the whole region as unavailable rather than trying to fit text between system elements.
+
+The teaching content begins near the middle and moves downward in a clear order: concept, definition, quotation, fact, then source credit.
+
+## Fit meaning, not just characters
+
+Simple character counting is not enough. An uppercase word with many wide letters behaves differently from a short narrow word; line length changes with the font size; a definition needs more generous leading than a source line.
+
+WallCab uses bounded wrapping and font-size steps. Provider content that still cannot make a calm composition fails validation before rendering. The purpose of a wallpaper is repeated, effortless reading—not proving that every possible paragraph can be squeezed into a phone.
+
+## Contrast comes from composition
+
+Daily photographs are unpredictable. A permanent dark box behind the lesson would be safe, but it would also flatten every visual theme into the same card. Instead, the renderer adds a tuned gradient that preserves more of the image near the top and creates a stable reading field below.
+
+The fallback backgrounds follow the same rule. AMOLED is not merely “the dark one”; it uses the absence of image detail as part of the composition. Minimal, Abstract, Forest, and Space each have a different visual temperature while sharing one typographic system.
+
+## Credit belongs on the object
+
+Attribution cannot depend on someone remembering which web page generated an image they saved yesterday. A compact credit travels with every PNG. The full Sources page explains the provider and license trail, but the wallpaper itself always identifies where its lesson and image came from.
+
+This constraint improves the design. It creates a final baseline, reminds us that knowledge is not anonymous, and keeps provenance visible in the exact place the work is used.
+
+</article>

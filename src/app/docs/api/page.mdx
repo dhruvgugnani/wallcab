@@ -1,0 +1,93 @@
+import { DocsLayout } from "@/components/docs-layout";
+
+export const metadata = {
+  title: "API Reference",
+  description: "The WallCab wallpaper API parameters, responses, errors, and examples.",
+  alternates: { canonical: "/docs/api" },
+};
+
+<DocsLayout>
+
+# Wallpaper API
+
+The public API has one resource. It supports `GET` for an image body and `HEAD` for metadata only.
+
+```http
+GET /api/wallpaper?category=vocabulary&theme=nature&size=standard
+```
+
+An OpenAPI description is available at [`/openapi.json`](/openapi.json).
+
+## Query parameters
+
+| Name | Default | Allowed values |
+| --- | --- | --- |
+| `category` | `vocabulary` | `vocabulary`, `coding`, `finance`, `stoicism`, `science`, `history`, `psychology`, `productivity` |
+| `theme` | `nature` | `nature`, `mountains`, `ocean`, `forest`, `space`, `amoled`, `minimal`, `abstract` |
+| `size` | `standard` | `standard`, `air`, `max` |
+
+`standard` is 1206×2622, `air` is 1260×2736, and `max` is 1320×2868. Older iPhones can use `standard`; iOS will scale or crop the image.
+
+## Successful response
+
+A cache miss returns `200 image/png`. A cache hit may return a short-lived `307` redirect to a signed Worker asset. Shortcut and browser clients follow this redirect automatically.
+
+Useful response headers:
+
+| Header | Meaning |
+| --- | --- |
+| `ETag` | Stable hash of the generated image |
+| `X-WallCab-Date` | UTC content date |
+| `X-WallCab-Category` | Resolved learning category |
+| `X-WallCab-Theme` | Resolved visual theme |
+| `X-WallCab-Size` | Resolved device preset |
+| `X-WallCab-Cache` | `HIT` or `MISS` |
+| `X-Request-Id` | Identifier for operational debugging |
+
+## Invalid input
+
+Unsupported parameters return `400 application/json` and list every allowed option.
+
+```json
+{
+  "code": "INVALID_WALLPAPER_OPTIONS",
+  "message": "Choose a supported category, theme, and size.",
+  "allowed": {
+    "category": ["vocabulary", "coding"],
+    "theme": ["nature", "mountains"],
+    "size": ["standard", "air", "max"]
+  },
+  "requestId": "..."
+}
+```
+
+The arrays in the real response are complete; they are shortened above for readability.
+
+## Rate limits and failures
+
+The application currently allows 60 requests per client per minute. A `429` response includes `Retry-After` and `X-RateLimit-*` headers. Generation failures return `502` with the code `WALLPAPER_GENERATION_FAILED`.
+
+## Examples
+
+Browser:
+
+```text
+https://your-domain.example/api/wallpaper?category=science&theme=space&size=max
+```
+
+cURL:
+
+```bash
+curl --fail --location \
+  "https://your-domain.example/api/wallpaper?category=history&theme=mountains&size=standard" \
+  --output wallcab.png
+```
+
+Metadata only:
+
+```bash
+curl --head --location \
+  "https://your-domain.example/api/wallpaper?category=finance&theme=minimal&size=air"
+```
+
+</DocsLayout>

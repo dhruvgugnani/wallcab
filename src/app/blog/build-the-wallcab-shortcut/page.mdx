@@ -1,0 +1,66 @@
+import { ArticleHeader } from "@/components/article-header";
+import { ArticleSchema } from "@/components/article-schema";
+
+export const metadata = {
+  title: "Build the WallCab Shortcut by hand",
+  description: "A transparent five-minute Apple Shortcuts setup for WallCab.",
+  alternates: { canonical: "/blog/build-the-wallcab-shortcut" },
+};
+
+<ArticleSchema
+  title="Build the WallCab Shortcut by hand"
+  description="A transparent five-minute Apple Shortcuts setup for WallCab."
+  date="2026-07-25"
+  slug="build-the-wallcab-shortcut"
+/>
+
+<article className="article prose section-shell">
+<ArticleHeader
+  title="Build the WallCab Shortcut by hand"
+  description="A transparent five-minute setup—and why a plain URL is the best interface."
+  date="2026-07-25"
+  readingTime="5 min read"
+/>
+
+The nicest part of WallCab is that it does not need to become another app on your phone. Apple already ships the pieces we need: a way to fetch a URL, a way to set a wallpaper, and a way to run those actions on a schedule.
+
+## The entire Shortcut
+
+The finished Shortcut contains only two actions:
+
+1. **Get Contents of URL** points at the address created by the WallCab configurator.
+2. **Set Wallpaper Photo** uses the result as your Lock Screen image.
+
+That is the whole mechanism. There is no embedded token, account identifier, script, or opaque payload.
+
+## Make your address
+
+On the WallCab homepage, choose a subject, visual theme, and iPhone size. The configurator turns those three values into a readable URL:
+
+```text
+/api/wallpaper?category=science&theme=space&size=max
+```
+
+Copy the full address. If you ever want to change the edition, replace the relevant word in the Shortcut or return to the configurator and copy a new one.
+
+## Add the two actions
+
+Open Shortcuts and create a new Shortcut called **WallCab Daily**. Search for **Get Contents of URL**, add it, and paste your WallCab address into the URL field. The default `GET` method is correct.
+
+Then search for **Set Wallpaper Photo**. Select the Lock Screen you want WallCab to update. Open the action’s options and turn **Show Preview** off; otherwise iOS will ask you to approve the image every day.
+
+Run the Shortcut once manually. This confirms that your selected Lock Screen accepts automated changes and gives iOS the permissions it needs.
+
+## Add the automation
+
+Go to the Automation tab, make a personal automation, and choose **Time of Day**. Pick a time after WallCab’s UTC rollover, select **Daily**, and choose **Run Immediately**. Add your WallCab Daily Shortcut as the action.
+
+If your preferred morning time falls before `00:05 UTC`, that is fine—the URL still returns the most recently prepared stable edition. The important part is consistency, not a particular clock time.
+
+## Why this stays deliberately plain
+
+A plain, inspectable URL is a durable interface. It works in Shortcuts, a browser, `curl`, and any future automation tool that can download an image. It can be copied, audited, or replaced without asking WallCab to remember who you are.
+
+That is the larger design idea: useful automation should feel like a small tool you own, not a relationship you have to maintain.
+
+</article>

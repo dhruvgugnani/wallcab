@@ -1,0 +1,68 @@
+import { DocsLayout } from "@/components/docs-layout";
+
+export const metadata = {
+  title: "Self-hosting",
+  description: "Deploy WallCab with Vercel, a Cloudflare Worker, and Workers KV.",
+  alternates: { canonical: "/docs/self-hosting" },
+};
+
+<DocsLayout>
+
+# Self-hosting
+
+The MVP deployment uses Vercel for Next.js and a free Cloudflare Worker with KV for generated image caching. The website can run without the Worker, but each image request will render independently.
+
+## Requirements
+
+- Node.js 24.x and npm
+- a Vercel account
+- a Cloudflare account with Workers and KV
+- Git
+
+No database, paid API, billing credential, or content-provider key is required for the MVP.
+
+## Local development
+
+```powershell
+npm.cmd install
+Copy-Item .env.example .env.local
+npm.cmd run dev
+```
+
+Open `http://localhost:3000`. Without cache environment variables, the wallpaper route generates and returns images directly.
+
+## Environment contract
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | production | Canonical public origin |
+| `NEXT_PUBLIC_SHORTCUT_URL` | no | Published universal iCloud Shortcut |
+| `NEXT_PUBLIC_CF_ANALYTICS_TOKEN` | no | Cookie-free aggregate web analytics |
+| `CACHE_WORKER_URL` | for cache | Deployed Worker origin |
+| `CACHE_WORKER_SECRET` | for cache | Private lookup and upload HMAC |
+| `CACHE_SIGNING_SECRET` | for cache | Public asset URL signature |
+| `CRON_SECRET` | for cron | Protects the rollover route |
+
+Generate long, independent random values for each secret. Never prefix a secret with `NEXT_PUBLIC_`.
+
+## Cloudflare Worker and KV
+
+1. Create a KV namespace.
+2. Replace the placeholder namespace ID in `worker/wrangler.jsonc`.
+3. Add `CACHE_WORKER_SECRET` and `CACHE_SIGNING_SECRET` with `wrangler secret put`.
+4. Run `npm.cmd run worker:deploy`.
+5. Save the returned Worker URL for Vercel.
+
+The Worker defaults to `workers.dev`. Restrict or move it behind a custom route if your deployment policy requires it.
+
+## Vercel
+
+Import the GitHub repository, keep the framework preset on Next.js, select Node.js 24.x, and add the environment values above. `vercel.json` schedules one rollover call at 23:00 UTC. The cron is an optimization; lazy provider fetching and rendering remain the fallback.
+
+Promote a preview only after exercising the configurator, API redirect, source credits, and Shortcut flow.
+
+## Docker status
+
+Docker is intentionally deferred from the MVP. A container image needs a clear persistent-cache story, health checks, and documented Sharp native dependencies before it becomes a supported deployment route. It appears on the public [roadmap](/roadmap), but no placeholder Dockerfile is shipped today.
+
+</DocsLayout>

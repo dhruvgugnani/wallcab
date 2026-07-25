@@ -1,0 +1,56 @@
+import { DocsLayout } from "@/components/docs-layout";
+
+export const metadata = {
+  title: "Contributing",
+  description: "How to propose lessons, providers, themes, fixes, and documentation for WallCab.",
+  alternates: { canonical: "/docs/contributing" },
+};
+
+<DocsLayout>
+
+# Contributing
+
+WallCab welcomes focused changes that preserve a dependable, source-conscious daily experience. Start with an issue for a new provider, category, renderer direction, or architectural change.
+
+## Set up the project
+
+```powershell
+git clone https://github.com/dhruvgugnani/wallcab.git
+Set-Location wallcab
+npm.cmd install
+npm.cmd run check
+```
+
+Use Node.js 24.x. Copy `.env.example` only when you need live cache integration; unit tests do not require production secrets.
+
+## Before opening a pull request
+
+Run the full local gate:
+
+```powershell
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd run test
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+Keep commits coherent and avoid mixing unrelated formatting or dependency churn with a feature.
+
+## Lesson requirements
+
+A lesson contribution needs a credible source URL, content that fits the existing length bounds, neutral and accessible language, and no duplicate concept within its category. Quotes need an attributable primary or reputable archival source. Do not submit random-quote API output.
+
+Fallback records are reviewed continuity material. They do not override healthy external providers.
+
+## Visual requirements
+
+A new theme must keep the upper clock area quiet, meet text contrast requirements, show complete source credit, survive all three aspect ratios, and remain within the encoded PNG budget. Photography must be verifiably CC0 or public domain.
+
+## Security
+
+Do not open a public issue for a vulnerability that could expose secrets, forge cache signatures, bypass URL validation, or exhaust a production resource. Follow the private reporting instructions in `SECURITY.md`.
+
+The code of conduct, detailed development workflow, license, and pull-request checklist live at the repository root.
+
+</DocsLayout>
