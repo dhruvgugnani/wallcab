@@ -66,10 +66,17 @@ export default function SourcesPage() {
         <h2>Provider-first, reviewed fallback</h2>
         <p>
           WallCab first asks an external provider for the day’s word or concept.
-          It validates length, language, duplication risk, source availability,
-          and whether the content can fit the wallpaper. A 240-item reviewed
-          catalog exists only so a provider outage never leaves the Shortcut
-          without a safe image.
+          It validates candidates independently for length, language,
+          duplication risk, source availability, and composition fit. The
+          accepted result and its provenance are cached for one UTC day. A
+          240-item reviewed catalog exists only so a provider outage never
+          leaves the Shortcut without a safe image.
+        </p>
+        <p>
+          The configurator and `/api/wallpaper/status` identify the resolved
+          category and show whether today’s content is external or fallback.
+          The image API provides the same information in
+          `X-WallCab-Content-Mode` and `X-WallCab-Content-Provider`.
         </p>
         <h2>Image selection</h2>
         <p>

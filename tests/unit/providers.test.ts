@@ -13,6 +13,11 @@ describe("API-first daily lessons", () => {
       .mockResolvedValueOnce(
         Response.json([
           {
+            word: "dna",
+            defs: [`n\t${"x".repeat(688)}`],
+            tags: ["n"],
+          },
+          {
             word: "perspicacious",
             defs: ["adj\tHaving a ready insight into things"],
             tags: ["adj"],
@@ -43,6 +48,10 @@ describe("API-first daily lessons", () => {
 
     expect(lesson.term).toBe("Perspicacious");
     expect(lesson.definition).toContain("ready insight");
+    expect(lesson.provenance).toEqual({
+      mode: "external",
+      provider: "Datamuse + Free Dictionary API",
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -80,6 +89,8 @@ describe("API-first daily lessons", () => {
 
     expect(lesson.term).toBe("Memoization");
     expect(lesson.definition).toContain("storing previous results");
+    expect(lesson.provenance.mode).toBe("external");
+    expect(lesson.provenance.provider).toBe("Wikimedia");
   });
 
   it("uses curated records only when a provider fails", async () => {
@@ -92,5 +103,10 @@ describe("API-first daily lessons", () => {
     expect(fallbackSeeds.finance.some(([term]) => term === lesson.term)).toBe(
       true,
     );
+    expect(lesson.provenance).toMatchObject({
+      mode: "fallback",
+      provider: "WallCab reviewed catalog",
+      fallbackReason: "provider_unavailable",
+    });
   });
 });

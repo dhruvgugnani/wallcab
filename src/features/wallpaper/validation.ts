@@ -3,15 +3,40 @@ import {
   devicePresets,
   learningCategories,
   visualThemes,
+  type LearningCategory,
+  type WallpaperPreferences,
 } from "@/features/wallpaper/types";
+import { normalizeLearningCategories } from "@/features/wallpaper/preferences";
+
+const categoriesSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .default("vocabulary")
+  .transform((value, context) => {
+    const values = value
+      .split(",")
+      .map((category) => category.trim())
+      .filter(Boolean);
+    const invalid = values.filter(
+      (category) =>
+        !learningCategories.includes(category as LearningCategory),
+    );
+
+    if (values.length === 0 || invalid.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Choose between one and eight supported categories.",
+      });
+      return z.NEVER;
+    }
+
+    return normalizeLearningCategories(values as LearningCategory[]);
+  })
+  .pipe(z.array(z.enum(learningCategories)).min(1).max(8));
 
 export const wallpaperQuerySchema = z.object({
-  category: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(z.enum(learningCategories))
-    .default("vocabulary"),
+  categories: categoriesSchema,
   theme: z
     .string()
     .trim()
@@ -25,3 +50,24 @@ export const wallpaperQuerySchema = z.object({
     .pipe(z.enum(devicePresets))
     .default("standard"),
 });
+
+export function parseWallpaperSearchParams(
+  searchParams: URLSearchParams,
+):
+  | { success: true; value: WallpaperPreferences }
+  | { success: false; legacyCategory: boolean } {
+  const legacyCategory = searchParams.has("category");
+  if (legacyCategory) {
+    return { success: false, legacyCategory: true };
+  }
+
+  const parsed = wallpaperQuerySchema.safeParse({
+    categories: searchParams.get("categories") ?? undefined,
+    theme: searchParams.get("theme") ?? undefined,
+    size: searchParams.get("size") ?? undefined,
+  });
+
+  return parsed.success
+    ? { success: true, value: parsed.data }
+    : { success: false, legacyCategory: false };
+}

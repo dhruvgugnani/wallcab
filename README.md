@@ -1,6 +1,6 @@
 # WallCab
 
-WallCab turns an iPhone lock screen into one calm, source-credited lesson a day. A user chooses a learning category, visual theme, and device size; one stable API URL then works with a universal Apple Shortcut.
+WallCab turns an iPhone lock screen into one calm, source-credited lesson a day. A user chooses one or more learning interests, a visual theme, and a device size; one stable API URL then works with a universal Apple Shortcut.
 
 The production interface is always dark, account-free, and deliberately small. External providers select the daily word or concept. A reviewed 240-record catalog is used only when a provider fails validation or is unavailable.
 
@@ -8,7 +8,7 @@ The production interface is always dark, account-free, and deliberately small. E
 
 - eight learning categories and eight visual themes;
 - exact presets for iPhone 17/17 Pro, iPhone Air, and iPhone 17 Pro Max;
-- deterministic daily selection by UTC date;
+- deterministic, fair daily rotation across the user’s selected interests;
 - source-validated Openverse imagery with procedural fallbacks;
 - Sharp-rendered, indexed-palette PNGs capped at 2.2 MiB;
 - signed Cloudflare Worker/KV cache with direct-generation fallback;
@@ -55,11 +55,14 @@ npm.cmd run lighthouse
 ## Public API
 
 ```http
-GET /api/wallpaper?category=science&theme=space&size=max
-HEAD /api/wallpaper?category=science&theme=space&size=max
+GET /api/wallpaper?categories=science,history,psychology&theme=space&size=max
+HEAD /api/wallpaper?categories=science,history,psychology&theme=space&size=max
+GET /api/wallpaper/status?categories=science,history,psychology&theme=space&size=max
 ```
 
-Defaults are `vocabulary`, `nature`, and `standard`. A miss returns `200 image/png`; a hit may return a temporary `307` to a signed Worker asset. See the human-readable [API reference](src/app/docs/api/page.mdx) or `/openapi.json`.
+`categories` accepts between one and eight comma-separated interests. WallCab chooses one of them for the UTC day, stores the accepted lesson for that day, and reports its source through the status endpoint and `X-WallCab-Content-*` headers. Defaults are `vocabulary`, `nature`, and `standard`. The replaced singular `category` parameter returns `400`.
+
+A wallpaper miss returns `200 image/png`; a hit may return a temporary `307` to a signed Worker asset. See the human-readable [API reference](src/app/docs/api/page.mdx) or `/openapi.json`.
 
 ## Repository map
 

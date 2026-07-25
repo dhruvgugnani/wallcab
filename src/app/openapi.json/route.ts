@@ -1,4 +1,14 @@
 const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const categoryValues = [
+  "vocabulary",
+  "coding",
+  "finance",
+  "stoicism",
+  "science",
+  "history",
+  "psychology",
+  "productivity",
+] as const;
 
 const optionSchema = (values: readonly string[], defaultValue: string) => ({
   type: "string",
@@ -10,9 +20,9 @@ const specification = {
   openapi: "3.1.0",
   info: {
     title: "WallCab Wallpaper API",
-    version: "1.0.0",
+    version: "2.0.0",
     description:
-      "Generate one deterministic, source-credited daily learning wallpaper.",
+      "Choose one or more learning interests and generate one deterministic, source-credited daily wallpaper.",
     license: {
       name: "MIT (code only)",
       url: "https://github.com/dhruvgugnani/wallcab/blob/main/LICENSE",
@@ -26,21 +36,20 @@ const specification = {
         summary: "Get a daily wallpaper",
         parameters: [
           {
-            name: "category",
+            name: "categories",
             in: "query",
-            schema: optionSchema(
-              [
-                "vocabulary",
-                "coding",
-                "finance",
-                "stoicism",
-                "science",
-                "history",
-                "psychology",
-                "productivity",
-              ],
-              "vocabulary",
-            ),
+            description:
+              "One to eight interests. WallCab resolves one category per UTC day.",
+            style: "form",
+            explode: false,
+            schema: {
+              type: "array",
+              items: { type: "string", enum: categoryValues },
+              minItems: 1,
+              maxItems: 8,
+              uniqueItems: true,
+              default: ["vocabulary"],
+            },
           },
           {
             name: "theme",
@@ -71,6 +80,14 @@ const specification = {
             headers: {
               ETag: { schema: { type: "string" } },
               "X-WallCab-Date": { schema: { type: "string", format: "date" } },
+              "X-WallCab-Categories": { schema: { type: "string" } },
+              "X-WallCab-Category": { schema: { type: "string" } },
+              "X-WallCab-Content-Mode": {
+                schema: { type: "string", enum: ["external", "fallback"] },
+              },
+              "X-WallCab-Content-Provider": {
+                schema: { type: "string" },
+              },
             },
             content: {
               "image/png": {
@@ -125,9 +142,104 @@ const specification = {
         },
       },
     },
+    "/api/wallpaper/status": {
+      get: {
+        operationId: "getDailyWallpaperStatus",
+        summary: "Inspect the resolved category and content source",
+        parameters: [
+          {
+            name: "categories",
+            in: "query",
+            style: "form",
+            explode: false,
+            schema: {
+              type: "array",
+              items: { type: "string", enum: categoryValues },
+              minItems: 1,
+              maxItems: 8,
+              uniqueItems: true,
+              default: ["vocabulary"],
+            },
+          },
+          {
+            name: "theme",
+            in: "query",
+            schema: optionSchema(
+              [
+                "nature",
+                "mountains",
+                "ocean",
+                "forest",
+                "space",
+                "amoled",
+                "minimal",
+                "abstract",
+              ],
+              "nature",
+            ),
+          },
+          {
+            name: "size",
+            in: "query",
+            schema: optionSchema(["standard", "air", "max"], "standard"),
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Resolved daily source status",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/WallpaperStatus" },
+              },
+            },
+          },
+          "400": { description: "Unsupported parameter" },
+          "429": { description: "Rate limit exceeded" },
+        },
+      },
+    },
   },
   components: {
     schemas: {
+      WallpaperStatus: {
+        type: "object",
+        required: [
+          "date",
+          "selectedCategories",
+          "resolvedCategory",
+          "content",
+          "requestId",
+        ],
+        properties: {
+          date: { type: "string", format: "date" },
+          selectedCategories: {
+            type: "array",
+            items: { type: "string", enum: categoryValues },
+          },
+          resolvedCategory: { type: "string", enum: categoryValues },
+          content: {
+            type: "object",
+            required: ["mode", "provider"],
+            properties: {
+              mode: {
+                type: "string",
+                enum: ["external", "fallback"],
+              },
+              provider: { type: "string" },
+              fallbackReason: { type: "string" },
+              source: {
+                type: ["object", "null"],
+                properties: {
+                  label: { type: "string" },
+                  url: { type: "string", format: "uri" },
+                  license: { type: "string" },
+                },
+              },
+            },
+          },
+          requestId: { type: "string", format: "uuid" },
+        },
+      },
       Error: {
         type: "object",
         required: ["code", "message", "requestId"],

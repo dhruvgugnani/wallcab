@@ -454,7 +454,36 @@ label {
   pointer-events: none;
 }
 
+.category-guidance {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -1rem 0 1rem;
+}
+
+.category-guidance p {
+  max-width: 33rem;
+  margin: 0;
+  color: #928e85;
+  font-size: .72rem;
+}
+
+.category-guidance button {
+  cursor: pointer;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--paper);
+  padding: .2rem 0;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 .category-choices label > span {
+  position: relative;
   display: grid;
   min-height: 64px;
   place-items: center;
@@ -464,10 +493,23 @@ label {
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
+.category-choices label i {
+  position: absolute;
+  top: .35rem;
+  right: .45rem;
+  opacity: 0;
+  font-size: .62rem;
+  font-style: normal;
+}
+
 .category-choices input:checked + span {
   border-color: var(--paper);
   background: var(--paper);
   color: var(--ink);
+}
+
+.category-choices input:checked + span i {
+  opacity: 1;
 }
 
 .choice-grid input:focus-visible + span,
@@ -648,6 +690,37 @@ label {
   text-align: center;
 }
 
+.preview-loading {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--paper-muted);
+  font-size: .66rem;
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.preview-loading span {
+  width: 22px;
+  aspect-ratio: 1;
+  border: 1px solid var(--line-strong);
+  border-top-color: var(--paper);
+  border-radius: 50%;
+  animation: source-spin 900ms linear infinite;
+}
+
+.preview-loading p {
+  margin: 0;
+}
+
+@keyframes source-spin {
+  to { transform: rotate(1turn); }
+}
+
 .preview-error p {
   color: var(--paper-muted);
   font-size: .8rem;
@@ -665,6 +738,14 @@ label {
   font-size: .6rem;
   letter-spacing: .07em;
   text-transform: uppercase;
+}
+
+.source-mode-external {
+  color: #aebc93;
+}
+
+.source-mode-fallback {
+  color: #c7a77d;
 }
 
 .index-section {

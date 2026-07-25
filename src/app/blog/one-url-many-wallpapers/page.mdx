@@ -22,11 +22,11 @@ export const metadata = {
   readingTime="7 min read"
 />
 
-WallCab’s public interface is intentionally dull: three query parameters go in and a PNG comes out. The machinery behind it has a harder job. It must make provider-driven content feel stable, source-aware photography feel safe, and full-resolution image composition feel immediate.
+WallCab’s public interface is intentionally dull: selected interests, a theme, and a size go in; a PNG comes out. The machinery behind it has a harder job. It must make provider-driven content feel stable, source-aware photography feel safe, and full-resolution image composition feel immediate.
 
 ## One lesson, many presentations
 
-Eight learning categories, eight themes, and three screen sizes produce 192 possible daily images. That does not mean 192 different lessons. The UTC date and category select the content; theme and size affect only its presentation.
+Eight learning categories, eight themes, and three screen sizes produce 192 possible daily images. That does not mean 192 different lessons. The selected interest set and UTC date resolve one category; theme and size affect only its presentation.
 
 This detail matters. A person can switch from Nature to AMOLED—or from a standard iPhone to a Max—without quietly changing what the day was meant to teach.
 
@@ -34,7 +34,9 @@ This detail matters. A person can switch from Nature to AMOLED—or from a stand
 
 Vocabulary begins with daily term discovery through Datamuse and definition enrichment through Free Dictionary. The remaining categories begin with a Wikimedia search scoped by carefully chosen prompts, then use the selected page’s summary and URL.
 
-Every result is untrusted until it passes validation. WallCab checks structural fields, text length, source presence, unsafe titles, and composition fit. If any step fails, a complete reviewed local lesson takes over. Mixing half of a provider result with half of a fallback would create muddled attribution, so the fallback is atomic.
+Every result is untrusted until it passes validation. WallCab checks each candidate’s structural fields, text length, source presence, unsafe titles, and composition fit. Bad candidates are discarded individually. If no complete result survives, a reviewed local lesson takes over. Mixing half of a provider result with half of a fallback would create muddled attribution, so the fallback is atomic.
+
+The accepted lesson is cached once for the UTC day. Response headers and the companion status endpoint report whether it came from an external provider or the reviewed catalog.
 
 The local catalog is a seat belt, not the engine.
 

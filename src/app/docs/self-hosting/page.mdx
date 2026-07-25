@@ -19,7 +19,7 @@ The MVP deployment uses Vercel for Next.js and a free Cloudflare Worker with KV 
 - a Cloudflare account with Workers and KV
 - Git
 
-No database, paid API, billing credential, or content-provider key is required for the MVP.
+No database, paid API, billing credential, or content-provider key is required for the MVP. Active-day KV records hold only public lesson, attribution, and image data and expire at the next UTC rollover.
 
 ## Local development
 
@@ -60,6 +60,22 @@ The Worker defaults to `workers.dev`. Restrict or move it behind a custom route 
 Import the GitHub repository, keep the framework preset on Next.js, select Node.js 24.x, and add the environment values above. `vercel.json` schedules one rollover call at 23:00 UTC. The cron is an optimization; lazy provider fetching and rendering remain the fallback.
 
 Promote a preview only after exercising the configurator, API redirect, source credits, and Shortcut flow.
+
+## Provider diagnostics
+
+Every wallpaper response includes `X-WallCab-Content-Mode` and `X-WallCab-Content-Provider`. The configurator reads `/api/wallpaper/status` to show the same result beside its live preview.
+
+Vercel Runtime Logs receive structured `wallcab.content` and `wallcab.wallpaper` events with the UTC date, resolved category, provider, and fallback reason. They contain no IP address or user preference identifier.
+
+For an authenticated snapshot of every category already prepared or lazily generated today:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "https://your-domain.example/api/internal/status" `
+  -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
+```
+
+The status route is read-only and does not call an external content provider. A category appears as `not_generated` until the rollover manifest or a wallpaper request has prepared it.
 
 ## Docker status
 

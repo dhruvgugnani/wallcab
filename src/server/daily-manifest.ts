@@ -42,10 +42,22 @@ const lessonSchema = z.object({
       creator: z.string().optional(),
     }),
   ),
+  provenance: z.object({
+    mode: z.enum(["external", "fallback"]),
+    provider: z.string(),
+    fallbackReason: z
+      .enum([
+        "provider_unavailable",
+        "provider_timeout",
+        "invalid_response",
+        "unusable_content",
+      ])
+      .optional(),
+  }),
 });
 
 const manifestSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   date: z.string(),
   lessons: z.record(z.enum(learningCategories), lessonSchema),
   backgrounds: z.record(z.enum(visualThemes), attributionSchema),
@@ -54,14 +66,28 @@ const manifestSchema = z.object({
 export type DailyManifest = z.infer<typeof manifestSchema>;
 
 export function manifestCacheKey(dateKey: string): string {
-  return `manifest/v1/${dateKey}.json`;
+  return `manifest/v2/${dateKey}.json`;
+}
+
+export function lessonCacheKey(
+  dateKey: string,
+  category: LearningCategory,
+): string {
+  return `lesson/v2/${dateKey}/${category}.json`;
 }
 
 export function backgroundCacheKey(
   dateKey: string,
   theme: VisualTheme,
 ): string {
-  return `background/v1/${dateKey}/${theme}`;
+  return `background/v2/${dateKey}/${theme}`;
+}
+
+export function backgroundAttributionCacheKey(
+  dateKey: string,
+  theme: VisualTheme,
+): string {
+  return `background-attribution/v2/${dateKey}/${theme}.json`;
 }
 
 export async function getPreparedManifest(
@@ -77,6 +103,58 @@ export async function getPreparedManifest(
   } catch {
     return null;
   }
+}
+
+export async function getCachedDailyLesson(
+  category: LearningCategory,
+  dateKey: string,
+): Promise<DailyLesson | null> {
+  const response = await getPrivateCacheValue(
+    lessonCacheKey(dateKey, category),
+  );
+  if (!response) {
+    return null;
+  }
+
+  try {
+    return lessonSchema.parse(await response.json());
+  } catch {
+    return null;
+  }
+}
+
+async function storeDailyLesson(
+  lesson: DailyLesson,
+  expiration: number,
+): Promise<boolean> {
+  return putCacheValue(
+    lessonCacheKey(lesson.date, lesson.category),
+    new TextEncoder().encode(JSON.stringify(lesson)),
+    "application/json",
+    expiration,
+  );
+}
+
+function storeDailyBackground(
+  dateKey: string,
+  theme: VisualTheme,
+  asset: BackgroundAsset,
+  expiration: number,
+): [Promise<boolean>, Promise<boolean>] {
+  return [
+    putCacheValue(
+      backgroundCacheKey(dateKey, theme),
+      asset.bytes,
+      asset.contentType,
+      expiration,
+    ),
+    putCacheValue(
+      backgroundAttributionCacheKey(dateKey, theme),
+      new TextEncoder().encode(JSON.stringify(asset.attribution)),
+      "application/json",
+      expiration,
+    ),
+  ];
 }
 
 export async function prepareDailyManifest(
@@ -106,23 +184,22 @@ export async function prepareDailyManifest(
     backgroundEntries.map(([theme, asset]) => [theme, asset.attribution]),
   ) as Record<VisualTheme, BackgroundAttribution>;
   const manifest: DailyManifest = {
-    version: 1,
+    version: 2,
     date: dateKey,
     lessons,
     backgrounds,
   };
   const expiration = getNextUtcRollover(date);
-  const backgroundWrites = backgroundEntries.map(([theme, asset]) =>
-    putCacheValue(
-      backgroundCacheKey(dateKey, theme),
-      asset.bytes,
-      asset.contentType,
-      expiration,
-    ),
+  const backgroundWrites = backgroundEntries.flatMap(([theme, asset]) =>
+    storeDailyBackground(dateKey, theme, asset, expiration),
+  );
+  const lessonWrites = lessonEntries.map(([, lesson]) =>
+    storeDailyLesson(lesson, expiration),
   );
   const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest));
   const results = await Promise.all([
     ...backgroundWrites,
+    ...lessonWrites,
     putCacheValue(
       manifestCacheKey(dateKey),
       manifestBytes,
@@ -143,7 +220,19 @@ export async function resolveDailyLesson(
   manifest: DailyManifest | null,
 ): Promise<DailyLesson> {
   const prepared = manifest?.lessons[category];
-  return prepared ?? getHybridDailyLesson(category, date);
+  if (prepared) {
+    return prepared;
+  }
+
+  const dateKey = toUtcDateKey(date);
+  const cached = await getCachedDailyLesson(category, dateKey);
+  if (cached) {
+    return cached;
+  }
+
+  const lesson = await getHybridDailyLesson(category, date);
+  await storeDailyLesson(lesson, getNextUtcRollover(date));
+  return lesson;
 }
 
 export async function resolveBackground(
@@ -152,7 +241,22 @@ export async function resolveBackground(
   manifest: DailyManifest | null,
 ): Promise<BackgroundAsset> {
   const dateKey = toUtcDateKey(date);
-  const attribution = manifest?.backgrounds[theme];
+  let attribution = manifest?.backgrounds[theme];
+
+  if (!attribution) {
+    const attributionResponse = await getPrivateCacheValue(
+      backgroundAttributionCacheKey(dateKey, theme),
+    );
+    if (attributionResponse) {
+      try {
+        attribution = attributionSchema.parse(
+          await attributionResponse.json(),
+        );
+      } catch {
+        attribution = undefined;
+      }
+    }
+  }
 
   if (attribution) {
     const response = await getPrivateCacheValue(
@@ -172,5 +276,14 @@ export async function resolveBackground(
     }
   }
 
-  return getBackgroundAsset(theme, date);
+  const asset = await getBackgroundAsset(theme, date);
+  await Promise.all(
+    storeDailyBackground(
+      dateKey,
+      theme,
+      asset,
+      getNextUtcRollover(date),
+    ),
+  );
+  return asset;
 }

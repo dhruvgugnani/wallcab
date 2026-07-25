@@ -357,4 +357,15 @@ for (const category of Object.keys(fallbackSeeds) as LearningCategory[]) {
   if (fallbackSeeds[category].length !== 30) {
     throw new Error(`${category} must contain exactly 30 fallback lessons`);
   }
+  for (const [term, definition, fact] of fallbackSeeds[category]) {
+    if (term.length > 36 || definition.length > 150 || fact.length > 176) {
+      throw new Error(`${category} contains content outside renderer bounds`);
+    }
+  }
+}
+
+for (const [quote] of lessonQuotes) {
+  if (quote.length > 102) {
+    throw new Error("A reviewed quote exceeds the renderer bound");
+  }
 }

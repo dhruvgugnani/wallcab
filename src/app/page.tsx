@@ -95,8 +95,8 @@ export default function Home() {
             <h2>A small ritual, set once.</h2>
           </div>
           <p>
-            Choose what you want to learn, how it should feel, and the iPhone
-            it should fit. Your choices stay in this browser.
+            Choose one interest or several, decide how it should feel, and pick
+            the iPhone it should fit. Your choices stay in this browser.
           </p>
         </div>
         <Configurator siteOrigin={siteUrl} />

@@ -9,19 +9,12 @@ import {
   quoteSource,
   sourceByCategory,
 } from "@/features/wallpaper/fallback-content";
+import {
+  hashString,
+  toUtcDateKey,
+} from "@/features/wallpaper/preferences";
 
-export function toUtcDateKey(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
-}
-
-export function hashString(value: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
+export { hashString, toUtcDateKey } from "@/features/wallpaper/preferences";
 
 export function getFallbackLesson(
   category: LearningCategory,
@@ -50,6 +43,11 @@ export function getFallbackLesson(
       author: quote[1],
     },
     sources: [source, quoteSource],
+    provenance: {
+      mode: "fallback",
+      provider: "WallCab reviewed catalog",
+      fallbackReason: "unusable_content",
+    },
   };
 }
 

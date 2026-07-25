@@ -7,14 +7,14 @@ import type {
 } from "@/features/wallpaper/types";
 
 const themeQueries: Record<VisualTheme, string> = {
-  nature: "misty wild meadow morning",
-  mountains: "dramatic mountain dawn landscape",
-  ocean: "deep ocean waves aerial",
-  forest: "dark old growth forest light",
-  space: "nebula deep space stars",
-  amoled: "black night minimal light",
-  minimal: "minimal architecture shadow monochrome",
-  abstract: "abstract organic texture monochrome",
+  nature: "nature vertical",
+  mountains: "mountains vertical",
+  ocean: "ocean vertical",
+  forest: "forest vertical",
+  space: "space vertical",
+  amoled: "night vertical",
+  minimal: "architecture vertical",
+  abstract: "abstract vertical",
 };
 
 const paletteByTheme: Record<
@@ -136,8 +136,8 @@ export async function getBackgroundAsset(
       (result) =>
         ["cc0", "pdm"].includes(result.license.toLowerCase()) &&
         isAllowedImageUrl(result.url) &&
-        (result.width ?? 0) >= 1200 &&
-        (result.height ?? 0) >= 1600,
+        (result.width ?? 0) >= 700 &&
+        (result.height ?? 0) >= 1_000,
     );
     const selected =
       candidates[

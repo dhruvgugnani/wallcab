@@ -3,9 +3,11 @@ import {
   devicePresets,
   learningCategories,
   visualThemes,
-  type WallpaperRequest,
+  type DailyLesson,
+  type WallpaperPreferences,
 } from "@/features/wallpaper/types";
-import { wallpaperQuerySchema } from "@/features/wallpaper/validation";
+import { parseWallpaperSearchParams } from "@/features/wallpaper/validation";
+import { selectDailyCategory } from "@/features/wallpaper/preferences";
 import {
   getCachedWallpaperUrl,
   putCacheValue,
@@ -14,6 +16,10 @@ import {
   getNextUtcRollover,
   toUtcDateKey,
 } from "@/features/wallpaper/daily";
+import {
+  getPreparedManifest,
+  resolveDailyLesson,
+} from "@/server/daily-manifest";
 import { checkRateLimit } from "@/server/rate-limit";
 import {
   renderWallpaper,
@@ -31,27 +37,45 @@ function clientKey(request: Request): string {
   );
 }
 
-function parseRequest(request: Request):
-  | { success: true; value: WallpaperRequest }
-  | { success: false } {
-  const url = new URL(request.url);
-  const parsed = wallpaperQuerySchema.safeParse({
-    category: url.searchParams.get("category") ?? undefined,
-    theme: url.searchParams.get("theme") ?? undefined,
-    size: url.searchParams.get("size") ?? undefined,
-  });
-
-  return parsed.success
-    ? { success: true, value: parsed.data }
-    : { success: false };
-}
-
 function rateHeaders(result: ReturnType<typeof checkRateLimit>): HeadersInit {
   return {
     "X-RateLimit-Limit": String(result.limit),
     "X-RateLimit-Remaining": String(result.remaining),
     "X-RateLimit-Reset": String(result.resetAt),
   };
+}
+
+function contentHeaders(
+  preferences: WallpaperPreferences,
+  lesson: DailyLesson,
+): HeadersInit {
+  return {
+    "X-WallCab-Categories": preferences.categories.join(","),
+    "X-WallCab-Category": lesson.category,
+    "X-WallCab-Content-Mode": lesson.provenance.mode,
+    "X-WallCab-Content-Provider": lesson.provenance.provider,
+  };
+}
+
+function logWallpaperResponse(
+  requestId: string,
+  preferences: WallpaperPreferences,
+  lesson: DailyLesson,
+  cache: "HIT" | "MISS",
+): void {
+  console.info(
+    JSON.stringify({
+      event: "wallcab.wallpaper",
+      requestId,
+      date: lesson.date,
+      categories: preferences.categories,
+      resolvedCategory: lesson.category,
+      contentMode: lesson.provenance.mode,
+      contentProvider: lesson.provenance.provider,
+      fallbackReason: lesson.provenance.fallbackReason,
+      cache,
+    }),
+  );
 }
 
 async function handleWallpaper(
@@ -81,14 +105,16 @@ async function handleWallpaper(
     );
   }
 
-  const parsed = parseRequest(request);
+  const parsed = parseWallpaperSearchParams(new URL(request.url).searchParams);
   if (!parsed.success) {
     return Response.json(
       {
         code: "INVALID_WALLPAPER_OPTIONS",
-        message: "Choose a supported category, theme, and size.",
+        message: parsed.legacyCategory
+          ? "The category parameter was replaced. Use categories=vocabulary,coding instead."
+          : "Choose between one and eight supported categories, a theme, and a size.",
         allowed: {
-          category: learningCategories,
+          categories: learningCategories,
           theme: visualThemes,
           size: devicePresets,
         },
@@ -103,23 +129,45 @@ async function handleWallpaper(
 
   const now = new Date();
   const dateKey = toUtcDateKey(now);
-  const key = wallpaperCacheKey(parsed.value, dateKey);
+  const category = selectDailyCategory(parsed.value.categories, now);
+  const resolvedRequest = {
+    category,
+    theme: parsed.value.theme,
+    size: parsed.value.size,
+  };
+  const manifest = await getPreparedManifest(dateKey);
+  const lesson = await resolveDailyLesson(category, now, manifest);
+  const provenanceHeaders = contentHeaders(parsed.value, lesson);
+  const key = wallpaperCacheKey(resolvedRequest, dateKey);
   const cachedUrl = await getCachedWallpaperUrl(key);
 
   if (cachedUrl) {
+    logWallpaperResponse(
+      requestId,
+      parsed.value,
+      lesson,
+      "HIT",
+    );
     return new Response(null, {
       status: 307,
       headers: {
         ...throttlingHeaders,
+        ...provenanceHeaders,
         Location: cachedUrl,
         "Cache-Control": "private, no-store",
         "X-WallCab-Cache": "HIT",
+        "X-WallCab-Date": dateKey,
+        "X-WallCab-Size": parsed.value.size,
+        "X-WallCab-Theme": parsed.value.theme,
       },
     });
   }
 
   try {
-    const wallpaper = await renderWallpaper(parsed.value, now);
+    const wallpaper = await renderWallpaper(resolvedRequest, now, {
+      manifest,
+      lesson,
+    });
     after(async () => {
       await putCacheValue(
         wallpaper.key,
@@ -131,6 +179,7 @@ async function handleWallpaper(
 
     const responseHeaders: HeadersInit = {
       ...throttlingHeaders,
+      ...provenanceHeaders,
       "Cache-Control": "private, no-store",
       "Content-Disposition": `inline; filename="wallcab-${dateKey}-${wallpaper.category}-${wallpaper.theme}-${wallpaper.size}.png"`,
       "Content-Length": String(wallpaper.byteLength),
@@ -139,7 +188,6 @@ async function handleWallpaper(
       Link: '</sources>; rel="describedby"',
       "X-Request-Id": requestId,
       "X-WallCab-Cache": "MISS",
-      "X-WallCab-Category": wallpaper.category,
       "X-WallCab-Date": dateKey,
       "X-WallCab-Size": wallpaper.size,
       "X-WallCab-Theme": wallpaper.theme,
@@ -148,6 +196,12 @@ async function handleWallpaper(
     const body = includeBody
       ? Uint8Array.from(wallpaper.bytes).buffer
       : null;
+    logWallpaperResponse(
+      requestId,
+      parsed.value,
+      lesson,
+      "MISS",
+    );
     return new Response(body, {
       status: 200,
       headers: responseHeaders,

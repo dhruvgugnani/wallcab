@@ -33,6 +33,16 @@ export type SourceAttribution = {
   creator?: string;
 };
 
+export type ContentProvenance = {
+  mode: "external" | "fallback";
+  provider: string;
+  fallbackReason?:
+    | "provider_unavailable"
+    | "provider_timeout"
+    | "invalid_response"
+    | "unusable_content";
+};
+
 export type DailyLesson = {
   date: string;
   category: LearningCategory;
@@ -44,6 +54,7 @@ export type DailyLesson = {
   };
   fact: string;
   sources: SourceAttribution[];
+  provenance: ContentProvenance;
 };
 
 export type BackgroundAttribution = SourceAttribution & {
@@ -56,13 +67,19 @@ export type BackgroundAsset = {
   attribution: BackgroundAttribution;
 };
 
-export type WallpaperRequest = {
+export type WallpaperPreferences = {
+  categories: LearningCategory[];
+  theme: VisualTheme;
+  size: DevicePreset;
+};
+
+export type ResolvedWallpaperRequest = {
   category: LearningCategory;
   theme: VisualTheme;
   size: DevicePreset;
 };
 
-export type WallpaperCacheRecord = WallpaperRequest & {
+export type WallpaperCacheRecord = ResolvedWallpaperRequest & {
   key: string;
   date: string;
   etag: string;

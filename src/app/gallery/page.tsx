@@ -58,14 +58,14 @@ export default function GalleryPage() {
           </p>
           <a
             className="button button-light"
-            href="/api/wallpaper?category=vocabulary&theme=nature&size=standard"
+            href="/api/wallpaper?categories=vocabulary,coding,science&theme=nature&size=standard"
           >
             Open full-resolution PNG
           </a>
         </div>
         <div className="live-phone">
           <Image
-            src="/api/wallpaper?category=vocabulary&theme=nature&size=standard"
+            src="/api/wallpaper?categories=vocabulary,coding,science&theme=nature&size=standard"
             alt="Today’s live WallCab vocabulary wallpaper"
             width={1206}
             height={2622}

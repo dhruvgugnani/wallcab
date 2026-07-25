@@ -13,26 +13,45 @@ import {
   type LearningCategory,
   type VisualTheme,
 } from "@/features/wallpaper/types";
+import {
+  normalizeLearningCategories,
+  selectDailyCategory,
+} from "@/features/wallpaper/preferences";
 
 type Selections = {
-  category: LearningCategory;
+  categories: LearningCategory[];
   theme: VisualTheme;
   size: DevicePreset;
 };
 
 const defaults: Selections = {
-  category: "vocabulary",
+  categories: ["vocabulary"],
   theme: "nature",
   size: "standard",
 };
 
-const storageKey = "wallcab:preferences:v1";
+type SourceStatus =
+  | { state: "loading" }
+  | {
+      state: "ready";
+      category: LearningCategory;
+      mode: "external" | "fallback";
+      provider: string;
+    }
+  | { state: "unavailable" };
+
+const storageKey = "wallcab:preferences:v2";
 
 function isSelections(value: unknown): value is Selections {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<Selections>;
   return (
-    learningCategories.includes(candidate.category as LearningCategory) &&
+    Array.isArray(candidate.categories) &&
+    candidate.categories.length >= 1 &&
+    candidate.categories.length <= learningCategories.length &&
+    candidate.categories.every((category) =>
+      learningCategories.includes(category as LearningCategory),
+    ) &&
     visualThemes.includes(candidate.theme as VisualTheme) &&
     devicePresets.includes(candidate.size as DevicePreset)
   );
@@ -45,13 +64,21 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
     "idle" | "copied" | "failed"
   >("idle");
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [sourceStatus, setSourceStatus] = useState<SourceStatus>({
+    state: "loading",
+  });
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
         const stored = window.localStorage.getItem(storageKey);
         const parsed: unknown = stored ? JSON.parse(stored) : null;
-        if (isSelections(parsed)) setSelections(parsed);
+        if (isSelections(parsed)) {
+          setSelections({
+            ...parsed,
+            categories: normalizeLearningCategories(parsed.categories),
+          });
+        }
       } catch {
         // A blocked localStorage should not prevent the configurator from working.
       }
@@ -72,6 +99,26 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
   function updateSelections(next: Partial<Selections>) {
     setSelections((current) => ({ ...current, ...next }));
     setPreviewFailed(false);
+    setSourceStatus({ state: "loading" });
+  }
+
+  function toggleCategory(category: LearningCategory) {
+    setSelections((current) => {
+      const selected = current.categories.includes(category);
+      if (selected && current.categories.length === 1) {
+        return current;
+      }
+
+      const categories = selected
+        ? current.categories.filter((item) => item !== category)
+        : [...current.categories, category];
+      return {
+        ...current,
+        categories: normalizeLearningCategories(categories),
+      };
+    });
+    setPreviewFailed(false);
+    setSourceStatus({ state: "loading" });
   }
 
   const apiUrl = useMemo(() => {
@@ -80,11 +127,60 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
         ? window.location.origin
         : siteOrigin;
     const url = new URL("/api/wallpaper", origin);
-    url.searchParams.set("category", selections.category);
+    url.searchParams.set("categories", selections.categories.join(","));
     url.searchParams.set("theme", selections.theme);
     url.searchParams.set("size", selections.size);
-    return url.toString();
+    return url.toString().replaceAll("%2C", ",");
   }, [hydrated, selections, siteOrigin]);
+
+  const statusUrl = useMemo(() => {
+    const url = new URL(apiUrl);
+    url.pathname = "/api/wallpaper/status";
+    return url.toString();
+  }, [apiUrl]);
+
+  const resolvedCategory = hydrated
+    ? selectDailyCategory(selections.categories)
+    : selections.categories[0]!;
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const controller = new AbortController();
+    void fetch(statusUrl, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Status unavailable");
+        }
+        return response.json() as Promise<{
+          resolvedCategory: LearningCategory;
+          content: {
+            mode: "external" | "fallback";
+            provider: string;
+          };
+        }>;
+      })
+      .then((status) => {
+        setSourceStatus({
+          state: "ready",
+          category: status.resolvedCategory,
+          mode: status.content.mode,
+          provider: status.content.provider,
+        });
+      })
+      .catch((error: unknown) => {
+        if (
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
+          setSourceStatus({ state: "unavailable" });
+        }
+      });
+
+    return () => controller.abort();
+  }, [hydrated, statusUrl]);
 
   async function copyUrl() {
     try {
@@ -103,19 +199,45 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
         <fieldset>
           <legend>
             <span>01</span>
-            What would you like to learn?
+            What would you like to learn about?
           </legend>
+          <div className="category-guidance">
+            <p id="category-guidance">
+              Choose one or more. WallCab picks one of your interests for each
+              UTC day.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                updateSelections({
+                  categories:
+                    selections.categories.length ===
+                    learningCategories.length
+                      ? ["vocabulary"]
+                      : [...learningCategories],
+                })
+              }
+            >
+              {selections.categories.length === learningCategories.length
+                ? "Reset"
+                : "Select all"}
+            </button>
+          </div>
           <div className="choice-grid category-choices">
             {learningCategories.map((category) => (
               <label key={category}>
                 <input
-                  type="radio"
-                  name="category"
+                  type="checkbox"
+                  name="categories"
                   value={category}
-                  checked={selections.category === category}
-                  onChange={() => updateSelections({ category })}
+                  checked={selections.categories.includes(category)}
+                  aria-describedby="category-guidance"
+                  onChange={() => toggleCategory(category)}
                 />
-                <span>{categoryLabels[category]}</span>
+                <span>
+                  {categoryLabels[category]}
+                  <i aria-hidden="true">✓</i>
+                </span>
               </label>
             ))}
           </div>
@@ -190,8 +312,10 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
                 : ""}
           </span>
           <small>
-            This URL contains only these three choices. No account or personal
-            information is attached.
+            This URL contains {selections.categories.length} learning{" "}
+            {selections.categories.length === 1 ? "choice" : "choices"}, one
+            theme, and one size. No account or personal information is
+            attached.
           </small>
         </div>
       </div>
@@ -199,15 +323,27 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
       <aside className="preview-panel" aria-label="Live wallpaper preview">
         <div className="preview-label">
           <span>Live edition</span>
-          <span>{categoryLabels[selections.category]}</span>
+          <span>
+            Today ·{" "}
+            {categoryLabels[
+              sourceStatus.state === "ready"
+                ? sourceStatus.category
+                : resolvedCategory
+            ]}
+          </span>
         </div>
         <div className="phone-frame">
           <div className="phone-island" aria-hidden="true" />
-          {!previewFailed ? (
+          {sourceStatus.state === "loading" ? (
+            <div className="preview-loading" role="status">
+              <span />
+              <p>Choosing today&apos;s lesson</p>
+            </div>
+          ) : !previewFailed ? (
             <Image
               key={apiUrl}
               src={apiUrl}
-              alt={`Today’s ${categoryLabels[selections.category]} wallpaper in the ${themeLabels[selections.theme]} theme`}
+              alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper in the ${themeLabels[selections.theme]} theme`}
               width={deviceDimensions[selections.size].width}
               height={deviceDimensions[selections.size].height}
               sizes="(max-width: 800px) 78vw, 31vw"
@@ -225,8 +361,20 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
           )}
         </div>
         <p className="preview-note">
-          Updated once daily at 00:00 UTC
-          <span>Source credit appears on every image</span>
+          <span>Updated once daily at 00:00 UTC</span>
+          <span
+            className={
+              sourceStatus.state === "ready"
+                ? `source-mode source-mode-${sourceStatus.mode}`
+                : "source-mode"
+            }
+          >
+            {sourceStatus.state === "ready"
+              ? sourceStatus.mode === "external"
+                ? `External · ${sourceStatus.provider}`
+                : "Fallback · reviewed catalog"
+              : "Source status unavailable"}
+          </span>
         </p>
       </aside>
     </div>

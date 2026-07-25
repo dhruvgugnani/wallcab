@@ -15,35 +15,35 @@ const dictionarySchema = z.array(
       z.object({
         definitions: z.array(
           z.object({
-            definition: z.string().min(8).max(500),
+            definition: z.string(),
           }),
         ),
       }),
     ),
-    sourceUrls: z.array(z.url()).optional(),
+    sourceUrls: z.array(z.string()).optional(),
   }),
 );
 
 const datamuseSchema = z.array(
   z.object({
-    word: z.string().min(3).max(40),
-    defs: z.array(z.string().min(8).max(500)).optional(),
+    word: z.string(),
+    defs: z.array(z.string()).optional(),
     tags: z.array(z.string()).optional(),
   }),
-);
+).max(500);
 
 const wikipediaSearchSchema = z.object({
   pages: z.array(
     z.object({
-      title: z.string().min(3).max(100),
-      key: z.string().min(1),
+      title: z.string(),
+      key: z.string(),
       description: z.string().nullable().optional(),
     }),
   ),
 });
 
 const wikipediaSchema = z.object({
-  extract: z.string().min(30).max(2_000),
+  extract: z.string(),
   content_urls: z
     .object({
       desktop: z.object({ page: z.url() }),
@@ -52,6 +52,9 @@ const wikipediaSchema = z.object({
 });
 
 const PROVIDER_TIMEOUT_MS = 2_800;
+const MAX_PROVIDER_DEFINITION_LENGTH = 500;
+
+class UnusableProviderContentError extends Error {}
 
 const topicQueryByCategory: Record<LearningCategory, string> = {
   vocabulary: "language learning curiosity",
@@ -82,6 +85,61 @@ function cleanText(value: string, maximum: number): string {
   return `${clipped.slice(0, sentenceEnd > maximum * 0.55 ? sentenceEnd + 1 : maximum - 1).trim()}…`;
 }
 
+function isUsableProviderText(
+  value: string,
+  minimum: number,
+  maximum = MAX_PROVIDER_DEFINITION_LENGTH,
+): boolean {
+  const cleaned = cleanText(value, maximum + 1);
+  return cleaned.length >= minimum && cleaned.length <= maximum;
+}
+
+function safeSourceUrl(values: string[] | undefined): string | undefined {
+  return values?.find((value) => {
+    try {
+      return new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  });
+}
+
+function fallbackReason(
+  error: unknown,
+): NonNullable<DailyLesson["provenance"]["fallbackReason"]> {
+  if (error instanceof UnusableProviderContentError) {
+    return "unusable_content";
+  }
+  if (error instanceof z.ZodError) {
+    return "invalid_response";
+  }
+  if (
+    error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError")
+  ) {
+    return "provider_timeout";
+  }
+  return "provider_unavailable";
+}
+
+function logContentDecision(lesson: DailyLesson): void {
+  const event = {
+    event: "wallcab.content",
+    date: lesson.date,
+    category: lesson.category,
+    term: lesson.term,
+    mode: lesson.provenance.mode,
+    provider: lesson.provenance.provider,
+    fallbackReason: lesson.provenance.fallbackReason,
+  };
+
+  if (lesson.provenance.mode === "fallback") {
+    console.warn(JSON.stringify(event));
+  } else {
+    console.info(JSON.stringify(event));
+  }
+}
+
 async function fetchProviderJson(url: string): Promise<unknown> {
   const response = await fetch(url, {
     headers: {
@@ -106,7 +164,7 @@ function splitDefinition(value: string): string {
 
 function isSafeConceptTitle(value: string): boolean {
   return (
-    value.length <= 42 &&
+    value.length <= 36 &&
     !/^(list of|outline of|category:|template:|portal:)/i.test(value) &&
     !/[<>{}[\]|]/.test(value)
   );
@@ -129,6 +187,12 @@ async function fetchVocabularyLesson(
         `https://api.datamuse.com/words?${query.toString()}`,
       ),
     )
+    .map((entry) => ({
+      ...entry,
+      defs: entry.defs?.filter((definition) =>
+        isUsableProviderText(splitDefinition(definition), 8),
+      ),
+    }))
     .filter(
       (entry) =>
         /^[a-z-]+$/i.test(entry.word) &&
@@ -142,7 +206,9 @@ async function fetchVocabularyLesson(
     ];
 
   if (!selected?.defs?.[0]) {
-    throw new Error("Datamuse did not return a usable word");
+    throw new UnusableProviderContentError(
+      "Datamuse did not return a usable word",
+    );
   }
 
   const payload = dictionarySchema.parse(
@@ -150,9 +216,11 @@ async function fetchVocabularyLesson(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(selected.word.toLowerCase())}`,
     ),
   );
-  const dictionaryDefinitions = payload[0]?.meanings.flatMap((meaning) =>
-    meaning.definitions.map((item) => item.definition),
-  );
+  const dictionaryDefinitions = payload[0]?.meanings
+    .flatMap((meaning) =>
+      meaning.definitions.map((item) => item.definition),
+    )
+    .filter((definition) => isUsableProviderText(definition, 8));
   const definition =
     dictionaryDefinitions?.[0] ?? splitDefinition(selected.defs[0]);
   const relatedSense =
@@ -160,7 +228,7 @@ async function fetchVocabularyLesson(
     selected.defs[1];
 
   const sourceUrl =
-    payload[0]?.sourceUrls?.[0] ??
+    safeSourceUrl(payload[0]?.sourceUrls) ??
     `https://en.wiktionary.org/wiki/${encodeURIComponent(selected.word)}`;
 
   return {
@@ -178,6 +246,10 @@ async function fetchVocabularyLesson(
       },
       ...fallback.sources.slice(1),
     ],
+    provenance: {
+      mode: "external",
+      provider: "Datamuse + Free Dictionary API",
+    },
   };
 }
 
@@ -197,6 +269,7 @@ async function fetchConceptLesson(
   );
   const candidates = search.pages.filter(
     (page) =>
+      page.key.trim().length > 0 &&
       isSafeConceptTitle(page.title) &&
       Boolean(page.description && page.description.length >= 12),
   );
@@ -207,7 +280,9 @@ async function fetchConceptLesson(
     ];
 
   if (!selected?.description) {
-    throw new Error("Wikimedia did not return a usable concept");
+    throw new UnusableProviderContentError(
+      "Wikimedia did not return a usable concept",
+    );
   }
 
   const title = selected.key.trim().replace(/\s+/g, "_");
@@ -216,16 +291,23 @@ async function fetchConceptLesson(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
     ),
   );
-  const extract = cleanText(payload.extract, 210);
+  if (!isUsableProviderText(payload.extract, 30, 2_000)) {
+    throw new UnusableProviderContentError(
+      "Wikimedia returned an unusable summary",
+    );
+  }
+  const extract = cleanText(payload.extract, 176);
 
   if (/may refer to:/i.test(extract)) {
-    throw new Error("Wikimedia returned a disambiguation page");
+    throw new UnusableProviderContentError(
+      "Wikimedia returned a disambiguation page",
+    );
   }
 
   return {
     ...fallback,
     term: selected.title,
-    definition: cleanText(selected.description, 175),
+    definition: cleanText(selected.description, 150),
     fact: extract,
     sources: [
       {
@@ -237,6 +319,10 @@ async function fetchConceptLesson(
       },
       ...fallback.sources.slice(1),
     ],
+    provenance: {
+      mode: "external",
+      provider: "Wikimedia",
+    },
   };
 }
 
@@ -247,10 +333,21 @@ export async function getHybridDailyLesson(
   const fallback = getFallbackLesson(category, date);
 
   try {
-    return category === "vocabulary"
+    const lesson = category === "vocabulary"
       ? await fetchVocabularyLesson(fallback, date)
       : await fetchConceptLesson(category, fallback, date);
-  } catch {
-    return fallback;
+    logContentDecision(lesson);
+    return lesson;
+  } catch (error) {
+    const lesson: DailyLesson = {
+      ...fallback,
+      provenance: {
+        mode: "fallback",
+        provider: "WallCab reviewed catalog",
+        fallbackReason: fallbackReason(error),
+      },
+    };
+    logContentDecision(lesson);
+    return lesson;
   }
 }

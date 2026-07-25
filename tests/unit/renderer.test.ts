@@ -3,8 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   deviceDimensions,
   devicePresets,
+  learningCategories,
 } from "@/features/wallpaper/types";
+import { getFallbackLesson } from "@/features/wallpaper/daily";
 import {
+  fitWallpaperText,
   MAX_WALLPAPER_BYTES,
   rasterizeSvgWithBundledFonts,
   renderWallpaper,
@@ -24,6 +27,37 @@ describe("wallpaper renderer", () => {
     );
     expect(lines).toHaveLength(3);
     expect(lines.at(-1)).toMatch(/…$/);
+  });
+
+  it("hard-wraps unbroken provider text without crossing the line bound", () => {
+    const lines = wrapText("x".repeat(90), 18, 3);
+
+    expect(lines).toHaveLength(3);
+    expect(lines.every((line) => line.length <= 18)).toBe(true);
+    expect(lines.at(-1)).toMatch(/…$/);
+  });
+
+  it("keeps every reviewed lesson inside the renderer text limits", () => {
+    for (const category of learningCategories) {
+      const layout = fitWallpaperText(
+        getFallbackLesson(category, new Date("2026-07-25T00:00:00Z")),
+      );
+
+      expect(layout.termLines.length).toBeLessThanOrEqual(2);
+      expect(layout.termLines.every((line) => line.length <= 18)).toBe(true);
+      expect(layout.definitionLines.length).toBeLessThanOrEqual(4);
+      expect(
+        layout.definitionLines.every((line) => line.length <= 36),
+      ).toBe(true);
+      expect(layout.quoteLines.length).toBeLessThanOrEqual(3);
+      expect(layout.quoteLines.every((line) => line.length <= 34)).toBe(
+        true,
+      );
+      expect(layout.factLines.length).toBeLessThanOrEqual(4);
+      expect(layout.factLines.every((line) => line.length <= 38)).toBe(
+        true,
+      );
+    }
   });
 
   it("renders text using bundled fonts without system fonts", async () => {

@@ -2,24 +2,11 @@ import {
   getNextUtcDate,
   toUtcDateKey,
 } from "@/features/wallpaper/daily";
-import { safeEqualHex, sha256Hex } from "@/server/cache/signing";
 import { prepareDailyManifest } from "@/server/daily-manifest";
+import { isInternalAuthorized } from "@/server/internal-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-function isAuthorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  const authorization = request.headers.get("authorization");
-  if (!secret || !authorization?.startsWith("Bearer ")) {
-    return false;
-  }
-
-  return safeEqualHex(
-    sha256Hex(authorization.slice("Bearer ".length)),
-    sha256Hex(secret),
-  );
-}
 
 export async function GET(request: Request): Promise<Response> {
   if (!process.env.CRON_SECRET) {
@@ -29,7 +16,7 @@ export async function GET(request: Request): Promise<Response> {
     );
   }
 
-  if (!isAuthorized(request)) {
+  if (!isInternalAuthorized(request)) {
     return Response.json(
       { code: "UNAUTHORIZED", message: "A valid cron secret is required." },
       { status: 401 },

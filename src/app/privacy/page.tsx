@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <article className="legal prose section-shell">
         <h2>What stays on your device</h2>
         <p>
-          Your category, theme, and device selection are saved in your
+          Your learning interests, theme, and device selection are saved in your
           browser’s localStorage. WallCab does not send these preferences to a
           profile service or connect them to an identity. Clearing site data
           removes them.
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
 
         <h2>What a wallpaper request contains</h2>
         <p>
-          The wallpaper API receives the three choices embedded in the URL,
+          The wallpaper API receives the preference values embedded in the URL,
           standard request metadata such as an IP address and user agent, and
           the request time. Hosting infrastructure may retain short-lived
           security and operational logs. WallCab does not build user histories

@@ -10,10 +10,10 @@ export const metadata = {
 
 # Wallpaper API
 
-The public API has one resource. It supports `GET` for an image body and `HEAD` for metadata only.
+The public API has a wallpaper resource and a matching source-status resource. The wallpaper supports `GET` for an image body and `HEAD` for metadata only.
 
 ```http
-GET /api/wallpaper?category=vocabulary&theme=nature&size=standard
+GET /api/wallpaper?categories=vocabulary,coding,science&theme=nature&size=standard
 ```
 
 An OpenAPI description is available at [`/openapi.json`](/openapi.json).
@@ -22,11 +22,13 @@ An OpenAPI description is available at [`/openapi.json`](/openapi.json).
 
 | Name | Default | Allowed values |
 | --- | --- | --- |
-| `category` | `vocabulary` | `vocabulary`, `coding`, `finance`, `stoicism`, `science`, `history`, `psychology`, `productivity` |
+| `categories` | `vocabulary` | One to eight comma-separated values from `vocabulary`, `coding`, `finance`, `stoicism`, `science`, `history`, `psychology`, `productivity` |
 | `theme` | `nature` | `nature`, `mountains`, `ocean`, `forest`, `space`, `amoled`, `minimal`, `abstract` |
 | `size` | `standard` | `standard`, `air`, `max` |
 
 `standard` is 1206×2622, `air` is 1260×2736, and `max` is 1320×2868. Older iPhones can use `standard`; iOS will scale or crop the image.
+
+WallCab normalizes the selected interests and chooses one for each UTC day. The choice looks varied but remains stable for the whole day. Across complete cycles, every selected interest gets a turn. The old singular `category` parameter has been replaced and returns a descriptive `400`.
 
 ## Successful response
 
@@ -38,7 +40,10 @@ Useful response headers:
 | --- | --- |
 | `ETag` | Stable hash of the generated image |
 | `X-WallCab-Date` | UTC content date |
+| `X-WallCab-Categories` | Normalized interests supplied by the user |
 | `X-WallCab-Category` | Resolved learning category |
+| `X-WallCab-Content-Mode` | `external` or `fallback` |
+| `X-WallCab-Content-Provider` | Provider used for the accepted lesson |
 | `X-WallCab-Theme` | Resolved visual theme |
 | `X-WallCab-Size` | Resolved device preset |
 | `X-WallCab-Cache` | `HIT` or `MISS` |
@@ -51,9 +56,9 @@ Unsupported parameters return `400 application/json` and list every allowed opti
 ```json
 {
   "code": "INVALID_WALLPAPER_OPTIONS",
-  "message": "Choose a supported category, theme, and size.",
+  "message": "Choose between one and eight supported categories, a theme, and a size.",
   "allowed": {
-    "category": ["vocabulary", "coding"],
+    "categories": ["vocabulary", "coding"],
     "theme": ["nature", "mountains"],
     "size": ["standard", "air", "max"]
   },
@@ -67,19 +72,47 @@ The arrays in the real response are complete; they are shortened above for reada
 
 The application currently allows 60 requests per client per minute. A `429` response includes `Retry-After` and `X-RateLimit-*` headers. Generation failures return `502` with the code `WALLPAPER_GENERATION_FAILED`.
 
+## Source status
+
+Use the same query with `/api/wallpaper/status` to see the category selected today and whether the external provider or reviewed fallback supplied its lesson:
+
+```http
+GET /api/wallpaper/status?categories=coding,science,history&theme=space&size=max
+```
+
+```json
+{
+  "date": "2026-07-25",
+  "selectedCategories": ["coding", "science", "history"],
+  "resolvedCategory": "science",
+  "content": {
+    "mode": "external",
+    "provider": "Wikimedia",
+    "source": {
+      "label": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Example",
+      "license": "CC BY-SA 4.0"
+    }
+  },
+  "requestId": "..."
+}
+```
+
+The status lookup and image renderer share the same active-day KV lesson. This avoids extra provider calls and ensures the reported source matches the wallpaper.
+
 ## Examples
 
 Browser:
 
 ```text
-https://your-domain.example/api/wallpaper?category=science&theme=space&size=max
+https://your-domain.example/api/wallpaper?categories=science,history&theme=space&size=max
 ```
 
 cURL:
 
 ```bash
 curl --fail --location \
-  "https://your-domain.example/api/wallpaper?category=history&theme=mountains&size=standard" \
+  "https://your-domain.example/api/wallpaper?categories=history,psychology&theme=mountains&size=standard" \
   --output wallcab.png
 ```
 
@@ -87,7 +120,7 @@ Metadata only:
 
 ```bash
 curl --head --location \
-  "https://your-domain.example/api/wallpaper?category=finance&theme=minimal&size=air"
+  "https://your-domain.example/api/wallpaper?categories=finance,productivity&theme=minimal&size=air"
 ```
 
 </DocsLayout>
