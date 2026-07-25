@@ -1,6 +1,6 @@
 # Deployment runbook
 
-WallCab uses Cloudflare Workers/KV for the active-day image cache and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise both hit and miss paths.
+WallCab uses Cloudflare Workers/KV for the active-day image cache, private R2 storage for optional user backgrounds, and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise cache and upload paths.
 
 Creating external resources changes account state. Run these commands only in the intended Cloudflare and Vercel accounts.
 
@@ -15,7 +15,7 @@ npm.cmd run test:e2e
 
 The installed Node version must be 24.x. Do not deploy when the lockfile audit, Worker type check, image ceiling, build, or browser tests fail.
 
-## 2. Create Workers KV
+## 2. Create Workers KV and R2
 
 Confirm the active Cloudflare identity:
 
@@ -30,6 +30,17 @@ npx.cmd wrangler kv namespace create WALLPAPERS
 ```
 
 Copy the exact opaque namespace ID into `worker/wrangler.jsonc`. Do not derive or reformat it.
+
+Create the private custom-background bucket. The bucket is not connected to a
+public R2 development URL or custom domain:
+
+```powershell
+npx.cmd wrangler r2 bucket create wallcab-custom-backgrounds
+```
+
+The repository already binds that exact bucket name as
+`CUSTOM_BACKGROUNDS`. The Worker schedules a cleanup at 03:17 UTC and removes
+uploads after 30 days without a wallpaper read.
 
 Generate two independent high-entropy values, then store them:
 
@@ -46,7 +57,23 @@ npm.cmd run worker:deploy
 
 Verify an unsigned public request returns `401`, an unknown route returns `404`, and the response security headers are present.
 
-## 3. Create the Vercel preview
+## 3. Create Turnstile
+
+Create one managed Turnstile widget in the Cloudflare dashboard:
+
+- allowed hostnames: `wallcab.vercel.app` and `wallcab.dhruvdev.me`;
+- protected action: the homepage custom-background upload;
+- client action value: `custom_background_upload`.
+
+Save the public site key and secret separately. The site key is safe for the
+browser; the secret is server-only. WallCab verifies the token, exact action,
+and exact hostname before reading and normalizing an upload. Tokens are
+single-use, so the configurator resets the widget after every attempt.
+
+For localhost only, Cloudflare's documented always-pass test site key and
+secret may be placed in `.env.local`. Never use test keys in Vercel.
+
+## 4. Create the Vercel preview
 
 Confirm the active identity:
 
@@ -62,6 +89,9 @@ CACHE_WORKER_URL=<exact Worker origin>
 CACHE_WORKER_SECRET=<same private HMAC value>
 CACHE_SIGNING_SECRET=<same public URL signing value>
 CRON_SECRET=<independent high-entropy value>
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Turnstile public site key>
+TURNSTILE_SECRET=<Turnstile server secret>
+TURNSTILE_HOSTNAMES=wallcab.vercel.app,wallcab.dhruvdev.me
 ```
 
 Optional:
@@ -71,15 +101,23 @@ NEXT_PUBLIC_SHORTCUT_URL=<published iCloud Shortcut>
 NEXT_PUBLIC_CF_ANALYTICS_TOKEN=<Cloudflare Web Analytics token>
 ```
 
-The Shortcut and analytics values may remain empty during preview. No content-provider billing credentials are required.
+The Shortcut and analytics values may remain empty during preview. No
+content-provider billing credentials are required. Do not upload `.env.local`
+to Vercel; add each value to the project environment settings so secrets do
+not enter Git or a deployment archive.
 
-## 4. Preview acceptance
+## 5. Preview acceptance
 
 Verify:
 
 - all routes in the sitemap return successfully;
 - configurator choices persist after reload;
 - the copied URL matches all three selections;
+- a custom image is resized, uploaded after Turnstile succeeds, and appears
+  behind the daily lesson;
+- switching back to a built-in theme preserves the private deletion link;
+- the deletion link works only after confirmation and the old custom URL then
+  falls back safely;
 - first wallpaper request is `200 image/png`;
 - repeated request becomes a `307` cache hit when the Worker is configured;
 - `HEAD` has the same metadata and no body;
@@ -88,7 +126,7 @@ Verify:
 - provider and Worker outages still return the reviewed fallback image;
 - Apple Shortcut runs once manually and through an automation.
 
-## 5. Production promotion
+## 6. Production promotion
 
 After explicit preview approval, attach `wallcab.dhruvdev.me`, set `NEXT_PUBLIC_SITE_URL` to that canonical origin, redeploy, and verify Open Graph, sitemap, robots, RSS, OpenAPI, security headers, cron authentication, and signed cache URLs.
 

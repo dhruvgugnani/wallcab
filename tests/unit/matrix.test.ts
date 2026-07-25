@@ -44,4 +44,25 @@ describe("daily wallpaper matrix", () => {
       height: 2868,
     });
   });
+
+  it("isolates custom-background cache entries from built-in themes", () => {
+    const customId = "A".repeat(22);
+    const key = wallpaperCacheKey(
+      {
+        category: "science",
+        theme: "grid",
+        size: "standard",
+        customBackgroundId: customId,
+      },
+      "2026-07-25",
+    );
+
+    expect(key).toContain(`/custom/${customId}/`);
+    expect(key).not.toBe(
+      wallpaperCacheKey(
+        { category: "science", theme: "grid", size: "standard" },
+        "2026-07-25",
+      ),
+    );
+  });
 });

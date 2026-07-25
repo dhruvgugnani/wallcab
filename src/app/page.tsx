@@ -5,6 +5,8 @@ import { StructuredData } from "@/components/structured-data";
 import { categoryLabels, learningCategories } from "@/features/wallpaper/types";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const turnstileSiteKey =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 const homeSchemas = [
   {
@@ -77,7 +79,7 @@ export default function Home() {
               <dd>learning paths</dd>
             </div>
             <div>
-              <dt>08</dt>
+              <dt>11</dt>
               <dd>visual directions</dd>
             </div>
             <div>
@@ -99,7 +101,10 @@ export default function Home() {
             the iPhone it should fit. Your choices stay in this browser.
           </p>
         </div>
-        <Configurator siteOrigin={siteUrl} />
+        <Configurator
+          siteOrigin={siteUrl}
+          turnstileSiteKey={turnstileSiteKey}
+        />
       </section>
 
       <section className="index-section section-shell" aria-labelledby="paths-title">

@@ -618,6 +618,184 @@ label {
 [data-theme="monochrome"] .theme-swatch { background: linear-gradient(135deg, #f0ede5 0 48%, #090909 49% 100%); border: 1px solid #5b5954; }
 [data-theme="grid"] .theme-swatch { background-color: #090a09; background-image: linear-gradient(rgba(232,227,216,.32) 1px, transparent 1px), linear-gradient(90deg, rgba(232,227,216,.32) 1px, transparent 1px); background-size: 7px 7px; }
 
+.custom-background {
+  margin-top: 1.8rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.custom-upload-form,
+.custom-background-saved {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), transparent 55%),
+    #0c0c0a;
+}
+
+.custom-file {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .8rem;
+  min-height: 62px;
+  cursor: pointer;
+  border: 1px dashed var(--line-strong);
+  padding: .8rem 1rem;
+}
+
+.custom-file span {
+  color: #8f8b83;
+  font-size: .68rem;
+}
+
+.custom-file strong {
+  max-width: 15rem;
+  overflow: hidden;
+  color: var(--paper);
+  font-size: .68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.custom-file:has(input:focus-visible) {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+
+.custom-consent {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: start;
+  gap: .65rem;
+  color: var(--paper-muted);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+.custom-consent input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--moss);
+}
+
+.turnstile-container {
+  min-height: 65px;
+}
+
+.custom-upload-button,
+.custom-actions button,
+.delete-panel button {
+  min-height: 44px;
+  cursor: pointer;
+  border: 1px solid var(--paper);
+  background: var(--paper);
+  color: var(--ink);
+  padding: .7rem 1rem;
+  font-size: .64rem;
+  font-weight: 750;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.custom-upload-button:disabled,
+.custom-actions button:disabled,
+.delete-panel button:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #24231f;
+  color: #77746d;
+}
+
+.custom-upload-note,
+.custom-setup-note,
+.custom-message,
+.custom-background-saved p {
+  margin: 0;
+  color: #8f8b83;
+  font-size: .65rem;
+  line-height: 1.55;
+}
+
+.custom-setup-note {
+  border-left: 2px solid var(--moss);
+  padding-left: .7rem;
+}
+
+.custom-message {
+  min-height: 1.1rem;
+  margin-top: .75rem;
+  color: var(--moss);
+}
+
+.custom-message-error {
+  color: #e4a48f;
+}
+
+.custom-background-saved > div:first-child {
+  display: grid;
+  gap: .5rem;
+}
+
+.custom-background-saved strong {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 430;
+}
+
+.custom-state {
+  width: fit-content;
+  border: 1px solid var(--line-strong);
+  padding: .2rem .45rem;
+  color: #aaa69d;
+  font-size: .55rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.custom-state-active {
+  border-color: var(--moss);
+  color: var(--moss);
+}
+
+.custom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.custom-actions button {
+  border-color: var(--line-strong);
+  background: transparent;
+  color: var(--paper);
+}
+
+.custom-actions .custom-delete {
+  border-color: #7b4336;
+  color: #e4a48f;
+}
+
+.custom-background-saved code {
+  padding: .65rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  color: #77746d;
+  font-size: .58rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .device-choices {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1439,6 +1617,39 @@ label {
   max-width: 850px;
   padding-top: 2rem;
   padding-bottom: clamp(6rem, 10vw, 10rem);
+}
+
+.delete-panel {
+  max-width: 760px;
+  padding-top: clamp(3rem, 6vw, 6rem);
+  padding-bottom: clamp(6rem, 10vw, 10rem);
+}
+
+.delete-panel h2 {
+  margin: 0 0 1.2rem;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 4.5rem);
+  font-weight: 400;
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+.delete-panel p {
+  max-width: 630px;
+  color: var(--paper-muted);
+  line-height: 1.7;
+}
+
+.delete-panel button {
+  margin-top: 1.25rem;
+}
+
+.delete-panel code {
+  color: var(--moss);
+}
+
+.delete-panel .delete-error {
+  color: #e4a48f;
 }
 
 .journal-list {

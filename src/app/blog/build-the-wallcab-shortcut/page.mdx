@@ -31,17 +31,25 @@ The finished Shortcut contains only two actions:
 1. **Get Contents of URL** points at the address created by the WallCab configurator.
 2. **Set Wallpaper Photo** uses the result as your Lock Screen image.
 
-That is the whole mechanism. There is no embedded token, account identifier, script, or opaque payload.
+That is the whole mechanism. There is no account identifier, script, or
+private deletion token in the Shortcut.
 
 ## Make your address
 
-On the WallCab homepage, choose one or more learning interests, a visual theme, and an iPhone size. The configurator turns those preferences into a readable URL:
+On the WallCab homepage, choose one or more learning interests, a built-in
+visual theme or your own private background, and an iPhone size. The
+configurator turns those preferences into a readable URL:
 
 ```text
 /api/wallpaper?categories=science,history,psychology&theme=space&size=max
 ```
 
 Copy the full address. If you ever want to change the edition, replace the relevant word in the Shortcut or return to the configurator and copy a new one.
+
+A custom background adds `background=` followed by an unguessable ID. That ID
+lets the renderer use the image, but it cannot delete it. Save the separate
+private deletion link from the configurator somewhere safe; its secret never
+belongs in the Shortcut.
 
 ## Add the two actions
 

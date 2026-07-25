@@ -1,6 +1,7 @@
 import {
   devicePresets,
   learningCategories,
+  themeCadence,
   visualThemes,
 } from "@/features/wallpaper/types";
 import { selectDailyCategory } from "@/features/wallpaper/preferences";
@@ -96,6 +97,14 @@ export async function GET(request: Request): Promise<Response> {
               license: source.license,
             }
           : null,
+      },
+      background: {
+        mode: parsed.value.customBackgroundId
+          ? "custom"
+          : themeCadence[parsed.value.theme] === "daily"
+            ? "daily-photo"
+            : "fixed-design",
+        theme: parsed.value.theme,
       },
       requestId,
     },

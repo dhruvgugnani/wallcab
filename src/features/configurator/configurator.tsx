@@ -1,7 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  isCustomBackgroundDeleteToken,
+  isCustomBackgroundId,
+} from "@/features/wallpaper/custom-background";
 import {
   categoryLabels,
   deviceDimensions,
@@ -20,11 +24,21 @@ import {
   normalizeLearningCategories,
   selectDailyCategory,
 } from "@/features/wallpaper/preferences";
+import { prepareImageUpload } from "./prepare-upload";
+import { TurnstileWidget } from "./turnstile-widget";
+
+type SavedCustomBackground = {
+  id: string;
+  deleteToken: string;
+  deletionUrl: string;
+  active: boolean;
+};
 
 type Selections = {
   categories: LearningCategory[];
   theme: VisualTheme;
   size: DevicePreset;
+  customBackground?: SavedCustomBackground;
 };
 
 const defaults: Selections = {
@@ -63,6 +77,15 @@ const themeGroups = [
 function isSelections(value: unknown): value is Selections {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<Selections>;
+  const custom = candidate.customBackground;
+  const customIsValid =
+    custom === undefined ||
+    (typeof custom === "object" &&
+      custom !== null &&
+      isCustomBackgroundId(custom.id) &&
+      isCustomBackgroundDeleteToken(custom.deleteToken) &&
+      typeof custom.deletionUrl === "string" &&
+      typeof custom.active === "boolean");
   return (
     Array.isArray(candidate.categories) &&
     candidate.categories.length >= 1 &&
@@ -71,11 +94,20 @@ function isSelections(value: unknown): value is Selections {
       learningCategories.includes(category as LearningCategory),
     ) &&
     visualThemes.includes(candidate.theme as VisualTheme) &&
-    devicePresets.includes(candidate.size as DevicePreset)
+    devicePresets.includes(candidate.size as DevicePreset) &&
+    customIsValid
   );
 }
 
-export function Configurator({ siteOrigin }: { siteOrigin: string }) {
+type UploadStatus = "idle" | "preparing" | "uploading" | "failed";
+
+export function Configurator({
+  siteOrigin,
+  turnstileSiteKey,
+}: {
+  siteOrigin: string;
+  turnstileSiteKey: string;
+}) {
   const [selections, setSelections] = useState<Selections>(defaults);
   const [hydrated, setHydrated] = useState(false);
   const [copyStatus, setCopyStatus] = useState<
@@ -85,6 +117,16 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>({
     state: "loading",
   });
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadAllowed, setUploadAllowed] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [deleteStatus, setDeleteStatus] = useState<
+    "idle" | "deleting" | "failed"
+  >("idle");
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -120,6 +162,18 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
     setSourceStatus({ state: "loading" });
   }
 
+  function selectTheme(theme: VisualTheme) {
+    setSelections((current) => ({
+      ...current,
+      theme,
+      customBackground: current.customBackground
+        ? { ...current.customBackground, active: false }
+        : undefined,
+    }));
+    setPreviewFailed(false);
+    setSourceStatus({ state: "loading" });
+  }
+
   function toggleCategory(category: LearningCategory) {
     setSelections((current) => {
       const selected = current.categories.includes(category);
@@ -148,6 +202,9 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
     url.searchParams.set("categories", selections.categories.join(","));
     url.searchParams.set("theme", selections.theme);
     url.searchParams.set("size", selections.size);
+    if (selections.customBackground?.active) {
+      url.searchParams.set("background", selections.customBackground.id);
+    }
     return url.toString().replaceAll("%2C", ",");
   }, [hydrated, selections, siteOrigin]);
 
@@ -209,6 +266,132 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
       setCopyStatus("failed");
     }
     window.setTimeout(() => setCopyStatus("idle"), 2400);
+  }
+
+  const acceptTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+    setUploadMessage("");
+  }, []);
+
+  const rejectTurnstileToken = useCallback(() => {
+    setTurnstileToken("");
+    setUploadMessage("Verification expired. Please complete it again.");
+  }, []);
+
+  async function uploadCustomBackground() {
+    if (!uploadFile || !uploadAllowed || !turnstileToken) return;
+
+    setUploadStatus("preparing");
+    setUploadMessage("Preparing your image…");
+    try {
+      const prepared = await prepareImageUpload(uploadFile);
+      const form = new FormData();
+      form.set("image", prepared);
+      form.set("turnstileToken", turnstileToken);
+      form.set("rightsConfirmed", "true");
+      setUploadStatus("uploading");
+      setUploadMessage("Saving your private background…");
+
+      const response = await fetch("/api/custom-backgrounds", {
+        method: "POST",
+        body: form,
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            backgroundId?: string;
+            deleteToken?: string;
+            deletionUrl?: string;
+            message?: string;
+          }
+        | null;
+
+      if (
+        !response.ok ||
+        !result ||
+        !isCustomBackgroundId(result.backgroundId) ||
+        !isCustomBackgroundDeleteToken(result.deleteToken) ||
+        typeof result.deletionUrl !== "string"
+      ) {
+        throw new Error(
+          result?.message ?? "The upload could not be saved. Please try again.",
+        );
+      }
+
+      setSelections((current) => ({
+        ...current,
+        customBackground: {
+          id: result.backgroundId as string,
+          deleteToken: result.deleteToken as string,
+          deletionUrl: result.deletionUrl as string,
+          active: true,
+        },
+      }));
+      setUploadFile(null);
+      setUploadAllowed(false);
+      setUploadStatus("idle");
+      setUploadMessage(
+        "Your upload is active. Copy the updated wallpaper address below.",
+      );
+      setPreviewFailed(false);
+      setSourceStatus({ state: "loading" });
+    } catch (error) {
+      setUploadStatus("failed");
+      setUploadMessage(
+        error instanceof Error
+          ? error.message
+          : "The upload could not be saved. Please try again.",
+      );
+    } finally {
+      setTurnstileToken("");
+      setTurnstileReset((current) => current + 1);
+    }
+  }
+
+  async function copyDeletionLink() {
+    const deletionUrl = selections.customBackground?.deletionUrl;
+    if (!deletionUrl) return;
+    try {
+      await navigator.clipboard.writeText(deletionUrl);
+      setDeleteMessage("Private deletion link copied.");
+    } catch {
+      setDeleteMessage("Select and copy the private link manually.");
+    }
+  }
+
+  async function deleteUpload() {
+    const custom = selections.customBackground;
+    if (!custom) return;
+    setDeleteStatus("deleting");
+    setDeleteMessage("Deleting your upload…");
+    try {
+      const response = await fetch(
+        `/api/custom-backgrounds/${encodeURIComponent(custom.id)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deleteToken: custom.deleteToken }),
+        },
+      );
+      if (!response.ok && response.status !== 404) {
+        throw new Error("Deletion is temporarily unavailable.");
+      }
+      setSelections((current) => ({
+        categories: current.categories,
+        theme: current.theme,
+        size: current.size,
+      }));
+      setDeleteStatus("idle");
+      setDeleteMessage("The upload was deleted.");
+      setPreviewFailed(false);
+      setSourceStatus({ state: "loading" });
+    } catch (error) {
+      setDeleteStatus("failed");
+      setDeleteMessage(
+        error instanceof Error
+          ? error.message
+          : "Deletion is temporarily unavailable.",
+      );
+    }
   }
 
   return (
@@ -287,7 +470,7 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
                         value={theme}
                         aria-label={themeLabels[theme]}
                         checked={selections.theme === theme}
-                        onChange={() => updateSelections({ theme })}
+                        onChange={() => selectTheme(theme)}
                       />
                       <span className="theme-swatch" aria-hidden="true" />
                       <span className="theme-copy">
@@ -304,6 +487,143 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
               </section>
             ))}
           </div>
+          <section className="custom-background" aria-labelledby="custom-title">
+            <div className="theme-group-heading">
+              <p id="custom-title">Your own background</p>
+              <span aria-hidden="true" />
+              <small>Private upload · retained while used</small>
+            </div>
+
+            {selections.customBackground ? (
+              <div className="custom-background-saved">
+                <div>
+                  <span
+                    className={
+                      selections.customBackground.active
+                        ? "custom-state custom-state-active"
+                        : "custom-state"
+                    }
+                  >
+                    {selections.customBackground.active
+                      ? "Active"
+                      : "Saved, not active"}
+                  </span>
+                  <strong>Your uploaded background</strong>
+                  <p>
+                    It stays behind each new daily lesson. It is removed after
+                    30 days without wallpaper use.
+                  </p>
+                </div>
+                <div className="custom-actions">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelections({
+                        customBackground: {
+                          ...selections.customBackground!,
+                          active: !selections.customBackground!.active,
+                        },
+                      })
+                    }
+                  >
+                    {selections.customBackground.active
+                      ? "Use built-in style"
+                      : "Use my upload"}
+                  </button>
+                  <button type="button" onClick={copyDeletionLink}>
+                    Copy deletion link
+                  </button>
+                  <button
+                    className="custom-delete"
+                    type="button"
+                    disabled={deleteStatus === "deleting"}
+                    onClick={deleteUpload}
+                  >
+                    {deleteStatus === "deleting"
+                      ? "Deleting…"
+                      : "Delete upload"}
+                  </button>
+                </div>
+                <code>{selections.customBackground.deletionUrl}</code>
+              </div>
+            ) : (
+              <div className="custom-upload-form">
+                <label className="custom-file">
+                  <span>Choose a JPEG, PNG, or WebP</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => {
+                      setUploadFile(event.target.files?.[0] ?? null);
+                      setUploadMessage("");
+                    }}
+                  />
+                  <strong>
+                    {uploadFile ? uploadFile.name : "Choose image"}
+                  </strong>
+                </label>
+                <label className="custom-consent">
+                  <input
+                    type="checkbox"
+                    checked={uploadAllowed}
+                    onChange={(event) =>
+                      setUploadAllowed(event.target.checked)
+                    }
+                  />
+                  <span>
+                    I own this image or have permission to use it, and it is
+                    safe to display.
+                  </span>
+                </label>
+                {turnstileSiteKey ? (
+                  <TurnstileWidget
+                    siteKey={turnstileSiteKey}
+                    resetSignal={turnstileReset}
+                    onToken={acceptTurnstileToken}
+                    onError={rejectTurnstileToken}
+                  />
+                ) : (
+                  <p className="custom-setup-note">
+                    Uploads are being connected. Built-in styles remain
+                    available.
+                  </p>
+                )}
+                <button
+                  className="custom-upload-button"
+                  type="button"
+                  disabled={
+                    !turnstileSiteKey ||
+                    !turnstileToken ||
+                    !uploadFile ||
+                    !uploadAllowed ||
+                    uploadStatus === "preparing" ||
+                    uploadStatus === "uploading"
+                  }
+                  onClick={uploadCustomBackground}
+                >
+                  {uploadStatus === "preparing"
+                    ? "Preparing…"
+                    : uploadStatus === "uploading"
+                      ? "Uploading…"
+                      : "Use my background"}
+                </button>
+                <p className="custom-upload-note">
+                  Your browser shrinks large photos before upload. WallCab
+                  strips metadata and keeps the original private.
+                </p>
+              </div>
+            )}
+            <p
+              className={
+                uploadStatus === "failed" || deleteStatus === "failed"
+                  ? "custom-message custom-message-error"
+                  : "custom-message"
+              }
+              aria-live="polite"
+            >
+              {uploadMessage || deleteMessage}
+            </p>
+          </section>
         </fieldset>
 
         <fieldset>
@@ -355,8 +675,10 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
           <small>
             This URL contains {selections.categories.length} learning{" "}
             {selections.categories.length === 1 ? "choice" : "choices"}, one
-            theme, and one size. No account or personal information is
-            attached.
+            {selections.customBackground?.active
+              ? " private background"
+              : " theme"}
+            , and one size. No account or personal information is attached.
           </small>
         </div>
       </div>
@@ -384,7 +706,11 @@ export function Configurator({ siteOrigin }: { siteOrigin: string }) {
             <Image
               key={apiUrl}
               src={apiUrl}
-              alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper in the ${themeLabels[selections.theme]} theme`}
+              alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
+                selections.customBackground?.active
+                  ? "your custom background"
+                  : `the ${themeLabels[selections.theme]} theme`
+              }`}
               width={deviceDimensions[selections.size].width}
               height={deviceDimensions[selections.size].height}
               sizes="(max-width: 800px) 78vw, 31vw"

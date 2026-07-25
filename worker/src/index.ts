@@ -1,9 +1,7 @@
-export interface Env {
-  WALLPAPERS: KVNamespace;
+type WorkerEnv = Env & {
   CACHE_WORKER_SECRET: string;
   CACHE_SIGNING_SECRET: string;
-  ALLOWED_ORIGINS?: string;
-}
+};
 
 type CacheMetadata = {
   contentType: string;
@@ -11,14 +9,27 @@ type CacheMetadata = {
   storedAt: string;
 };
 
+type CustomBackgroundMetadata = {
+  createdAt: string;
+  deleteTokenHash: string;
+  lastUsedAt: string;
+  lastUsedDate: string;
+};
+
 const MAX_CACHE_BYTES = 5 * 1024 * 1024;
+const MAX_CUSTOM_BACKGROUND_BYTES = 4 * 1024 * 1024;
 const MAX_AUTH_SKEW_SECONDS = 300;
 const PUBLIC_LINK_MAX_SECONDS = 600;
+const CUSTOM_METADATA_PREFIX = "custom-background/v1/";
+const CUSTOM_OBJECT_PREFIX = "custom/";
+const CUSTOM_INACTIVE_SECONDS = 30 * 24 * 60 * 60;
+const CUSTOM_METADATA_TTL_SECONDS = 40 * 24 * 60 * 60;
 const allowedContentTypes = new Set([
   "application/json",
   "image/jpeg",
   "image/png",
   "image/svg+xml",
+  "image/webp",
 ]);
 
 function hex(bytes: ArrayBuffer): string {
@@ -73,7 +84,7 @@ function parseKey(pathname: string, prefix: string): string | null {
   }
 }
 
-function corsHeaders(request: Request, env: Env): HeadersInit {
+function corsHeaders(request: Request, env: WorkerEnv): HeadersInit {
   const origin = request.headers.get("origin");
   const allowed = new Set(
     (env.ALLOWED_ORIGINS ??
@@ -91,7 +102,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
 
 function json(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   body: unknown,
   status: number,
 ): Response {
@@ -107,7 +118,7 @@ function json(
 
 async function verifyServiceRequest(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   bodyHash: string,
 ): Promise<boolean> {
   const timestamp = Number(request.headers.get("x-wallcab-timestamp"));
@@ -130,7 +141,7 @@ async function verifyServiceRequest(
 
 async function readCache(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   key: string,
   publicAsset: boolean,
 ): Promise<Response> {
@@ -166,7 +177,7 @@ async function readCache(
 
 async function handlePublic(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   key: string,
 ): Promise<Response> {
   const url = new URL(request.url);
@@ -195,7 +206,7 @@ async function handlePublic(
 
 async function handlePrivate(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   key: string,
 ): Promise<Response> {
   if (request.method === "GET" || request.method === "HEAD") {
@@ -253,22 +264,398 @@ async function handlePrivate(
   );
 }
 
+function parseCustomBackgroundId(
+  pathname: string,
+): string | null {
+  const prefix = "/v1/custom-backgrounds/";
+  if (!pathname.startsWith(prefix)) {
+    return null;
+  }
+
+  try {
+    const id = decodeURIComponent(pathname.slice(prefix.length));
+    return /^[A-Za-z0-9_-]{22}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function customObjectKey(id: string): string {
+  return `${CUSTOM_OBJECT_PREFIX}${id}.webp`;
+}
+
+function customMetadataKey(id: string): string {
+  return `${CUSTOM_METADATA_PREFIX}${id}`;
+}
+
+function validDeleteTokenHash(value: string): boolean {
+  return /^[a-f0-9]{64}$/.test(value);
+}
+
+function isCustomMetadata(
+  value: unknown,
+): value is CustomBackgroundMetadata {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const metadata = value as Partial<CustomBackgroundMetadata>;
+  return Boolean(
+    metadata.createdAt &&
+      metadata.lastUsedAt &&
+      metadata.lastUsedDate &&
+      metadata.deleteTokenHash &&
+      validDeleteTokenHash(metadata.deleteTokenHash),
+  );
+}
+
+async function putCustomMetadata(
+  env: WorkerEnv,
+  id: string,
+  metadata: CustomBackgroundMetadata,
+  nowSeconds: number,
+): Promise<void> {
+  await env.WALLPAPERS.put(customMetadataKey(id), "", {
+    expiration: nowSeconds + CUSTOM_METADATA_TTL_SECONDS,
+    metadata,
+  });
+}
+
+async function touchCustomBackground(
+  env: WorkerEnv,
+  id: string,
+  createdAt: string,
+  deleteTokenHash: string,
+): Promise<void> {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const existing =
+    await env.WALLPAPERS.getWithMetadata<CustomBackgroundMetadata>(
+      customMetadataKey(id),
+      "text",
+    );
+
+  if (
+    isCustomMetadata(existing.metadata) &&
+    existing.metadata.lastUsedDate === today
+  ) {
+    return;
+  }
+
+  await putCustomMetadata(
+    env,
+    id,
+    {
+      createdAt,
+      deleteTokenHash,
+      lastUsedAt: now.toISOString(),
+      lastUsedDate: today,
+    },
+    Math.floor(now.getTime() / 1_000),
+  );
+}
+
+async function purgeCustomWallpaperCache(
+  env: WorkerEnv,
+  id: string,
+): Promise<number> {
+  let cursor: string | undefined;
+  let deleted = 0;
+
+  do {
+    const page = await env.WALLPAPERS.list({
+      prefix: "wallpaper/",
+      ...(cursor ? { cursor } : {}),
+    });
+    const matching = page.keys
+      .map((key) => key.name)
+      .filter((key) => key.includes(`/custom/${id}/`));
+    await Promise.all(
+      matching.map((key) => env.WALLPAPERS.delete(key)),
+    );
+    deleted += matching.length;
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+
+  return deleted;
+}
+
+async function deleteCustomBackgroundValue(
+  env: WorkerEnv,
+  id: string,
+): Promise<void> {
+  await Promise.all([
+    env.CUSTOM_BACKGROUNDS.delete(customObjectKey(id)),
+    env.WALLPAPERS.delete(customMetadataKey(id)),
+    purgeCustomWallpaperCache(env, id),
+  ]);
+}
+
+async function handleCustomBackground(
+  request: Request,
+  env: WorkerEnv,
+  id: string,
+  ctx: ExecutionContext,
+): Promise<Response> {
+  const declaredLength = Number(
+    request.headers.get("content-length") ?? 0,
+  );
+  if (
+    request.method === "PUT" &&
+    declaredLength > MAX_CUSTOM_BACKGROUND_BYTES
+  ) {
+    return json(
+      request,
+      env,
+      { code: "INVALID_CUSTOM_BACKGROUND_SIZE" },
+      413,
+    );
+  }
+
+  const requestBody =
+    request.method === "PUT" ? await request.arrayBuffer() : null;
+  if (
+    requestBody &&
+    (requestBody.byteLength === 0 ||
+      requestBody.byteLength > MAX_CUSTOM_BACKGROUND_BYTES)
+  ) {
+    return json(
+      request,
+      env,
+      { code: "INVALID_CUSTOM_BACKGROUND_SIZE" },
+      413,
+    );
+  }
+  const bodyHash = await sha256(requestBody ?? "");
+  if (!(await verifyServiceRequest(request, env, bodyHash))) {
+    return json(request, env, { code: "UNAUTHORIZED" }, 401);
+  }
+
+  if (request.method === "GET" || request.method === "HEAD") {
+    let object: R2Object | null;
+    let responseBody: ReadableStream | null = null;
+    if (request.method === "HEAD") {
+      object = await env.CUSTOM_BACKGROUNDS.head(customObjectKey(id));
+    } else {
+      const objectWithBody =
+        await env.CUSTOM_BACKGROUNDS.get(customObjectKey(id));
+      object = objectWithBody;
+      responseBody = objectWithBody?.body ?? null;
+    }
+    if (!object) {
+      return json(request, env, { code: "NOT_FOUND" }, 404);
+    }
+
+    const createdAt =
+      object.customMetadata?.createdAt ?? object.uploaded.toISOString();
+    const deleteTokenHash =
+      object.customMetadata?.deleteTokenHash ?? "";
+    if (validDeleteTokenHash(deleteTokenHash)) {
+      ctx.waitUntil(
+        touchCustomBackground(env, id, createdAt, deleteTokenHash),
+      );
+    }
+
+    const headers = new Headers({
+      ...corsHeaders(request, env),
+      "Cache-Control": "private, no-store",
+      "Content-Length": String(object.size),
+      "Content-Type": object.httpMetadata?.contentType ?? "image/webp",
+      ETag: object.httpEtag,
+      "X-Content-Type-Options": "nosniff",
+    });
+    return new Response(
+      responseBody,
+      { status: 200, headers },
+    );
+  }
+
+  if (request.method === "PUT") {
+    const contentType = (request.headers.get("content-type") ?? "")
+      .split(";")[0]
+      ?.trim();
+    const deleteTokenHash =
+      request.headers.get("x-wallcab-delete-token-sha256") ?? "";
+
+    if (
+      contentType !== "image/webp" ||
+      !validDeleteTokenHash(deleteTokenHash) ||
+      declaredLength > MAX_CUSTOM_BACKGROUND_BYTES
+    ) {
+      return json(
+        request,
+        env,
+        { code: "INVALID_CUSTOM_BACKGROUND_WRITE" },
+        400,
+      );
+    }
+
+    const now = new Date();
+    const nowSeconds = Math.floor(now.getTime() / 1_000);
+    const metadata: CustomBackgroundMetadata = {
+      createdAt: now.toISOString(),
+      deleteTokenHash,
+      lastUsedAt: now.toISOString(),
+      lastUsedDate: now.toISOString().slice(0, 10),
+    };
+
+    await env.CUSTOM_BACKGROUNDS.put(
+      customObjectKey(id),
+      requestBody!,
+      {
+        httpMetadata: {
+          contentType: "image/webp",
+          cacheControl: "private, no-store",
+        },
+        customMetadata: {
+          createdAt: metadata.createdAt,
+          deleteTokenHash,
+        },
+      },
+    );
+    try {
+      await putCustomMetadata(env, id, metadata, nowSeconds);
+    } catch (error) {
+      await env.CUSTOM_BACKGROUNDS.delete(customObjectKey(id));
+      throw error;
+    }
+
+    return json(
+      request,
+      env,
+      { ok: true, byteLength: requestBody!.byteLength },
+      201,
+    );
+  }
+
+  if (request.method === "DELETE") {
+    const providedHash =
+      request.headers.get("x-wallcab-delete-token-sha256") ?? "";
+    if (!validDeleteTokenHash(providedHash)) {
+      return json(request, env, { code: "NOT_FOUND" }, 404);
+    }
+
+    const [object, stored] = await Promise.all([
+      env.CUSTOM_BACKGROUNDS.head(customObjectKey(id)),
+      env.WALLPAPERS.getWithMetadata<CustomBackgroundMetadata>(
+        customMetadataKey(id),
+        "text",
+      ),
+    ]);
+    const expectedHash = isCustomMetadata(stored.metadata)
+      ? stored.metadata.deleteTokenHash
+      : object?.customMetadata?.deleteTokenHash ?? "";
+    if (
+      !object ||
+      !validDeleteTokenHash(expectedHash) ||
+      !constantTimeEqual(providedHash, expectedHash)
+    ) {
+      return json(request, env, { code: "NOT_FOUND" }, 404);
+    }
+
+    await deleteCustomBackgroundValue(env, id);
+    return json(request, env, { ok: true }, 200);
+  }
+
+  return json(request, env, { code: "METHOD_NOT_ALLOWED" }, 405);
+}
+
+async function cleanupCustomBackgrounds(
+  env: WorkerEnv,
+  now = Date.now(),
+): Promise<{ inactive: number; orphans: number }> {
+  const inactiveCutoff = now - CUSTOM_INACTIVE_SECONDS * 1_000;
+  const orphanCutoff = now - CUSTOM_METADATA_TTL_SECONDS * 1_000;
+  const activeIds = new Set<string>();
+  let inactive = 0;
+  let kvCursor: string | undefined;
+
+  do {
+    const page =
+      await env.WALLPAPERS.list<CustomBackgroundMetadata>({
+        prefix: CUSTOM_METADATA_PREFIX,
+        ...(kvCursor ? { cursor: kvCursor } : {}),
+      });
+    for (const key of page.keys) {
+      const id = key.name.slice(CUSTOM_METADATA_PREFIX.length);
+      if (!/^[A-Za-z0-9_-]{22}$/.test(id)) {
+        await env.WALLPAPERS.delete(key.name);
+        continue;
+      }
+      if (
+        isCustomMetadata(key.metadata) &&
+        Date.parse(key.metadata.lastUsedAt) > inactiveCutoff
+      ) {
+        activeIds.add(id);
+        continue;
+      }
+
+      await deleteCustomBackgroundValue(env, id);
+      inactive += 1;
+    }
+    kvCursor = page.list_complete ? undefined : page.cursor;
+  } while (kvCursor);
+
+  let orphans = 0;
+  let r2Cursor: string | undefined;
+  do {
+    const page = await env.CUSTOM_BACKGROUNDS.list({
+      prefix: CUSTOM_OBJECT_PREFIX,
+      include: ["customMetadata"],
+      ...(r2Cursor ? { cursor: r2Cursor } : {}),
+    });
+    const expiredOrphans = page.objects.filter((object) => {
+      const filename = object.key.slice(CUSTOM_OBJECT_PREFIX.length);
+      const id = filename.endsWith(".webp")
+        ? filename.slice(0, -5)
+        : "";
+      return (
+        /^[A-Za-z0-9_-]{22}$/.test(id) &&
+        !activeIds.has(id) &&
+        object.uploaded.getTime() <= orphanCutoff
+      );
+    });
+    if (expiredOrphans.length > 0) {
+      await env.CUSTOM_BACKGROUNDS.delete(
+        expiredOrphans.map((object) => object.key),
+      );
+    }
+    orphans += expiredOrphans.length;
+    r2Cursor = page.truncated ? page.cursor : undefined;
+  } while (r2Cursor);
+
+  return { inactive, orphans };
+}
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: WorkerEnv,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
         headers: {
           ...corsHeaders(request, env),
           "Access-Control-Allow-Headers":
-            "Content-Type, X-WallCab-Body-Sha256, X-WallCab-Expiration, X-WallCab-Signature, X-WallCab-Timestamp",
-          "Access-Control-Allow-Methods": "GET, HEAD, PUT, OPTIONS",
+            "Content-Type, X-WallCab-Body-Sha256, X-WallCab-Delete-Token-Sha256, X-WallCab-Expiration, X-WallCab-Signature, X-WallCab-Timestamp",
+          "Access-Control-Allow-Methods": "DELETE, GET, HEAD, PUT, OPTIONS",
           "Access-Control-Max-Age": "86400",
         },
       });
     }
 
     const pathname = new URL(request.url).pathname;
+    const customBackgroundId = parseCustomBackgroundId(pathname);
+    if (customBackgroundId) {
+      return handleCustomBackground(
+        request,
+        env,
+        customBackgroundId,
+        ctx,
+      );
+    }
+
     const publicKey = parseKey(pathname, "/v1/wallpapers/");
     if (publicKey && ["GET", "HEAD"].includes(request.method)) {
       return handlePublic(request, env, publicKey);
@@ -281,4 +668,17 @@ export default {
 
     return json(request, env, { code: "NOT_FOUND" }, 404);
   },
-} satisfies ExportedHandler<Env>;
+
+  async scheduled(
+    _controller: ScheduledController,
+    env: WorkerEnv,
+  ): Promise<void> {
+    const result = await cleanupCustomBackgrounds(env);
+    console.info(
+      JSON.stringify({
+        event: "wallcab.custom_background_cleanup",
+        ...result,
+      }),
+    );
+  },
+} satisfies ExportedHandler<WorkerEnv>;

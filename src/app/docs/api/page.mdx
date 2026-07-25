@@ -25,6 +25,7 @@ An OpenAPI description is available at [`/openapi.json`](/openapi.json).
 | `categories` | `vocabulary` | One to eight comma-separated values from `vocabulary`, `coding`, `finance`, `stoicism`, `science`, `history`, `psychology`, `productivity` |
 | `theme` | `nature` | Daily photography: `nature`, `mountains`, `ocean`, `forest`, `space`. Fixed WallCab Originals: `amoled`, `minimal`, `abstract`, `gradient`, `monochrome`, `grid` |
 | `size` | `standard` | `standard`, `air`, `max` |
+| `background` | none | Opaque 22-character ID returned by the custom upload flow |
 
 `standard` is 1206×2622, `air` is 1260×2736, and `max` is 1320×2868. Older iPhones can use `standard`; iOS will scale or crop the image.
 
@@ -33,6 +34,11 @@ WallCab normalizes the selected interests and chooses one for each UTC day. The 
 The five photography themes resolve a new source-checked image each UTC day.
 The six WallCab Original SVG themes remain visually constant; only the lesson
 changes each day.
+
+When `background` is present, the private custom image overrides the selected
+theme while the lesson still changes every day. The `theme` remains in the URL
+as a safe fallback if the upload is deleted, expires, or is temporarily
+unavailable. Existing URLs without `background` work exactly as before.
 
 ## Successful response
 
@@ -48,6 +54,7 @@ Useful response headers:
 | `X-WallCab-Category` | Resolved learning category |
 | `X-WallCab-Content-Mode` | `external` or `fallback` |
 | `X-WallCab-Content-Provider` | Provider used for the accepted lesson |
+| `X-WallCab-Background-Mode` | `custom`, `daily-photo`, or `fixed-design` |
 | `X-WallCab-Theme` | Resolved visual theme |
 | `X-WallCab-Size` | Resolved device preset |
 | `X-WallCab-Cache` | `HIT` or `MISS` |
@@ -98,6 +105,10 @@ GET /api/wallpaper/status?categories=coding,science,history&theme=space&size=max
       "license": "CC BY-SA 4.0"
     }
   },
+  "background": {
+    "mode": "daily-photo",
+    "theme": "space"
+  },
   "requestId": "..."
 }
 ```
@@ -113,6 +124,37 @@ the resolved category, and cache status. Search for `wallcab.content` to see
 the original daily provider decision when a lesson is first accepted.
 
 No client IP address is written into these application log entries.
+
+## Custom-background upload
+
+The homepage is the recommended client. It resizes a selected JPEG, PNG, or
+WebP before sending `image`, `turnstileToken`, and the explicit
+`rightsConfirmed=true` declaration as `multipart/form-data`:
+
+```http
+POST /api/custom-backgrounds
+```
+
+The prepared file must be at most 4 MiB and at least 600×600 pixels. WallCab
+validates the real image format, removes metadata, rotates it correctly,
+normalizes it to a portrait WebP, and stores it in a private R2 bucket. The
+successful response contains an opaque `backgroundId` and a private
+`deletionUrl`. It contains no public raw-image URL.
+
+Keep the deletion link private. Its secret is stored after `#`, so it is not
+sent in normal page requests or referrer headers. Deletion requires an explicit
+confirmation on that page and calls:
+
+```http
+DELETE /api/custom-backgrounds/{backgroundId}
+Content-Type: application/json
+
+{"deleteToken":"..."}
+```
+
+An upload is removed after 30 days without a wallpaper read. Deletion purges
+the source and active generated variants; a previously issued signed cache URL
+can remain usable for at most its five-minute lifetime.
 
 ## Examples
 

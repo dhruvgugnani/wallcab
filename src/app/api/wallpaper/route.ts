@@ -2,6 +2,7 @@ import { after } from "next/server";
 import {
   devicePresets,
   learningCategories,
+  themeCadence,
   visualThemes,
   type DailyLesson,
   type WallpaperPreferences,
@@ -54,6 +55,11 @@ function contentHeaders(
     "X-WallCab-Category": lesson.category,
     "X-WallCab-Content-Mode": lesson.provenance.mode,
     "X-WallCab-Content-Provider": lesson.provenance.provider,
+    "X-WallCab-Background-Mode": preferences.customBackgroundId
+      ? "custom"
+      : themeCadence[preferences.theme] === "daily"
+        ? "daily-photo"
+        : "fixed-design",
   };
 }
 
@@ -73,6 +79,11 @@ function logWallpaperResponse(
       contentMode: lesson.provenance.mode,
       contentProvider: lesson.provenance.provider,
       fallbackReason: lesson.provenance.fallbackReason,
+      backgroundMode: preferences.customBackgroundId
+        ? "custom"
+        : themeCadence[preferences.theme] === "daily"
+          ? "daily-photo"
+          : "fixed-design",
       cache,
     }),
   );
@@ -134,6 +145,7 @@ async function handleWallpaper(
     category,
     theme: parsed.value.theme,
     size: parsed.value.size,
+    customBackgroundId: parsed.value.customBackgroundId,
   };
   const manifest = await getPreparedManifest(dateKey);
   const lesson = await resolveDailyLesson(category, now, manifest);

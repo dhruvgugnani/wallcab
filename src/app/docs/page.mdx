@@ -10,7 +10,7 @@ export const metadata = {
 
 # Documentation
 
-WallCab is a small, public wallpaper service built around one stable URL. You choose one or more learning interests, a visual theme, and an iPhone size; the same address returns a newly composed image each UTC day.
+WallCab is a small, public wallpaper service built around one stable URL. You choose one or more learning interests, a built-in visual theme or optional private custom background, and an iPhone size; the same address returns a newly composed image each UTC day.
 
 ## Start in five minutes
 
@@ -37,7 +37,8 @@ If a provider is slow, unreachable, or returns content that cannot be safely com
 ## Guarantees
 
 - No account or database is required.
-- A date, normalized interest set, theme, and size always identify the same daily edition.
+- A date, normalized interest set, visual choice, and size always identify the same daily edition.
+- Custom uploads are optional, protected by Turnstile, stored privately, and removable without an account.
 - The preview and status API disclose whether external content or the reviewed fallback was used.
 - Each image includes a compact source and license credit.
 - Invalid options return structured JSON rather than a surprise default.

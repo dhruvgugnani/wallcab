@@ -16,8 +16,9 @@ import {
   resolveDailyLesson,
   type DailyManifest,
 } from "@/server/daily-manifest";
+import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v4";
+export const RENDERER_VERSION = "v5";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {
@@ -33,6 +34,9 @@ export function wallpaperCacheKey(
   request: ResolvedWallpaperRequest,
   dateKey: string,
 ): string {
+  if (request.customBackgroundId) {
+    return `wallpaper/${RENDERER_VERSION}/${dateKey}/custom/${request.customBackgroundId}/${request.category}/${request.theme}/${request.size}.png`;
+  }
   return `wallpaper/${RENDERER_VERSION}/${dateKey}/${request.category}/${request.theme}/${request.size}.png`;
 }
 
@@ -235,7 +239,12 @@ export async function renderWallpaper(
     context?.lesson
       ? Promise.resolve(context.lesson)
       : resolveDailyLesson(request.category, date, manifest),
-    resolveBackground(request.theme, date, manifest),
+    request.customBackgroundId
+      ? resolveCustomBackground(request.customBackgroundId).then(
+          (custom) =>
+            custom ?? resolveBackground(request.theme, date, manifest),
+        )
+      : resolveBackground(request.theme, date, manifest),
   ]);
   const dimensions = deviceDimensions[request.size];
   const details = {

@@ -43,6 +43,7 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   await configurator.getByLabel("Vocabulary").locator("..").click();
   await expect(configurator.getByText("Daily photography")).toBeVisible();
   await expect(configurator.getByText("WallCab Originals")).toBeVisible();
+  await expect(configurator.getByText("Your own background")).toBeVisible();
   await configurator.getByLabel("Grid").locator("..").click();
   await expect(
     configurator.getByLabel("Grid").locator("..").getByText("Fixed design"),
@@ -97,6 +98,7 @@ test("launch routes render and mobile navigation is operable", async ({
     "/docs/contributing",
     "/sources",
     "/privacy",
+    "/custom-background/delete",
   ];
 
   await mockWallpaperApi(page);
@@ -104,6 +106,11 @@ test("launch routes render and mobile navigation is operable", async ({
     await page.goto(path);
     await expect(page.locator("h1").first()).toBeVisible();
   }
+
+  await page.goto("/custom-background/delete");
+  await expect(
+    page.getByRole("heading", { name: "This deletion link is incomplete." }),
+  ).toBeVisible();
 
   if (testInfo.project.name === "mobile") {
     await page.goto("/");

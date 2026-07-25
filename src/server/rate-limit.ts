@@ -17,11 +17,13 @@ export type RateLimitResult = {
 export function checkRateLimit(
   key: string,
   now = Date.now(),
+  limit = LIMIT,
+  windowMs = WINDOW_MS,
 ): RateLimitResult {
   const existing = windows.get(key);
   const current =
     !existing || existing.resetAt <= now
-      ? { count: 0, resetAt: now + WINDOW_MS }
+      ? { count: 0, resetAt: now + windowMs }
       : existing;
 
   current.count += 1;
@@ -36,9 +38,9 @@ export function checkRateLimit(
   }
 
   return {
-    allowed: current.count <= LIMIT,
-    limit: LIMIT,
-    remaining: Math.max(0, LIMIT - current.count),
+    allowed: current.count <= limit,
+    limit,
+    remaining: Math.max(0, limit - current.count),
     resetAt: Math.floor(current.resetAt / 1_000),
   };
 }

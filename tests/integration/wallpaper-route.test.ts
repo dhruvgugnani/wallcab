@@ -203,6 +203,29 @@ describe("wallpaper route", () => {
     expect(body.requestId).toBeTruthy();
   });
 
+  it("passes an opaque custom background through to the renderer and cache", async () => {
+    const customBackgroundId = "A".repeat(22);
+    const { GET } = await route();
+    const response = await GET(
+      new Request(
+        `http://localhost/api/wallpaper?categories=science&theme=grid&size=standard&background=${customBackgroundId}`,
+        { headers: { "x-real-ip": "192.0.2.28" } },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-wallcab-background-mode")).toBe("custom");
+    expect(rendererMocks.wallpaperCacheKey).toHaveBeenCalledWith(
+      expect.objectContaining({ customBackgroundId }),
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    );
+    expect(rendererMocks.renderWallpaper).toHaveBeenCalledWith(
+      expect.objectContaining({ customBackgroundId }),
+      expect.any(Date),
+      expect.any(Object),
+    );
+  });
+
   it("reports the resolved daily category and provider provenance", async () => {
     const { GET } = await statusRoute();
     const response = await GET(
@@ -215,6 +238,7 @@ describe("wallpaper route", () => {
       selectedCategories: string[];
       resolvedCategory: string;
       content: { mode: string; provider: string };
+      background: { mode: string; theme: string };
     };
 
     expect(response.status).toBe(200);
@@ -232,6 +256,10 @@ describe("wallpaper route", () => {
         url: "https://en.wikipedia.org/wiki/Fixture",
         license: "CC BY-SA 4.0",
       },
+    });
+    expect(body.background).toEqual({
+      mode: "daily-photo",
+      theme: "forest",
     });
   });
 });

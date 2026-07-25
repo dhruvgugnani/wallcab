@@ -7,6 +7,7 @@ import {
   type WallpaperPreferences,
 } from "@/features/wallpaper/types";
 import { normalizeLearningCategories } from "@/features/wallpaper/preferences";
+import { CUSTOM_BACKGROUND_ID_PATTERN } from "@/features/wallpaper/custom-background";
 
 const categoriesSchema = z
   .string()
@@ -49,6 +50,11 @@ export const wallpaperQuerySchema = z.object({
     .toLowerCase()
     .pipe(z.enum(devicePresets))
     .default("standard"),
+  customBackgroundId: z
+    .string()
+    .trim()
+    .regex(CUSTOM_BACKGROUND_ID_PATTERN)
+    .optional(),
 });
 
 export function parseWallpaperSearchParams(
@@ -65,6 +71,7 @@ export function parseWallpaperSearchParams(
     categories: searchParams.get("categories") ?? undefined,
     theme: searchParams.get("theme") ?? undefined,
     size: searchParams.get("size") ?? undefined,
+    customBackgroundId: searchParams.get("background") ?? undefined,
   });
 
   return parsed.success

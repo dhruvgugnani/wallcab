@@ -2,7 +2,8 @@
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "wallcab-cache",
   "main": "src/index.ts",
-  "compatibility_date": "2026-07-25",
+  "compatibility_date": "2026-07-26",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": false,
   "observability": {
@@ -14,6 +15,15 @@
       "id": "f6d3f15691394b879a3ef11d3300abe6"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "CUSTOM_BACKGROUNDS",
+      "bucket_name": "wallcab-custom-backgrounds"
+    }
+  ],
+  "triggers": {
+    "crons": ["17 3 * * *"]
+  },
   "vars": {
     "ALLOWED_ORIGINS": "https://wallcab.vercel.app,https://wallcab.dhruvdev.me,http://localhost:3000"
   }

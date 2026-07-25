@@ -59,6 +59,7 @@ beforeAll(async () => {
     modules: true,
     script,
     kvNamespaces: ["WALLPAPERS"],
+    r2Buckets: ["CUSTOM_BACKGROUNDS"],
     bindings: {
       CACHE_WORKER_SECRET: serviceSecret,
       CACHE_SIGNING_SECRET: signingSecret,
@@ -178,6 +179,115 @@ describe("Cloudflare Worker cache", () => {
           oversizedBody,
           expiration,
         ),
+        body: oversizedBody,
+      },
+    );
+    expect(oversized.status).toBe(413);
+  });
+
+  it("privately uploads, reads, and deletes a custom R2 background", async () => {
+    const id = "A".repeat(22);
+    const pathname = `/v1/custom-backgrounds/${id}`;
+    const webp = Uint8Array.from([82, 73, 70, 70, 1, 2, 3, 4]);
+    const deleteTokenHash = sha256Hex("private-delete-token");
+    const putHeaders = {
+      ...privateHeaders("PUT", pathname, webp),
+      "content-type": "image/webp",
+      "x-wallcab-delete-token-sha256": deleteTokenHash,
+    };
+    const write = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "PUT",
+        headers: putHeaders,
+        body: webp,
+      },
+    );
+    expect(write.status).toBe(201);
+
+    const read = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "GET",
+        headers: privateHeaders("GET", pathname, ""),
+      },
+    );
+    expect(read.status).toBe(200);
+    expect(read.headers.get("content-type")).toBe("image/webp");
+    expect(read.headers.get("cache-control")).toBe("private, no-store");
+    expect(new Uint8Array(await read.arrayBuffer())).toEqual(webp);
+
+    const head = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "HEAD",
+        headers: privateHeaders("HEAD", pathname, ""),
+      },
+    );
+    expect(head.status).toBe(200);
+    expect((await head.arrayBuffer()).byteLength).toBe(0);
+
+    const wrongHash = sha256Hex("wrong-delete-token");
+    const wrongDelete = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "DELETE",
+        headers: {
+          ...privateHeaders("DELETE", pathname, ""),
+          "x-wallcab-delete-token-sha256": wrongHash,
+        },
+      },
+    );
+    expect(wrongDelete.status).toBe(404);
+
+    const deleted = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "DELETE",
+        headers: {
+          ...privateHeaders("DELETE", pathname, ""),
+          "x-wallcab-delete-token-sha256": deleteTokenHash,
+        },
+      },
+    );
+    expect(deleted.status).toBe(200);
+
+    const missing = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "GET",
+        headers: privateHeaders("GET", pathname, ""),
+      },
+    );
+    expect(missing.status).toBe(404);
+  });
+
+  it("rejects unauthenticated and oversized custom uploads", async () => {
+    const id = "Z".repeat(22);
+    const pathname = `/v1/custom-backgrounds/${id}`;
+    const unauthenticated = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "image/webp",
+          "x-wallcab-delete-token-sha256": sha256Hex("token"),
+        },
+        body: Uint8Array.from([1]),
+      },
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const oversizedBody = new Uint8Array(4 * 1024 * 1024 + 1);
+    const oversized = await worker.dispatchFetch(
+      `https://worker.example${pathname}`,
+      {
+        method: "PUT",
+        headers: {
+          ...privateHeaders("PUT", pathname, oversizedBody),
+          "content-type": "image/webp",
+          "x-wallcab-delete-token-sha256": sha256Hex("token"),
+        },
         body: oversizedBody,
       },
     );

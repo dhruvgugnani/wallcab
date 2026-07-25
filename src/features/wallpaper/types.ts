@@ -76,7 +76,7 @@ export type BackgroundAttribution = SourceAttribution & {
 
 export type BackgroundAsset = {
   bytes: Uint8Array;
-  contentType: "image/jpeg" | "image/svg+xml";
+  contentType: "image/jpeg" | "image/svg+xml" | "image/webp";
   attribution: BackgroundAttribution;
 };
 
@@ -84,12 +84,14 @@ export type WallpaperPreferences = {
   categories: LearningCategory[];
   theme: VisualTheme;
   size: DevicePreset;
+  customBackgroundId?: string;
 };
 
 export type ResolvedWallpaperRequest = {
   category: LearningCategory;
   theme: VisualTheme;
   size: DevicePreset;
+  customBackgroundId?: string;
 };
 
 export type WallpaperCacheRecord = ResolvedWallpaperRequest & {

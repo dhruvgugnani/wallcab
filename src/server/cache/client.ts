@@ -5,6 +5,7 @@ import {
 } from "@/server/cache/signing";
 
 const CACHE_TIMEOUT_MS = 2_500;
+const CUSTOM_BACKGROUND_TIMEOUT_MS = 8_000;
 
 type CacheConfiguration = {
   baseUrl: string;
@@ -55,6 +56,10 @@ function privateHeaders(
 
 function cachePath(key: string): string {
   return `/v1/cache/${encodeURIComponent(key)}`;
+}
+
+function customBackgroundPath(id: string): string {
+  return `/v1/custom-backgrounds/${encodeURIComponent(id)}`;
 }
 
 export function createPublicCacheUrl(
@@ -155,6 +160,104 @@ export async function putCacheValue(
       },
       body: Buffer.from(bytes),
       signal: AbortSignal.timeout(CACHE_TIMEOUT_MS),
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function getCustomBackground(
+  id: string,
+): Promise<Response | null> {
+  const config = getCacheConfiguration();
+  if (!config) {
+    return null;
+  }
+
+  const url = new URL(customBackgroundPath(id), config.baseUrl);
+  const bodyHash = sha256Hex("");
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: privateHeaders(
+        "GET",
+        url,
+        bodyHash,
+        config.serviceSecret,
+      ),
+      signal: AbortSignal.timeout(CUSTOM_BACKGROUND_TIMEOUT_MS),
+      cache: "no-store",
+    });
+    return response.ok ? response : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function putCustomBackground(
+  id: string,
+  bytes: Uint8Array,
+  deleteTokenHash: string,
+): Promise<boolean> {
+  const config = getCacheConfiguration();
+  if (!config) {
+    return false;
+  }
+
+  const url = new URL(customBackgroundPath(id), config.baseUrl);
+  const bodyHash = sha256Hex(bytes);
+
+  try {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        ...privateHeaders(
+          "PUT",
+          url,
+          bodyHash,
+          config.serviceSecret,
+        ),
+        "content-type": "image/webp",
+        "x-wallcab-delete-token-sha256": deleteTokenHash,
+      },
+      body: Buffer.from(bytes),
+      signal: AbortSignal.timeout(CUSTOM_BACKGROUND_TIMEOUT_MS),
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteCustomBackground(
+  id: string,
+  deleteTokenHash: string,
+): Promise<boolean> {
+  const config = getCacheConfiguration();
+  if (!config) {
+    return false;
+  }
+
+  const url = new URL(customBackgroundPath(id), config.baseUrl);
+  const bodyHash = sha256Hex("");
+
+  try {
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        ...privateHeaders(
+          "DELETE",
+          url,
+          bodyHash,
+          config.serviceSecret,
+        ),
+        "x-wallcab-delete-token-sha256": deleteTokenHash,
+      },
+      signal: AbortSignal.timeout(CUSTOM_BACKGROUND_TIMEOUT_MS),
       cache: "no-store",
     });
     return response.ok;

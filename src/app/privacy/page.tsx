@@ -14,15 +14,33 @@ export default function PrivacyPage() {
         eyebrow="Privacy"
         title="Nothing personal is required."
         description="WallCab is designed to work without an account, profile, database, advertising identifier, or cross-device tracking."
-        meta="Effective July 25, 2026"
+        meta="Effective July 26, 2026"
       />
       <article className="legal prose section-shell">
         <h2>What stays on your device</h2>
         <p>
-          Your learning interests, theme, and device selection are saved in your
-          browser’s localStorage. WallCab does not send these preferences to a
-          profile service or connect them to an identity. Clearing site data
-          removes them.
+          Your learning interests, theme, device selection, and optional
+          custom-background deletion credential are saved in your browser’s
+          localStorage. WallCab does not send them to a profile service or
+          connect them to an identity. Clearing site data removes the local
+          copy, so save a separate deletion link before clearing it.
+        </p>
+
+        <h2>Optional custom backgrounds</h2>
+        <p>
+          If you choose to upload an image, your browser first resizes it.
+          WallCab validates the file, removes embedded metadata, and stores a
+          normalized copy in a private Cloudflare R2 bucket. The image is used
+          only to generate wallpapers requested with its unguessable ID; there
+          is no public raw-image address.
+        </p>
+        <p>
+          Cloudflare Turnstile processes an anti-bot challenge before upload.
+          WallCab receives its verification token and normal request metadata.
+          The upload is automatically removed after 30 days without a
+          wallpaper read. You can delete it sooner with the private link shown
+          after upload. Keep that link secret: anyone who has it can delete the
+          image.
         </p>
 
         <h2>What a wallpaper request contains</h2>

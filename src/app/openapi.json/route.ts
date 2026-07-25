@@ -18,11 +18,51 @@ const optionSchema = (values: readonly string[], defaultValue: string) => ({
   default: defaultValue,
 });
 
+const wallpaperParameters = [
+  {
+    name: "categories",
+    in: "query",
+    description:
+      "One to eight interests. WallCab resolves one category per UTC day.",
+    style: "form",
+    explode: false,
+    schema: {
+      type: "array",
+      items: { type: "string", enum: categoryValues },
+      minItems: 1,
+      maxItems: 8,
+      uniqueItems: true,
+      default: ["vocabulary"],
+    },
+  },
+  {
+    name: "theme",
+    in: "query",
+    description: "Built-in theme and fallback for a custom background.",
+    schema: optionSchema(visualThemes, "nature"),
+  },
+  {
+    name: "size",
+    in: "query",
+    schema: optionSchema(["standard", "air", "max"], "standard"),
+  },
+  {
+    name: "background",
+    in: "query",
+    description:
+      "Optional opaque custom-background ID returned by the upload flow.",
+    schema: {
+      type: "string",
+      pattern: "^[A-Za-z0-9_-]{22}$",
+    },
+  },
+] as const;
+
 const specification = {
   openapi: "3.1.0",
   info: {
     title: "WallCab Wallpaper API",
-    version: "2.0.0",
+    version: "2.1.0",
     description:
       "Choose one or more learning interests and generate one deterministic, source-credited daily wallpaper.",
     license: {
@@ -36,34 +76,7 @@ const specification = {
       get: {
         operationId: "getDailyWallpaper",
         summary: "Get a daily wallpaper",
-        parameters: [
-          {
-            name: "categories",
-            in: "query",
-            description:
-              "One to eight interests. WallCab resolves one category per UTC day.",
-            style: "form",
-            explode: false,
-            schema: {
-              type: "array",
-              items: { type: "string", enum: categoryValues },
-              minItems: 1,
-              maxItems: 8,
-              uniqueItems: true,
-              default: ["vocabulary"],
-            },
-          },
-          {
-            name: "theme",
-            in: "query",
-            schema: optionSchema(visualThemes, "nature"),
-          },
-          {
-            name: "size",
-            in: "query",
-            schema: optionSchema(["standard", "air", "max"], "standard"),
-          },
-        ],
+        parameters: wallpaperParameters,
         responses: {
           "200": {
             description: "Generated wallpaper",
@@ -77,6 +90,12 @@ const specification = {
               },
               "X-WallCab-Content-Provider": {
                 schema: { type: "string" },
+              },
+              "X-WallCab-Background-Mode": {
+                schema: {
+                  type: "string",
+                  enum: ["custom", "daily-photo", "fixed-design"],
+                },
               },
             },
             content: {
@@ -123,6 +142,7 @@ const specification = {
       head: {
         operationId: "headDailyWallpaper",
         summary: "Get daily wallpaper metadata",
+        parameters: wallpaperParameters,
         responses: {
           "200": { description: "Wallpaper metadata without an image body" },
           "307": { description: "Temporary redirect to a signed cached image" },
@@ -136,32 +156,7 @@ const specification = {
       get: {
         operationId: "getDailyWallpaperStatus",
         summary: "Inspect the resolved category and content source",
-        parameters: [
-          {
-            name: "categories",
-            in: "query",
-            style: "form",
-            explode: false,
-            schema: {
-              type: "array",
-              items: { type: "string", enum: categoryValues },
-              minItems: 1,
-              maxItems: 8,
-              uniqueItems: true,
-              default: ["vocabulary"],
-            },
-          },
-          {
-            name: "theme",
-            in: "query",
-            schema: optionSchema(visualThemes, "nature"),
-          },
-          {
-            name: "size",
-            in: "query",
-            schema: optionSchema(["standard", "air", "max"], "standard"),
-          },
-        ],
+        parameters: wallpaperParameters,
         responses: {
           "200": {
             description: "Resolved daily source status",
@@ -176,6 +171,102 @@ const specification = {
         },
       },
     },
+    "/api/custom-backgrounds": {
+      post: {
+        operationId: "uploadCustomBackground",
+        summary: "Upload a private custom background",
+        description:
+          "Requires a fresh Turnstile token with the custom_background_upload action.",
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: [
+                  "image",
+                  "turnstileToken",
+                  "rightsConfirmed",
+                ],
+                properties: {
+                  image: {
+                    type: "string",
+                    contentEncoding: "binary",
+                    description: "JPEG, PNG, or WebP up to 4 MiB.",
+                  },
+                  turnstileToken: {
+                    type: "string",
+                    maxLength: 2048,
+                  },
+                  rightsConfirmed: {
+                    type: "string",
+                    const: "true",
+                    description:
+                      "Uploader confirms ownership or permission and safe-display suitability.",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Private background stored",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CustomUploadResult" },
+              },
+            },
+          },
+          "400": { description: "Invalid image or multipart request" },
+          "403": { description: "Turnstile verification rejected" },
+          "413": { description: "Upload exceeds the request limit" },
+          "429": { description: "Upload rate limit exceeded" },
+          "503": { description: "Upload protection or storage unavailable" },
+        },
+      },
+    },
+    "/api/custom-backgrounds/{backgroundId}": {
+      delete: {
+        operationId: "deleteCustomBackground",
+        summary: "Delete a private custom background",
+        parameters: [
+          {
+            name: "backgroundId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+              pattern: "^[A-Za-z0-9_-]{22}$",
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["deleteToken"],
+                properties: {
+                  deleteToken: {
+                    type: "string",
+                    pattern: "^[A-Za-z0-9_-]{43}$",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "204": { description: "Background deleted" },
+          "404": {
+            description: "Upload missing or deletion credential invalid",
+          },
+          "429": { description: "Deletion rate limit exceeded" },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -186,6 +277,7 @@ const specification = {
           "selectedCategories",
           "resolvedCategory",
           "content",
+          "background",
           "requestId",
         ],
         properties: {
@@ -215,7 +307,39 @@ const specification = {
               },
             },
           },
+          background: {
+            type: "object",
+            required: ["mode", "theme"],
+            properties: {
+              mode: {
+                type: "string",
+                enum: ["custom", "daily-photo", "fixed-design"],
+              },
+              theme: { type: "string", enum: visualThemes },
+            },
+          },
           requestId: { type: "string", format: "uuid" },
+        },
+      },
+      CustomUploadResult: {
+        type: "object",
+        required: [
+          "backgroundId",
+          "deleteToken",
+          "deletionUrl",
+          "inactiveDays",
+        ],
+        properties: {
+          backgroundId: {
+            type: "string",
+            pattern: "^[A-Za-z0-9_-]{22}$",
+          },
+          deleteToken: {
+            type: "string",
+            pattern: "^[A-Za-z0-9_-]{43}$",
+          },
+          deletionUrl: { type: "string", format: "uri-reference" },
+          inactiveDays: { type: "integer", const: 30 },
         },
       },
       Error: {

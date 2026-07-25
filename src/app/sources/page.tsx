@@ -100,6 +100,12 @@ export default function SourcesPage() {
           third-party material retain their original licenses. The repository’s
           license does not relicense those works.
         </p>
+        <p>
+          A user-supplied background is not part of WallCab’s source catalog
+          and is not relicensed. Uploaders must own the image or have
+          permission to use it. WallCab labels the generated wallpaper as
+          “User upload” without claiming a third-party license.
+        </p>
       </article>
     </>
   );
