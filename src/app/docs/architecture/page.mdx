@@ -33,9 +33,9 @@ Apple Shortcut / browser
 
 ## Deterministic daily content
 
-The normalized interest set and UTC date select one category for the day. The order is random-looking but deterministic, and complete cycles give every selected interest a turn. Vocabulary uses Datamuse to select the daily term and Free Dictionary to enrich its definition. The other categories use Wikimedia search to select a concept and a page summary to enrich it. Themes and device sizes never alter the day’s lesson.
+The normalized interest set and UTC date select one category for the day. The order is random-looking but deterministic, and complete cycles give every selected interest a turn. Vocabulary uses rotating advanced semantic prompts plus Datamuse frequency and syllable metadata to discover an uncommon term; Free Dictionary then enriches its definition and pronunciation. The other categories rotate through advanced, category-specific Wikimedia searches before selecting a concept and page summary. Themes and device sizes never alter the day’s lesson.
 
-Every provider candidate passes structural and editorial validation independently. One malformed search result cannot reject an otherwise usable provider response. WallCab rejects excessive text, unsafe titles, missing source links, duplicates, and content that cannot fit the composition. The reviewed fallback record for that date and category is used as a complete unit when validation fails.
+Every provider candidate passes structural and editorial validation independently. One malformed search result cannot reject an otherwise usable provider response. WallCab rejects excessive text, unsafe titles, missing source links, overly common vocabulary, absent pronunciation, duplicates, and content that cannot fit the composition. The reviewed advanced fallback record for that date and category is used as a complete unit when validation fails.
 
 The accepted lesson and its provenance are stored in Workers KV until the next UTC rollover. This keeps provider traffic bounded to one resolution per category per day and makes `external` versus `fallback` observable through response headers, the preview, and the status APIs.
 
@@ -62,6 +62,7 @@ The Node.js renderer uses Sharp with an SVG overlay:
 
 - the clock and Dynamic Island zone remains quiet;
 - the lesson occupies the middle and lower fields;
+- vocabulary terms include a bounded IPA pronunciation line;
 - titles, definitions, quotations, and facts have separate hard line and block bounds;
 - a contrast gradient protects readability;
 - lesson and image credits are always visible;

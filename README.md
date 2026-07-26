@@ -9,6 +9,8 @@ The production interface is always dark, account-free, and deliberately small. E
 - eight learning categories and eleven visual themes;
 - exact presets for iPhone 17/17 Pro, iPhone Air, and iPhone 17 Pro Max;
 - deterministic, fair daily rotation across the user’s selected interests;
+- advanced provider-discovered words and concepts, with IPA pronunciation on
+  every vocabulary wallpaper;
 - five daily Openverse photo themes, six fixed WallCab Original SVG themes,
   and procedural photo fallbacks;
 - optional private custom backgrounds protected by Turnstile, normalized by

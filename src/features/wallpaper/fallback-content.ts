@@ -3,7 +3,12 @@ import type {
   SourceAttribution,
 } from "@/features/wallpaper/types";
 
-type LessonSeed = readonly [term: string, definition: string, fact: string];
+type LessonSeed = readonly [
+  term: string,
+  definition: string,
+  fact: string,
+  pronunciation?: string,
+];
 type LessonQuote = readonly [text: string, author: string];
 
 export const lessonQuotes: readonly LessonQuote[] = [
@@ -96,36 +101,36 @@ export const fallbackSeeds: Record<
   readonly LessonSeed[]
 > = {
   vocabulary: [
-    ["Sonder", "The realization that every passerby has a life as vivid and complex as your own.", "Use it to replace a quick judgment with curiosity."],
-    ["Liminal", "Relating to a threshold or an in-between stage.", "Dawn, doorways, and life transitions can all feel liminal."],
-    ["Epiphany", "A sudden, illuminating realization.", "Writing an insight down quickly helps preserve its useful detail."],
-    ["Serendipity", "A fortunate discovery made by chance.", "Curiosity increases the odds of noticing a useful accident."],
-    ["Lucid", "Clear, easy to understand, or mentally alert.", "A lucid explanation removes complexity without removing truth."],
-    ["Tenacious", "Persistent in maintaining or seeking something valued.", "Tenacity works best when paired with feedback."],
-    ["Ephemeral", "Lasting for a very short time.", "A rainbow is a familiar example of ephemeral beauty."],
-    ["Pragmatic", "Focused on practical results rather than theory alone.", "Pragmatic choices still benefit from clear principles."],
-    ["Eloquent", "Fluent, persuasive, and graceful in expression.", "Precise words often make speech more eloquent than extra words do."],
-    ["Resilient", "Able to recover or adapt after difficulty.", "Recovery time is part of resilience, not evidence against it."],
-    ["Ubiquitous", "Present, appearing, or found everywhere.", "Smartphones became ubiquitous within a few decades."],
-    ["Meticulous", "Showing careful attention to small details.", "Checklists turn meticulous thinking into a repeatable habit."],
-    ["Benevolent", "Well-meaning, kind, and inclined to help.", "Benevolence describes intent as well as action."],
-    ["Ambivalent", "Having mixed or contradictory feelings about something.", "Ambivalence is different from indifference; both sides matter."],
-    ["Candid", "Truthful and straightforward without concealment.", "Candid feedback is most useful when it is also specific."],
-    ["Diligent", "Steady, careful, and persistent in one’s work.", "Diligence compounds through small sessions repeated often."],
-    ["Frugal", "Careful about using money or resources without waste.", "Frugal does not mean cheapest; it means deliberate value."],
-    ["Gregarious", "Fond of company and naturally sociable.", "The word traces to the Latin term for a flock."],
-    ["Humble", "Having a modest view of one’s importance while remaining open to learning.", "Humility makes it easier to update a mistaken belief."],
-    ["Judicious", "Showing good judgment and balanced consideration.", "A judicious decision weighs consequences, evidence, and timing."],
-    ["Kinetic", "Relating to motion or movement.", "Kinetic energy depends on both mass and velocity."],
-    ["Magnanimous", "Generous and forgiving, especially toward a rival.", "Magnanimity is strength expressed without pettiness."],
-    ["Nuanced", "Characterized by subtle distinctions or variations.", "Nuanced thinking can hold two partly true ideas at once."],
-    ["Obsolete", "No longer used because something newer has replaced it.", "A technology can be obsolete while its underlying idea remains useful."],
-    ["Paradox", "A statement or situation that seems contradictory yet may reveal a truth.", "Paradoxes expose hidden assumptions in everyday reasoning."],
-    ["Quaint", "Attractively old-fashioned or unusual.", "Context decides whether quaint feels affectionate or dismissive."],
-    ["Robust", "Strong, healthy, or able to withstand changing conditions.", "A robust system handles ordinary failures without collapsing."],
-    ["Succinct", "Clearly expressed in few words.", "Succinct writing usually comes from editing, not from rushing."],
-    ["Versatile", "Able to adapt to many different functions or activities.", "A versatile skill transfers across projects and roles."],
-    ["Wistful", "Quietly longing for something absent or past.", "Wistful describes a gentle blend of sadness and affection."],
+    ["Perspicacious", "Having a ready insight into people or situations.", "The Latin root perspicere means to look through or inspect closely.", "/ˌpɜː.spɪˈkeɪ.ʃəs/"],
+    ["Obfuscate", "To make something deliberately obscure or difficult to understand.", "Clear writing reverses obfuscation by naming the exact claim.", "/ˈɒb.fʌs.keɪt/"],
+    ["Epistemic", "Relating to knowledge, its scope, or the grounds for belief.", "An epistemic question asks how a claim can be known.", "/ˌep.ɪˈstiː.mɪk/"],
+    ["Ineffable", "Too powerful, unusual, or subtle to be expressed adequately in words.", "The word combines a negating prefix with a Latin root meaning speakable.", "/ɪnˈef.ə.bəl/"],
+    ["Pulchritude", "Physical beauty, especially when described in elevated language.", "Its formal sound contrasts with the simple idea it names.", "/ˈpʌl.krɪ.tjuːd/"],
+    ["Sesquipedalian", "Characterized by very long words or given to using them.", "The term literally evokes words a foot and a half long.", "/ˌses.kwɪ.pɪˈdeɪ.li.ən/"],
+    ["Equivocate", "To speak ambiguously in order to avoid committing to a clear position.", "Equivocation often hides a shift between two meanings of one word.", "/ɪˈkwɪv.ə.keɪt/"],
+    ["Inchoate", "Only partly formed, disorganized, or not yet fully developed.", "An inchoate idea may be promising before it becomes precise.", "/ɪnˈkəʊ.ət/"],
+    ["Recondite", "Little known and difficult for most people to understand.", "A recondite subject is obscure because it demands specialized knowledge.", "/ˈrek.ən.daɪt/"],
+    ["Sagacious", "Showing penetrating judgment and practical wisdom.", "Sagacity combines perception with the ability to choose well.", "/səˈɡeɪ.ʃəs/"],
+    ["Trenchant", "Sharp, forceful, and effective in expression or analysis.", "A trenchant argument cuts directly to the decisive issue.", "/ˈtren.tʃənt/"],
+    ["Laconic", "Using very few words while remaining clear and meaningful.", "The term comes from Laconia, the region associated with ancient Sparta.", "/ləˈkɒn.ɪk/"],
+    ["Vicissitude", "An unwelcome change of circumstances, especially one in a sequence.", "The plural often describes the alternating turns of fortune.", "/vɪˈsɪs.ɪ.tjuːd/"],
+    ["Synecdoche", "A figure of speech in which a part represents a whole, or the reverse.", "Calling workers hands is a familiar example of synecdoche.", "/sɪˈnek.də.ki/"],
+    ["Anachronism", "Something placed in a historical period where it does not belong.", "A wristwatch in an ancient drama would be an anachronism.", "/əˈnæk.rə.nɪ.zəm/"],
+    ["Apodictic", "Expressed as unquestionably true or logically necessary.", "An apodictic claim allows no uncertainty, so its evidence must be strong.", "/ˌæp.əˈdɪk.tɪk/"],
+    ["Contumacious", "Stubbornly disobedient toward authority or lawful procedure.", "Courts use the term for persistent refusal to comply with an order.", "/ˌkɒn.tjʊˈmeɪ.ʃəs/"],
+    ["Diaphanous", "Light, delicate, and almost transparent.", "The word can describe fabric, mist, or prose with an airy quality.", "/daɪˈæf.ə.nəs/"],
+    ["Enervate", "To drain someone or something of energy and vitality.", "Despite its sound, enervate means weaken rather than energize.", "/ˈen.ə.veɪt/"],
+    ["Fastidious", "Very attentive to accuracy, detail, cleanliness, or propriety.", "Fastidious standards help when they serve the work rather than delay it.", "/fæˈstɪd.i.əs/"],
+    ["Garrulous", "Excessively talkative, especially about unimportant matters.", "Garrulous speech is abundant but not necessarily informative.", "/ˈɡær.ə.ləs/"],
+    ["Hermeneutic", "Relating to the interpretation of texts, symbols, or human experience.", "A hermeneutic method makes its assumptions about interpretation explicit.", "/ˌhɜː.məˈnjuː.tɪk/"],
+    ["Impecunious", "Having little or no money.", "The word is formal and often carries a lightly humorous tone.", "/ˌɪm.pɪˈkjuː.ni.əs/"],
+    ["Juxtapose", "To place different things side by side so their contrast becomes clear.", "Editors juxtapose images to create meaning neither image carries alone.", "/ˌdʒʌk.stəˈpəʊz/"],
+    ["Mellifluous", "Pleasantly smooth, rich, and musical to hear.", "Its Latin roots refer to something flowing with honey.", "/meˈlɪf.lu.əs/"],
+    ["Numinous", "Evoking a mysterious sense of awe, presence, or spiritual significance.", "Numinous describes an atmosphere rather than a formal doctrine.", "/ˈnjuː.mɪ.nəs/"],
+    ["Ontological", "Relating to the nature of being, existence, or what kinds of things are real.", "An ontological claim concerns what exists before asking how it is known.", "/ˌɒn.təˈlɒdʒ.ɪ.kəl/"],
+    ["Parsimonious", "Extremely unwilling to spend resources, or using the fewest assumptions.", "In science, a parsimonious explanation avoids unnecessary complexity.", "/ˌpɑː.sɪˈməʊ.ni.əs/"],
+    ["Quotidian", "Occurring every day, or belonging to ordinary daily life.", "The word can make the routine details of life sound newly visible.", "/kwəʊˈtɪd.i.ən/"],
+    ["Redoubtable", "Formidable and worthy of respect, often because of strength or ability.", "A redoubtable opponent inspires caution before the contest begins.", "/rɪˈdaʊ.tə.bəl/"],
   ],
   coding: [
     ["Algorithm", "A finite sequence of steps for solving a problem.", "A correct algorithm can still be impractical if it scales poorly."],
@@ -357,9 +362,17 @@ for (const category of Object.keys(fallbackSeeds) as LearningCategory[]) {
   if (fallbackSeeds[category].length !== 30) {
     throw new Error(`${category} must contain exactly 30 fallback lessons`);
   }
-  for (const [term, definition, fact] of fallbackSeeds[category]) {
-    if (term.length > 36 || definition.length > 150 || fact.length > 176) {
+  for (const [term, definition, fact, pronunciation] of fallbackSeeds[category]) {
+    if (
+      term.length > 36 ||
+      definition.length > 150 ||
+      fact.length > 176 ||
+      (pronunciation?.length ?? 0) > 50
+    ) {
       throw new Error(`${category} contains content outside renderer bounds`);
+    }
+    if (category === "vocabulary" && !pronunciation) {
+      throw new Error("Every vocabulary fallback needs a pronunciation");
     }
   }
 }

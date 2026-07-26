@@ -20,13 +20,15 @@ describe("API-first daily lessons", () => {
           {
             word: "perspicacious",
             defs: ["adj\tHaving a ready insight into things"],
-            tags: ["adj"],
+            tags: ["adj", "f:0.08", "pron:pɜː.spɪˈkeɪ.ʃəs"],
+            numSyllables: 4,
           },
         ]),
       )
       .mockResolvedValueOnce(
         Response.json([
           {
+            phonetic: "/ˌpɜː.spɪˈkeɪ.ʃəs/",
             meanings: [
               {
                 definitions: [
@@ -47,12 +49,16 @@ describe("API-first daily lessons", () => {
     );
 
     expect(lesson.term).toBe("Perspicacious");
+    expect(lesson.pronunciation).toBe("/ˌpɜː.spɪˈkeɪ.ʃəs/");
     expect(lesson.definition).toContain("ready insight");
     expect(lesson.provenance).toEqual({
       mode: "external",
       provider: "Datamuse + Free Dictionary API",
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    const datamuseUrl = new URL(fetchMock.mock.calls[0]![0] as string);
+    expect(datamuseUrl.searchParams.get("md")).toBe("dpsrf");
+    expect(datamuseUrl.searchParams.get("ipa")).toBe("1");
   });
 
   it("selects a non-vocabulary concept from Wikimedia", async () => {
@@ -91,6 +97,9 @@ describe("API-first daily lessons", () => {
     expect(lesson.definition).toContain("storing previous results");
     expect(lesson.provenance.mode).toBe("external");
     expect(lesson.provenance.provider).toBe("Wikimedia");
+    expect(
+      decodeURIComponent(fetchMock.mock.calls[0]![0] as string),
+    ).not.toContain("computer programming concepts");
   });
 
   it("uses curated records only when a provider fails", async () => {
@@ -108,5 +117,45 @@ describe("API-first daily lessons", () => {
       provider: "WallCab reviewed catalog",
       fallbackReason: "provider_unavailable",
     });
+  });
+
+  it("uses an advanced fallback when pronunciation metadata is missing", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            word: "perspicacious",
+            defs: ["adj\tHaving a ready insight into things"],
+            tags: ["adj", "f:0.08"],
+            numSyllables: 4,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            meanings: [
+              {
+                definitions: [
+                  { definition: "Having a ready insight into things." },
+                ],
+              },
+            ],
+          },
+        ]),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const lesson = await getHybridDailyLesson(
+      "vocabulary",
+      new Date("2026-07-25T00:00:00Z"),
+    );
+
+    expect(lesson.provenance).toMatchObject({
+      mode: "fallback",
+      fallbackReason: "unusable_content",
+    });
+    expect(lesson.pronunciation).toMatch(/^\/.+\/$/);
   });
 });

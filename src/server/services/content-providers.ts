@@ -11,6 +11,14 @@ import type {
 
 const dictionarySchema = z.array(
   z.object({
+    phonetic: z.string().optional(),
+    phonetics: z
+      .array(
+        z.object({
+          text: z.string().optional(),
+        }),
+      )
+      .optional(),
     meanings: z.array(
       z.object({
         definitions: z.array(
@@ -27,8 +35,10 @@ const dictionarySchema = z.array(
 const datamuseSchema = z.array(
   z.object({
     word: z.string(),
+    score: z.number().optional(),
     defs: z.array(z.string()).optional(),
     tags: z.array(z.string()).optional(),
+    numSyllables: z.number().int().positive().optional(),
   }),
 ).max(500);
 
@@ -56,15 +66,93 @@ const MAX_PROVIDER_DEFINITION_LENGTH = 500;
 
 class UnusableProviderContentError extends Error {}
 
-const topicQueryByCategory: Record<LearningCategory, string> = {
-  vocabulary: "language learning curiosity",
-  coding: "computer programming concepts",
-  finance: "personal finance investing concepts",
-  stoicism: "Stoic philosophy concepts",
-  science: "important scientific concepts",
-  history: "world history concepts events",
-  psychology: "psychology concepts cognitive science",
-  productivity: "productivity time management concepts",
+const vocabularyPrompts = [
+  {
+    meaning: "a subtle precise intellectual concept",
+    topics: "philosophy,language,knowledge,reason,thought",
+  },
+  {
+    meaning: "difficult to understand or deliberately obscure",
+    topics: "rhetoric,language,argument,meaning,logic",
+  },
+  {
+    meaning: "showing unusual insight judgment or perception",
+    topics: "character,wisdom,perception,reason,analysis",
+  },
+  {
+    meaning: "a complex state of change uncertainty or transition",
+    topics: "change,time,identity,experience,uncertainty",
+  },
+  {
+    meaning: "interpretation of texts symbols or ideas",
+    topics: "language,meaning,culture,philosophy,criticism",
+  },
+  {
+    meaning: "an exact description of beauty sound or atmosphere",
+    topics: "aesthetics,beauty,sound,perception,experience",
+  },
+] as const;
+
+const topicQueriesByCategory: Record<
+  Exclude<LearningCategory, "vocabulary">,
+  readonly string[]
+> = {
+  coding: [
+    "distributed consensus algorithms",
+    "type theory programming languages",
+    "concurrency control computer science",
+    "cryptographic protocol concepts",
+    "compiler optimization techniques",
+    "formal verification software",
+  ],
+  finance: [
+    "financial market microstructure",
+    "derivatives pricing concepts",
+    "portfolio risk theory",
+    "behavioral finance anomalies",
+    "fixed income duration convexity",
+    "systemic financial risk",
+  ],
+  stoicism: [
+    "Stoic prohairesis moral psychology",
+    "Stoic oikeiosis ethics",
+    "Stoic theory of impressions assent",
+    "Stoic cosmopolitanism philosophy",
+    "Stoic preferred indifferents",
+    "Stoic discipline of desire",
+  ],
+  science: [
+    "quantum field theory concepts",
+    "statistical thermodynamics concepts",
+    "molecular biology regulatory mechanisms",
+    "cosmology dark matter concepts",
+    "neuroscience predictive processing",
+    "complex systems emergence science",
+  ],
+  history: [
+    "historiography historical methodology",
+    "postcolonial history concepts",
+    "political economy historical systems",
+    "global intellectual history",
+    "state formation comparative history",
+    "environmental history concepts",
+  ],
+  psychology: [
+    "metacognition cognitive science",
+    "predictive processing psychology",
+    "psychometrics measurement theory",
+    "memory reconsolidation neuroscience",
+    "dual process theory cognition",
+    "social cognition attribution theory",
+  ],
+  productivity: [
+    "cognitive load knowledge work",
+    "decision theory prioritization",
+    "deliberate practice expertise",
+    "systems thinking work management",
+    "attention residue task switching",
+    "implementation intentions behavior change",
+  ],
 };
 
 function cleanText(value: string, maximum: number): string {
@@ -102,6 +190,56 @@ function safeSourceUrl(values: string[] | undefined): string | undefined {
       return false;
     }
   });
+}
+
+function metadataNumber(
+  tags: string[] | undefined,
+  prefix: string,
+): number | undefined {
+  const value = tags?.find((tag) => tag.startsWith(prefix))?.slice(
+    prefix.length,
+  );
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function normalizePronunciation(
+  ...values: Array<string | undefined>
+): string | undefined {
+  const value = values
+    .map((candidate) => candidate?.replace(/\s+/g, " ").trim())
+    .find(
+      (candidate) =>
+        candidate &&
+        candidate.length >= 3 &&
+        candidate.length <= 48 &&
+        !/[<>{}\u0000-\u001f\u007f]/.test(candidate),
+    );
+  if (!value) return undefined;
+  const slashWrapped = value.startsWith("/") && value.endsWith("/");
+  const bracketWrapped = value.startsWith("[") && value.endsWith("]");
+  const unwrapped =
+    slashWrapped || bracketWrapped
+      ? value.slice(1, -1)
+      : value.replace(/^[\/\[]/, "").replace(/[\/\]]$/, "");
+  if (unwrapped.length < 2 || !/\p{L}/u.test(unwrapped)) {
+    return undefined;
+  }
+  return bracketWrapped ? `[${unwrapped}]` : `/${unwrapped}/`;
+}
+
+function isAdvancedVocabularyCandidate(entry: {
+  word: string;
+  tags?: string[];
+  numSyllables?: number;
+}): boolean {
+  const frequency = metadataNumber(entry.tags, "f:");
+  const complexEnough =
+    (entry.numSyllables ?? 0) >= 3 || entry.word.length >= 11;
+  const uncommonEnough = frequency === undefined || frequency <= 8;
+
+  return complexEnough && uncommonEnough;
 }
 
 function fallbackReason(
@@ -174,10 +312,17 @@ async function fetchVocabularyLesson(
   fallback: DailyLesson,
   date: Date,
 ): Promise<DailyLesson> {
+  const dateKey = toUtcDateKey(date);
+  const prompt =
+    vocabularyPrompts[
+      hashString(`${dateKey}:vocabulary:prompt`) %
+        vocabularyPrompts.length
+    ]!;
   const query = new URLSearchParams({
-    ml: "curiosity knowledge learning",
-    topics: "language,ideas,thought",
-    md: "dp",
+    ml: prompt.meaning,
+    topics: prompt.topics,
+    md: "dpsrf",
+    ipa: "1",
     max: "500",
     v: "enwiki",
   });
@@ -196,13 +341,14 @@ async function fetchVocabularyLesson(
     .filter(
       (entry) =>
         /^[a-z-]+$/i.test(entry.word) &&
-        entry.word.length >= 5 &&
-        entry.word.length <= 16 &&
+        entry.word.length >= 8 &&
+        entry.word.length <= 18 &&
+        isAdvancedVocabularyCandidate(entry) &&
         (entry.defs?.length ?? 0) > 0,
     );
   const selected =
     words[
-      hashString(`${toUtcDateKey(date)}:vocabulary:external`) % words.length
+      hashString(`${dateKey}:vocabulary:external`) % words.length
     ];
 
   if (!selected?.defs?.[0]) {
@@ -226,6 +372,22 @@ async function fetchVocabularyLesson(
   const relatedSense =
     dictionaryDefinitions?.find((item) => item !== definition) ??
     selected.defs[1];
+  const dictionaryPronunciations = payload.flatMap((entry) => [
+    entry.phonetic,
+    ...(entry.phonetics?.map((phonetic) => phonetic.text) ?? []),
+  ]);
+  const datamusePronunciation = selected.tags
+    ?.find((tag) => tag.startsWith("pron:"))
+    ?.slice("pron:".length);
+  const pronunciation = normalizePronunciation(
+    ...dictionaryPronunciations,
+    datamusePronunciation,
+  );
+  if (!pronunciation) {
+    throw new UnusableProviderContentError(
+      "Vocabulary provider did not return a usable pronunciation",
+    );
+  }
 
   const sourceUrl =
     safeSourceUrl(payload[0]?.sourceUrls) ??
@@ -234,6 +396,7 @@ async function fetchVocabularyLesson(
   return {
     ...fallback,
     term: selected.word.replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    pronunciation,
     definition: cleanText(definition, 190),
     fact: relatedSense
       ? `Another recorded sense: ${cleanText(splitDefinition(relatedSense), 160)}`
@@ -258,8 +421,14 @@ async function fetchConceptLesson(
   fallback: DailyLesson,
   date: Date,
 ): Promise<DailyLesson> {
+  const dateKey = toUtcDateKey(date);
+  const prompts = topicQueriesByCategory[category];
+  const prompt =
+    prompts[
+      hashString(`${dateKey}:${category}:prompt`) % prompts.length
+    ]!;
   const searchQuery = new URLSearchParams({
-    q: topicQueryByCategory[category],
+    q: prompt,
     limit: "100",
   });
   const search = wikipediaSearchSchema.parse(
@@ -275,7 +444,7 @@ async function fetchConceptLesson(
   );
   const selected =
     candidates[
-      hashString(`${toUtcDateKey(date)}:${category}:external`) %
+      hashString(`${dateKey}:${category}:external`) %
         candidates.length
     ];
 

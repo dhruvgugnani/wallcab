@@ -18,7 +18,7 @@ import {
 } from "@/server/daily-manifest";
 import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v6";
+export const RENDERER_VERSION = "v7";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {
@@ -110,11 +110,19 @@ export function wrapText(
 export function fitWallpaperText(lesson: DailyLesson) {
   const termLines = wrapText(lesson.term, 18, 2);
   const longestTermLine = Math.max(...termLines.map((line) => line.length));
+  const pronunciation =
+    lesson.category === "vocabulary" &&
+    lesson.pronunciation &&
+    lesson.pronunciation.length <= 50 &&
+    !/[\u0000-\u001f\u007f]/.test(lesson.pronunciation)
+      ? lesson.pronunciation.trim()
+      : undefined;
 
   return {
     termLines,
     termFontSize:
       longestTermLine <= 12 ? 142 : longestTermLine <= 16 ? 112 : 92,
+    pronunciation,
     definitionLines: wrapText(lesson.definition, 36, 4),
     quoteLines: wrapText(lesson.quote.text, 34, 3),
     factLines: wrapText(lesson.fact, 38, 4),
@@ -135,7 +143,7 @@ function tspans(
     .join("");
 }
 
-function createOverlay(
+export function createWallpaperOverlay(
   output: Omit<WallpaperOutput, "bytes" | "etag" | "byteLength" | "key">,
   width: number,
   height: number,
@@ -151,10 +159,12 @@ function createOverlay(
   );
   const brandLabelY = termStartY - Math.round(190 * scale);
   const brandMarkY = brandLabelY - Math.round(38 * scale);
+  const termBottomY =
+    termStartY + (layout.termLines.length - 1) * termLineHeight;
+  const pronunciationY = termBottomY + Math.round(56 * scale);
   const definitionStartY =
-    termStartY +
-    (layout.termLines.length - 1) * termLineHeight +
-    Math.round(90 * scale);
+    termBottomY +
+    Math.round(layout.pronunciation ? 130 * scale : 90 * scale);
   const sourceCredit =
     wrapText(
       `${output.background.label} · ${output.background.license}`,
@@ -190,6 +200,11 @@ function createOverlay(
         <text font-family="Fraunces" font-size="${termSize}" font-weight="600" letter-spacing="${Math.round(-3 * scale)}">
           ${tspans(layout.termLines, left, termStartY, termLineHeight)}
         </text>
+        ${
+          layout.pronunciation
+            ? `<text x="${left}" y="${pronunciationY}" font-family="Fraunces" font-size="${Math.round(40 * scale)}" font-style="italic" fill="#d8d1c5">${escapeXml(layout.pronunciation)}</text>`
+            : ""
+        }
         <text font-family="Manrope" font-size="${Math.round(39 * scale)}" font-weight="500" fill="#f4f0e8" fill-opacity=".92">
           ${tspans(layout.definitionLines, left, definitionStartY, Math.round(50 * scale))}
         </text>
@@ -255,7 +270,7 @@ export async function renderWallpaper(
     lesson,
     background: background.attribution,
   };
-  const overlaySvg = createOverlay(
+  const overlaySvg = createWallpaperOverlay(
     details,
     dimensions.width,
     dimensions.height,

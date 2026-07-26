@@ -18,6 +18,41 @@ describe("daily fallback selection", () => {
     }
   });
 
+  it("provides a bounded pronunciation for every advanced vocabulary fallback", () => {
+    for (const [, , , pronunciation] of fallbackSeeds.vocabulary) {
+      expect(pronunciation).toMatch(/^\/.+\/$/);
+      expect(pronunciation!.length).toBeLessThanOrEqual(50);
+    }
+
+    const lesson = getFallbackLesson(
+      "vocabulary",
+      new Date("2026-07-25T00:00:00Z"),
+    );
+    expect(lesson.pronunciation).toMatch(/^\/.+\/$/);
+  });
+
+  it("avoids introductory fallback topics in advanced daily rotation", () => {
+    const introductoryTerms = new Set([
+      "API",
+      "Loop",
+      "Budget",
+      "Asset",
+      "Atom",
+      "Cell",
+      "Gravity",
+    ]);
+
+    for (const category of ["coding", "finance", "science"] as const) {
+      for (let day = 1; day <= 60; day += 1) {
+        const lesson = getFallbackLesson(
+          category,
+          new Date(Date.UTC(2026, 7, day)),
+        );
+        expect(introductoryTerms.has(lesson.term)).toBe(false);
+      }
+    }
+  });
+
   it("is deterministic for a category and UTC date", () => {
     const date = new Date("2026-07-25T23:59:00Z");
     expect(getFallbackLesson("science", date)).toEqual(

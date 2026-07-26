@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 const providers = [
   {
     name: "Datamuse",
-    use: "Daily vocabulary term discovery",
+    use: "Advanced term discovery, frequency, syllables, and IPA metadata",
     license: "Provider terms",
     href: "https://www.datamuse.com/api/",
   },
   {
     name: "Free Dictionary API",
-    use: "Vocabulary definitions and pronunciation metadata",
+    use: "Vocabulary definitions and pronunciation validation",
     license: "Provider and upstream dictionary licenses",
     href: "https://dictionaryapi.dev/",
   },

@@ -60,6 +60,7 @@ export type DailyLesson = {
   date: string;
   category: LearningCategory;
   term: string;
+  pronunciation?: string;
   definition: string;
   quote: {
     text: string;

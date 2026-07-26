@@ -7,6 +7,7 @@ import {
 } from "@/features/wallpaper/types";
 import { getFallbackLesson } from "@/features/wallpaper/daily";
 import {
+  createWallpaperOverlay,
   fitWallpaperText,
   MAX_WALLPAPER_BYTES,
   rasterizeSvgWithBundledFonts,
@@ -45,6 +46,12 @@ describe("wallpaper renderer", () => {
 
       expect(layout.termLines.length).toBeLessThanOrEqual(2);
       expect(layout.termLines.every((line) => line.length <= 18)).toBe(true);
+      if (category === "vocabulary") {
+        expect(layout.pronunciation).toMatch(/^\/.+\/$/);
+        expect(layout.pronunciation!.length).toBeLessThanOrEqual(50);
+      } else {
+        expect(layout.pronunciation).toBeUndefined();
+      }
       expect(layout.definitionLines.length).toBeLessThanOrEqual(4);
       expect(
         layout.definitionLines.every((line) => line.length <= 36),
@@ -58,6 +65,41 @@ describe("wallpaper renderer", () => {
         true,
       );
     }
+  });
+
+  it("places vocabulary pronunciation between the term and definition", () => {
+    const lesson = getFallbackLesson(
+      "vocabulary",
+      new Date("2026-07-25T00:00:00Z"),
+    );
+    const svg = createWallpaperOverlay(
+      {
+        category: "vocabulary",
+        theme: "nature",
+        size: "standard",
+        date: lesson.date,
+        lesson,
+        background: {
+          label: "Fixture background",
+          url: "https://example.com/background",
+          license: "CC0",
+          source: "Test",
+        },
+      },
+      deviceDimensions.standard.width,
+      deviceDimensions.standard.height,
+    ).toString();
+    const firstDefinitionLine =
+      fitWallpaperText(lesson).definitionLines[0]!;
+
+    expect(lesson.pronunciation).toBeTruthy();
+    expect(svg).toContain(lesson.pronunciation);
+    expect(svg.indexOf(lesson.term)).toBeLessThan(
+      svg.indexOf(lesson.pronunciation!),
+    );
+    expect(svg.indexOf(lesson.pronunciation!)).toBeLessThan(
+      svg.indexOf(firstDefinitionLine),
+    );
   });
 
   it("renders text using bundled fonts without system fonts", async () => {
@@ -125,6 +167,30 @@ describe("wallpaper renderer", () => {
         height: deviceDimensions.standard.height,
       });
       expect(wallpaper.background.source).toBe("WallCab Original");
+      expect(wallpaper.byteLength).toBeLessThanOrEqual(MAX_WALLPAPER_BYTES);
+    },
+    60_000,
+  );
+
+  it(
+    "renders an advanced vocabulary PNG with pronunciation",
+    async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
+      );
+      const wallpaper = await renderWallpaper(
+        { category: "vocabulary", theme: "minimal", size: "standard" },
+        new Date("2026-07-25T12:00:00Z"),
+      );
+      const metadata = await sharp(wallpaper.bytes).metadata();
+
+      expect(wallpaper.lesson.pronunciation).toMatch(/^\/.+\/$/);
+      expect(metadata).toMatchObject({
+        format: "png",
+        width: deviceDimensions.standard.width,
+        height: deviceDimensions.standard.height,
+      });
       expect(wallpaper.byteLength).toBeLessThanOrEqual(MAX_WALLPAPER_BYTES);
     },
     60_000,
