@@ -49,16 +49,11 @@ export default function Home() {
             One useful idea. One considered image. Delivered to your iPhone
             lock screen every day.
           </p>
-          <a className="roundel" href="#make-yours" aria-label="Make your WallCab">
-            <span className="roundel-index">Start here</span>
-            <span className="roundel-main">
-              <span>Make yours</span>
-              <span className="roundel-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M12 4v15M6 13l6 6 6-6" />
-                </svg>
-              </span>
-            </span>
+          <a className="hero-cta" href="#make-yours">
+            <span>Make yours</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 4v15M6 13l6 6 6-6" />
+            </svg>
           </a>
         </div>
         <div className="hero-cabinet" aria-hidden="true">

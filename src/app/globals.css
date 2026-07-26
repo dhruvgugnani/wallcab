@@ -258,123 +258,40 @@ label {
   font-size: clamp(1rem, 1.6vw, 1.35rem);
 }
 
-.roundel {
-  position: relative;
-  display: flex;
-  width: 142px;
-  aspect-ratio: 1;
-  align-items: stretch;
-  justify-content: space-between;
-  flex-direction: column;
-  padding: 1.15rem;
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 24%, rgba(168, 184, 154, .16), transparent 40%),
-    rgba(240, 237, 228, .018);
-  font-size: .68rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  isolation: isolate;
-  transition:
-    border-color 260ms ease,
-    background 260ms ease,
-    box-shadow 260ms ease,
-    transform 260ms ease;
-}
-
-.roundel::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 8px;
-  border: 1px solid rgba(240, 237, 228, .1);
-  border-top-color: var(--moss);
-  border-radius: 50%;
-  animation: roundel-orbit 10s linear infinite;
-}
-
-.roundel::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 54%;
-  left: -12%;
-  width: 124%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
-  transform: rotate(-16deg);
-  transition: transform 350ms ease;
-}
-
-.roundel-index {
-  display: flex;
+.hero-cta {
+  display: inline-flex;
+  min-width: 174px;
+  min-height: 54px;
   align-items: center;
-  gap: .45rem;
-  color: var(--moss);
-  font-size: .52rem;
+  justify-content: space-between;
+  padding: .9rem 1.05rem .9rem 1.25rem;
+  border: 1px solid var(--paper);
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .24);
+  color: var(--ink);
+  font-size: .66rem;
   font-weight: 750;
   letter-spacing: .14em;
+  text-transform: uppercase;
 }
 
-.roundel-index::before {
-  content: "";
-  width: 5px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--moss);
-  box-shadow: 0 0 0 0 rgba(168, 184, 154, .5);
-  animation: roundel-pulse 2.4s ease-out infinite;
-}
-
-.roundel-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .5rem;
-  padding: 0 .1rem .05rem .25rem;
-  font-size: .62rem;
-  font-weight: 700;
-}
-
-.roundel-arrow {
-  display: grid;
-  width: 32px;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--paper);
-  color: var(--ink);
-  transition: background 220ms ease, color 220ms ease, transform 220ms ease;
-}
-
-.roundel-arrow svg {
-  width: 19px;
+.hero-cta svg {
+  width: 17px;
+  margin-left: 1.75rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 
-.roundel:hover,
-.roundel:focus-visible {
-  border-color: rgba(168, 184, 154, .8);
-  background:
-    radial-gradient(circle at 32% 24%, rgba(168, 184, 154, .24), transparent 42%),
-    rgba(240, 237, 228, .055);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, .34);
-  transform: translateY(-5px) rotate(-2deg);
-}
-
-.roundel:hover::after,
-.roundel:focus-visible::after {
-  transform: rotate(3deg);
-}
-
-.roundel:hover .roundel-arrow,
-.roundel:focus-visible .roundel-arrow {
+.hero-cta:hover {
+  border-color: var(--moss);
   background: var(--moss);
-  transform: translateY(3px);
+}
+
+.hero-cta:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 4px;
 }
 
 .hero-cabinet {
@@ -1138,20 +1055,6 @@ label {
 
 @keyframes source-spin {
   to { transform: rotate(1turn); }
-}
-
-@keyframes roundel-orbit {
-  to { transform: rotate(1turn); }
-}
-
-@keyframes roundel-pulse {
-  70% {
-    box-shadow: 0 0 0 6px rgba(168, 184, 154, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(168, 184, 154, 0);
-  }
 }
 
 @keyframes cabinet-scan {
@@ -2262,10 +2165,6 @@ label {
     align-items: flex-start;
     flex-direction: column;
     gap: 2.5rem;
-  }
-
-  .roundel {
-    width: 134px;
   }
 
   .hero-cabinet {
