@@ -18,7 +18,7 @@ import {
 } from "@/server/daily-manifest";
 import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v8";
+export const RENDERER_VERSION = "v10";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {
@@ -27,6 +27,7 @@ function getRendererFontFiles(): string[] {
     join(fontDirectory, "manrope-variable.ttf"),
     join(fontDirectory, "fraunces-variable.ttf"),
     join(fontDirectory, "fraunces-variable-italic.ttf"),
+    join(fontDirectory, "noto-sans-regular.ttf"),
   ];
 }
 
@@ -172,6 +173,8 @@ export function createWallpaperOverlay(
       1,
     )[0] ?? "Source unavailable";
   const category = categoryLabels[output.category].toUpperCase();
+  const factLabel =
+    output.category === "vocabulary" ? "WORD FACT" : "ONE MORE THING";
 
   return Buffer.from(`
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -202,7 +205,7 @@ export function createWallpaperOverlay(
         </text>
         ${
           layout.pronunciation
-            ? `<text x="${left}" y="${pronunciationY}" font-family="Fraunces" font-size="${Math.round(40 * scale)}" font-style="italic" fill="#d8d1c5">${escapeXml(layout.pronunciation)}</text>`
+            ? `<text x="${left}" y="${pronunciationY}" font-family="Noto Sans" font-size="${Math.round(40 * scale)}" fill="#d8d1c5">${escapeXml(layout.pronunciation)}</text>`
             : ""
         }
         <text font-family="Manrope" font-size="${Math.round(39 * scale)}" font-weight="500" fill="#f4f0e8" fill-opacity=".92">
@@ -214,7 +217,7 @@ export function createWallpaperOverlay(
           ${tspans(layout.quoteLines, left, Math.round(1620 * scale), Math.round(65 * scale))}
         </text>
         <text x="${left}" y="${Math.round(1855 * scale)}" font-family="Manrope" font-size="${Math.round(25 * scale)}" fill="#d8d1c5">— ${escapeXml(output.lesson.quote.author)}</text>
-        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">ONE MORE THING</text>
+        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">${factLabel}</text>
         <text font-family="Manrope" font-size="${Math.round(34 * scale)}" fill="#f4f0e8" fill-opacity=".9">
           ${tspans(layout.factLines, left, Math.round(2085 * scale), Math.round(49 * scale))}
         </text>

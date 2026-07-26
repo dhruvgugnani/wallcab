@@ -76,7 +76,7 @@ describe("active-day lesson cache", () => {
     expect(result).toEqual(lesson);
     expect(providerMocks.getHybridDailyLesson).toHaveBeenCalledTimes(1);
     expect(cacheMocks.putCacheValue).toHaveBeenCalledWith(
-      "lesson/v4/2026-07-25/science.json",
+      "lesson/v6/2026-07-25/science.json",
       expect.anything(),
       "application/json",
       1_785_024_000,

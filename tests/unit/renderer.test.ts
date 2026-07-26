@@ -94,6 +94,8 @@ describe("wallpaper renderer", () => {
 
     expect(lesson.pronunciation).toBeTruthy();
     expect(svg).toContain(lesson.pronunciation);
+    expect(svg).toContain('font-family="Noto Sans"');
+    expect(svg).toContain("WORD FACT");
     expect(svg.indexOf(lesson.term)).toBeLessThan(
       svg.indexOf(lesson.pronunciation!),
     );
@@ -125,6 +127,22 @@ describe("wallpaper renderer", () => {
     expect(info.width).toBe(400);
     expect(info.height).toBe(120);
     expect(visiblePixels).toBeGreaterThan(100);
+  });
+
+  it("renders every IPA-specific glyph with the bundled Noto font", () => {
+    const renderGlyph = (glyph: string) =>
+      rasterizeSvgWithBundledFonts(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="180" height="120">
+          <text x="20" y="88" font-family="Noto Sans" font-size="72" fill="#fff">
+            ${glyph}
+          </text>
+        </svg>
+      `);
+    const unsupportedGlyph = renderGlyph("🫠");
+
+    for (const glyph of ["ɫ", "ˈ", "ɛ", "ɪ", "ʌ"]) {
+      expect(renderGlyph(glyph).equals(unsupportedGlyph)).toBe(false);
+    }
   });
 
   it.each(devicePresets)(

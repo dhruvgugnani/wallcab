@@ -21,6 +21,11 @@ const fonts = [
       "https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/Fraunces-Italic%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf",
     destination: "fraunces-variable-italic.ttf",
   },
+  {
+    source:
+      "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf",
+    destination: "noto-sans-regular.ttf",
+  },
 ];
 
 await mkdir(fontDirectory, { recursive: true });

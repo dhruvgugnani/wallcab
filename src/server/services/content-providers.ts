@@ -242,6 +242,46 @@ function isAdvancedVocabularyCandidate(entry: {
   return complexEnough && uncommonEnough;
 }
 
+function vocabularyFact(entry: {
+  word: string;
+  tags?: string[];
+  numSyllables?: number;
+}): string {
+  const partOfSpeechByTag: Record<string, string> = {
+    adj: "adjective",
+    adv: "adverb",
+    n: "noun",
+    v: "verb",
+  };
+  const partOfSpeech = entry.tags
+    ?.map((tag) => partOfSpeechByTag[tag])
+    .find(Boolean);
+  const syllableDetail = entry.numSyllables
+    ? `${entry.numSyllables}-syllable${partOfSpeech ? ` ${partOfSpeech}` : " word"}`
+    : partOfSpeech ?? "word";
+  const frequency = metadataNumber(entry.tags, "f:");
+
+  if (frequency !== undefined) {
+    const frequencyLabel =
+      frequency < 0.01
+        ? "below 0.01"
+        : new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: frequency < 1 ? 2 : 0,
+            maximumFractionDigits: frequency < 1 ? 2 : 1,
+          }).format(frequency);
+    return cleanText(
+      `Datamuse tags this as a ${syllableDetail} and reports a corpus frequency ${frequencyLabel} occurrences per million words.`,
+      176,
+    );
+  }
+
+  const letters = entry.word.replace(/[^a-z]/gi, "").length;
+  return cleanText(
+    `The spelling contains ${letters} letters, and Datamuse tags it as a ${syllableDetail}.`,
+    176,
+  );
+}
+
 function fallbackReason(
   error: unknown,
 ): NonNullable<DailyLesson["provenance"]["fallbackReason"]> {
@@ -374,9 +414,6 @@ async function fetchVocabularyLesson(
     .filter((definition) => isUsableProviderText(definition, 8)) ?? [];
   const definition =
     dictionaryDefinitions?.[0] ?? splitDefinition(selected.defs[0]);
-  const relatedSense =
-    dictionaryDefinitions?.find((item) => item !== definition) ??
-    selected.defs[1];
   const dictionaryPronunciations = payload.flatMap((entry) => [
     entry.phonetic,
     ...(entry.phonetics?.map((phonetic) => phonetic.text) ?? []),
@@ -414,9 +451,7 @@ async function fetchVocabularyLesson(
     term: selected.word.replace(/\b\w/g, (letter) => letter.toUpperCase()),
     pronunciation,
     definition: cleanText(definition, 190),
-    fact: relatedSense
-      ? `Another recorded sense: ${cleanText(splitDefinition(relatedSense), 160)}`
-      : `Datamuse connected this word to today’s theme of curiosity and learning.`,
+    fact: vocabularyFact(selected),
     sources: [
       {
         label: provider,

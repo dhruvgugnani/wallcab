@@ -95,6 +95,6 @@ The iCloud Shortcut download remains disabled until `NEXT_PUBLIC_SHORTCUT_URL` i
 
 ## Licensing
 
-WallCab code is MIT licensed. Third-party content, photographs, provider data, quotations, and fonts retain their original licenses. Fraunces and Manrope are distributed under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+WallCab code is MIT licensed. Third-party content, photographs, provider data, quotations, and fonts retain their original licenses. Fraunces, Manrope, and Noto Sans are distributed under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Created by Dhruv Gugnani.

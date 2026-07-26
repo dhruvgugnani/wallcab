@@ -56,6 +56,11 @@ describe("API-first daily lessons", () => {
     expect(lesson.term).toBe("Perspicacious");
     expect(lesson.pronunciation).toBe("/ˌpɜː.spɪˈkeɪ.ʃəs/");
     expect(lesson.definition).toContain("ready insight");
+    expect(lesson.fact).toContain("4-syllable adjective");
+    expect(lesson.fact).toContain(
+      "0.08 occurrences per million words",
+    );
+    expect(lesson.fact).not.toContain("Another recorded sense");
     expect(lesson.provenance).toEqual({
       mode: "external",
       provider: "Datamuse + Free Dictionary API",
@@ -201,6 +206,9 @@ describe("API-first daily lessons", () => {
       term: "Lexigraphy",
       pronunciation: "/ɫˈɛksɪgrʌfi/",
       definition: "The representation of words in writing.",
+      fact: expect.stringContaining(
+        "below 0.01 occurrences per million words",
+      ),
       provenance: {
         mode: "external",
         provider: "Datamuse",
