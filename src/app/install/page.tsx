@@ -14,7 +14,7 @@ const steps = [
   {
     number: "01",
     title: "Copy your wallpaper address",
-    body: "Use the configurator, choose your learning interests, a built-in style or private custom background, and iPhone size, then copy the personal API address it creates.",
+    body: "Use the configurator, choose your learning interests, a built-in style or private custom background, iPhone size, and optional personal note, then copy the API address it creates.",
     art: "url",
   },
   {
@@ -54,7 +54,7 @@ export default function InstallPage() {
     {
       question: "Does the Shortcut expose my personal data?",
       answer:
-        "No. The URL includes only your selected learning interests, visual choice, and device size. A custom background adds an unguessable image ID, never its deletion secret.",
+        "The URL includes your selected learning interests, visual choice, device size, and any personal note you add. A custom background adds an unguessable image ID, never its deletion secret. Do not put sensitive information in the optional note because it is visible in the URL.",
     },
     {
       question: "What if the download button is unavailable?",

@@ -18,7 +18,7 @@ import {
 } from "@/server/daily-manifest";
 import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v10";
+export const RENDERER_VERSION = "v11";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {
@@ -35,10 +35,13 @@ export function wallpaperCacheKey(
   request: ResolvedWallpaperRequest,
   dateKey: string,
 ): string {
+  const noteSegment = request.personalNote
+    ? `/note-${sha256Hex(request.personalNote).slice(0, 24)}`
+    : "";
   if (request.customBackgroundId) {
-    return `wallpaper/${RENDERER_VERSION}/${dateKey}/custom/${request.customBackgroundId}/${request.category}/${request.theme}/${request.size}.png`;
+    return `wallpaper/${RENDERER_VERSION}/${dateKey}/custom/${request.customBackgroundId}/${request.category}/${request.theme}/${request.size}${noteSegment}.png`;
   }
-  return `wallpaper/${RENDERER_VERSION}/${dateKey}/${request.category}/${request.theme}/${request.size}.png`;
+  return `wallpaper/${RENDERER_VERSION}/${dateKey}/${request.category}/${request.theme}/${request.size}${noteSegment}.png`;
 }
 
 function escapeXml(value: string): string {
@@ -126,7 +129,6 @@ export function fitWallpaperText(lesson: DailyLesson) {
     pronunciation,
     definitionLines: wrapText(lesson.definition, 36, 4),
     quoteLines: wrapText(lesson.quote.text, 34, 3),
-    factLines: wrapText(lesson.fact, 38, 4),
   };
 }
 
@@ -173,8 +175,17 @@ export function createWallpaperOverlay(
       1,
     )[0] ?? "Source unavailable";
   const category = categoryLabels[output.category].toUpperCase();
-  const factLabel =
-    output.category === "vocabulary" ? "WORD FACT" : "ONE MORE THING";
+  const personalNoteLines = output.personalNote
+    ? wrapText(output.personalNote, 38, 3)
+    : [];
+  const personalNoteMarkup =
+    personalNoteLines.length > 0
+      ? `
+        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">PERSONAL NOTE</text>
+        <text font-family="Manrope" font-size="${Math.round(34 * scale)}" fill="#f4f0e8" fill-opacity=".9">
+          ${tspans(personalNoteLines, left, Math.round(2085 * scale), Math.round(49 * scale))}
+        </text>`
+      : "";
 
   return Buffer.from(`
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -217,10 +228,7 @@ export function createWallpaperOverlay(
           ${tspans(layout.quoteLines, left, Math.round(1620 * scale), Math.round(65 * scale))}
         </text>
         <text x="${left}" y="${Math.round(1855 * scale)}" font-family="Manrope" font-size="${Math.round(25 * scale)}" fill="#d8d1c5">— ${escapeXml(output.lesson.quote.author)}</text>
-        <text x="${left}" y="${Math.round(2010 * scale)}" font-family="Manrope" font-size="${Math.round(21 * scale)}" font-weight="700" letter-spacing="${Math.round(5 * scale)}" fill="#d8d1c5">${factLabel}</text>
-        <text font-family="Manrope" font-size="${Math.round(34 * scale)}" fill="#f4f0e8" fill-opacity=".9">
-          ${tspans(layout.factLines, left, Math.round(2085 * scale), Math.round(49 * scale))}
-        </text>
+        ${personalNoteMarkup}
         <line x1="${left}" x2="${right}" y1="${height - Math.round(180 * scale)}" y2="${height - Math.round(180 * scale)}" stroke="#f4f0e8" stroke-opacity=".24"/>
         <text x="${left}" y="${height - Math.round(115 * scale)}" font-family="Manrope" font-size="${Math.round(19 * scale)}" letter-spacing="${Math.round(2 * scale)}" fill="#d8d1c5">${escapeXml(output.date)} UTC · ${escapeXml(sourceCredit)}</text>
       </g>

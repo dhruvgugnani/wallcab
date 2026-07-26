@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   devicePresets,
   learningCategories,
+  PERSONAL_NOTE_MAX_LENGTH,
   visualThemes,
   type LearningCategory,
   type WallpaperPreferences,
@@ -55,6 +56,13 @@ export const wallpaperQuerySchema = z.object({
     .trim()
     .regex(CUSTOM_BACKGROUND_ID_PATTERN)
     .optional(),
+  personalNote: z
+    .string()
+    .trim()
+    .min(1)
+    .max(PERSONAL_NOTE_MAX_LENGTH)
+    .refine((value) => !/[\u0000-\u001f\u007f]/.test(value))
+    .optional(),
 });
 
 export function parseWallpaperSearchParams(
@@ -67,11 +75,13 @@ export function parseWallpaperSearchParams(
     return { success: false, legacyCategory: true };
   }
 
+  const personalNote = searchParams.get("note")?.trim();
   const parsed = wallpaperQuerySchema.safeParse({
     categories: searchParams.get("categories") ?? undefined,
     theme: searchParams.get("theme") ?? undefined,
     size: searchParams.get("size") ?? undefined,
     customBackgroundId: searchParams.get("background") ?? undefined,
+    personalNote: personalNote || undefined,
   });
 
   return parsed.success

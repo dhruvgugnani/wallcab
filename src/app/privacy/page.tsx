@@ -19,11 +19,11 @@ export default function PrivacyPage() {
       <article className="legal prose section-shell">
         <h2>What stays on your device</h2>
         <p>
-          Your learning interests, theme, device selection, and optional
-          custom-background deletion credential are saved in your browser’s
-          localStorage. WallCab does not send them to a profile service or
-          connect them to an identity. Clearing site data removes the local
-          copy, so save a separate deletion link before clearing it.
+          Your learning interests, theme, device selection, optional personal
+          note, and custom-background deletion credential are saved in your
+          browser’s localStorage. WallCab does not send them to a profile
+          service or connect them to an identity. Clearing site data removes
+          the local copy, so save a separate deletion link before clearing it.
         </p>
 
         <h2>Optional custom backgrounds</h2>
@@ -50,6 +50,14 @@ export default function PrivacyPage() {
           the request time. Hosting infrastructure may retain short-lived
           security and operational logs. WallCab does not build user histories
           from them.
+        </p>
+        <p>
+          If you add a personal note, it is included in the copied wallpaper
+          URL so the renderer can place it on the image. Do not enter sensitive
+          information: URL query values may be visible in browser history,
+          Shortcut configuration, and hosting request logs. WallCab does not
+          include the note in its structured application log or store the
+          completed personalized PNG in the shared Worker image cache.
         </p>
 
         <h2>Optional privacy-first analytics</h2>

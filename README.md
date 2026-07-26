@@ -1,6 +1,6 @@
 # WallCab
 
-WallCab turns an iPhone lock screen into one calm, source-credited lesson a day. A user chooses one or more learning interests, a visual theme or private custom background, and a device size; one stable API URL then works with a universal Apple Shortcut.
+WallCab turns an iPhone lock screen into one calm, source-credited lesson a day. A user chooses one or more learning interests, a visual theme or private custom background, a device size, and optionally a short personal note; one stable API URL then works with a universal Apple Shortcut.
 
 The production interface is always dark, account-free, and deliberately small. External providers select the daily word or concept. A reviewed 240-record catalog is used only when a provider fails validation or is unavailable.
 
@@ -63,9 +63,17 @@ npm.cmd run lighthouse
 GET /api/wallpaper?categories=science,history,psychology&theme=space&size=max
 HEAD /api/wallpaper?categories=science,history,psychology&theme=space&size=max
 GET /api/wallpaper/status?categories=science,history,psychology&theme=space&size=max
+GET /api/wallpaper?categories=vocabulary&theme=minimal&size=standard&note=Property%20of%20Dhruv
 ```
 
 `categories` accepts between one and eight comma-separated interests. WallCab chooses one of them for the UTC day, stores the accepted lesson for that day, and reports its source through the status endpoint and `X-WallCab-Content-*` headers. Defaults are `vocabulary`, `nature`, and `standard`. The replaced singular `category` parameter returns `400`.
+
+`note` is optional and accepts up to 80 characters. It replaces the lower fact
+section with a `PERSONAL NOTE` section; leaving it blank removes that section
+entirely. The note is saved only in browser preferences and the copied
+Shortcut URL. Because URL query values may appear in hosting request logs, it
+must not contain sensitive information. Personalized final PNGs bypass the
+shared Worker image cache.
 
 The homepage can upload an optional JPEG, PNG, or WebP. Its returned opaque ID
 adds `background=<id>` to the same daily URL. Raw files are private, upload
@@ -73,7 +81,7 @@ metadata is stripped, the deletion secret stays after `#` in a private link,
 and a missing or expired upload safely falls back to the selected built-in
 theme. Existing URLs remain unchanged.
 
-A wallpaper miss returns `200 image/png`; a hit may return a temporary `307` to a signed Worker asset. See the human-readable [API reference](src/app/docs/api/page.mdx) or `/openapi.json`.
+A wallpaper miss returns `200 image/png`; a hit may return a temporary `307` to a signed Worker asset. Personalized notes return `200` with `X-WallCab-Cache: BYPASS`. See the human-readable [API reference](src/app/docs/api/page.mdx) or `/openapi.json`.
 
 ## Repository map
 

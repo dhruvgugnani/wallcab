@@ -26,7 +26,7 @@ describe("daily wallpaper matrix", () => {
     }
 
     expect(keys.size).toBe(8 * 11 * 3);
-    expect([...keys][0]).toContain("/v10/");
+    expect([...keys][0]).toContain("/v11/");
     expect(photographicThemes).toHaveLength(5);
     expect(originalThemes).toHaveLength(6);
   });
@@ -65,5 +65,30 @@ describe("daily wallpaper matrix", () => {
         "2026-07-25",
       ),
     );
+  });
+
+  it("hashes personal notes without exposing their text in cache keys", () => {
+    const first = wallpaperCacheKey(
+      {
+        category: "vocabulary",
+        theme: "minimal",
+        size: "standard",
+        personalNote: "Property of Dhruv",
+      },
+      "2026-07-25",
+    );
+    const second = wallpaperCacheKey(
+      {
+        category: "vocabulary",
+        theme: "minimal",
+        size: "standard",
+        personalNote: "Keep going",
+      },
+      "2026-07-25",
+    );
+
+    expect(first).toMatch(/\/note-[a-f0-9]{24}\.png$/);
+    expect(first).not.toContain("Dhruv");
+    expect(second).not.toBe(first);
   });
 });

@@ -67,7 +67,7 @@ function logWallpaperResponse(
   requestId: string,
   preferences: WallpaperPreferences,
   lesson: DailyLesson,
-  cache: "HIT" | "MISS",
+  cache: "HIT" | "MISS" | "BYPASS",
 ): void {
   console.info(
     JSON.stringify({
@@ -123,7 +123,7 @@ async function handleWallpaper(
         code: "INVALID_WALLPAPER_OPTIONS",
         message: parsed.legacyCategory
           ? "The category parameter was replaced. Use categories=vocabulary,coding instead."
-          : "Choose between one and eight supported categories, a theme, and a size.",
+          : "Choose supported categories, a theme, a size, and an optional note of no more than 80 characters.",
         allowed: {
           categories: learningCategories,
           theme: visualThemes,
@@ -146,12 +146,16 @@ async function handleWallpaper(
     theme: parsed.value.theme,
     size: parsed.value.size,
     customBackgroundId: parsed.value.customBackgroundId,
+    personalNote: parsed.value.personalNote,
   };
   const manifest = await getPreparedManifest(dateKey);
   const lesson = await resolveDailyLesson(category, now, manifest);
   const provenanceHeaders = contentHeaders(parsed.value, lesson);
   const key = wallpaperCacheKey(resolvedRequest, dateKey);
-  const cachedUrl = await getCachedWallpaperUrl(key);
+  const bypassSharedCache = Boolean(parsed.value.personalNote);
+  const cachedUrl = bypassSharedCache
+    ? null
+    : await getCachedWallpaperUrl(key);
 
   if (cachedUrl) {
     logWallpaperResponse(
@@ -180,14 +184,17 @@ async function handleWallpaper(
       manifest,
       lesson,
     });
-    after(async () => {
-      await putCacheValue(
-        wallpaper.key,
-        wallpaper.bytes,
-        "image/png",
-        getNextUtcRollover(now),
-      );
-    });
+    if (!bypassSharedCache) {
+      after(async () => {
+        await putCacheValue(
+          wallpaper.key,
+          wallpaper.bytes,
+          "image/png",
+          getNextUtcRollover(now),
+        );
+      });
+    }
+    const cacheStatus = bypassSharedCache ? "BYPASS" : "MISS";
 
     const responseHeaders: HeadersInit = {
       ...throttlingHeaders,
@@ -199,7 +206,7 @@ async function handleWallpaper(
       ETag: `"${wallpaper.etag}"`,
       Link: '</sources>; rel="describedby"',
       "X-Request-Id": requestId,
-      "X-WallCab-Cache": "MISS",
+      "X-WallCab-Cache": cacheStatus,
       "X-WallCab-Date": dateKey,
       "X-WallCab-Size": wallpaper.size,
       "X-WallCab-Theme": wallpaper.theme,
@@ -212,7 +219,7 @@ async function handleWallpaper(
       requestId,
       parsed.value,
       lesson,
-      "MISS",
+      cacheStatus,
     );
     return new Response(body, {
       status: 200,

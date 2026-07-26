@@ -121,6 +121,8 @@ Verify:
   falls back safely;
 - first wallpaper request is `200 image/png`;
 - repeated request becomes a `307` cache hit when the Worker is configured;
+- a request with `note=Property%20of%20Dhruv` returns
+  `X-WallCab-Cache: BYPASS` and is not uploaded as a shared final image;
 - `HEAD` has the same metadata and no body;
 - all three dimensions and the 2.2 MiB ceiling hold;
 - the wallpaper includes lesson and image attribution;

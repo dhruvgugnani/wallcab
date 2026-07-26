@@ -60,10 +60,6 @@ describe("wallpaper renderer", () => {
       expect(layout.quoteLines.every((line) => line.length <= 34)).toBe(
         true,
       );
-      expect(layout.factLines.length).toBeLessThanOrEqual(4);
-      expect(layout.factLines.every((line) => line.length <= 38)).toBe(
-        true,
-      );
     }
   });
 
@@ -95,13 +91,50 @@ describe("wallpaper renderer", () => {
     expect(lesson.pronunciation).toBeTruthy();
     expect(svg).toContain(lesson.pronunciation);
     expect(svg).toContain('font-family="Noto Sans"');
-    expect(svg).toContain("WORD FACT");
+    expect(svg).not.toContain("WORD FACT");
+    expect(svg).not.toContain("ONE MORE THING");
+    expect(svg).not.toContain(lesson.fact);
     expect(svg.indexOf(lesson.term)).toBeLessThan(
       svg.indexOf(lesson.pronunciation!),
     );
     expect(svg.indexOf(lesson.pronunciation!)).toBeLessThan(
       svg.indexOf(firstDefinitionLine),
     );
+  });
+
+  it("renders an escaped personal note only when one is supplied", () => {
+    const lesson = getFallbackLesson(
+      "science",
+      new Date("2026-07-25T00:00:00Z"),
+    );
+    const base = {
+      category: "science" as const,
+      theme: "nature" as const,
+      size: "standard" as const,
+      date: lesson.date,
+      lesson,
+      background: {
+        label: "Fixture background",
+        url: "https://example.com/background",
+        license: "CC0",
+        source: "Test",
+      },
+    };
+    const withoutNote = createWallpaperOverlay(
+      base,
+      deviceDimensions.standard.width,
+      deviceDimensions.standard.height,
+    ).toString();
+    const withNote = createWallpaperOverlay(
+      { ...base, personalNote: "Property of Dhruv & family" },
+      deviceDimensions.standard.width,
+      deviceDimensions.standard.height,
+    ).toString();
+
+    expect(withoutNote).not.toContain("PERSONAL NOTE");
+    expect(withNote).toContain("PERSONAL NOTE");
+    expect(withNote).toContain("Property of Dhruv &amp; family");
+    expect(withNote).not.toContain(lesson.fact);
   });
 
   it("renders text using bundled fonts without system fonts", async () => {

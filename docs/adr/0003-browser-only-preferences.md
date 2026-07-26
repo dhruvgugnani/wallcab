@@ -9,11 +9,14 @@ Accounts and cross-device profiles would introduce personal data, authentication
 
 ## Decision
 
-Category, theme, device size, and an optional custom-background credential are
-stored in browser `localStorage`. The generated Shortcut URL contains only
-enumerated preferences and an opaque upload ID. The separate private deletion
-link contains its secret after `#`; that fragment is not included in normal
-page requests. WallCab stores no user profile.
+Category, theme, device size, an optional personal note, and an optional
+custom-background credential are stored in browser `localStorage`. The
+generated Shortcut URL contains the enumerated preferences, the optional note,
+and an opaque upload ID. Notes are capped at 80 characters, must not contain
+sensitive information, and personalized final PNGs bypass the shared Worker
+image cache. The separate private deletion link contains its secret after `#`;
+that fragment is not included in normal page requests. WallCab stores no user
+profile.
 
 ## Consequences
 

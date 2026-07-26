@@ -32,6 +32,7 @@ export const visualThemes = [
 ] as const;
 
 export const devicePresets = ["standard", "air", "max"] as const;
+export const PERSONAL_NOTE_MAX_LENGTH = 80;
 
 export type LearningCategory = (typeof learningCategories)[number];
 export type PhotographicTheme = (typeof photographicThemes)[number];
@@ -86,6 +87,7 @@ export type WallpaperPreferences = {
   theme: VisualTheme;
   size: DevicePreset;
   customBackgroundId?: string;
+  personalNote?: string;
 };
 
 export type ResolvedWallpaperRequest = {
@@ -93,6 +95,7 @@ export type ResolvedWallpaperRequest = {
   theme: VisualTheme;
   size: DevicePreset;
   customBackgroundId?: string;
+  personalNote?: string;
 };
 
 export type WallpaperCacheRecord = ResolvedWallpaperRequest & {

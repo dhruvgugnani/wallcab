@@ -52,20 +52,34 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
     .getByLabel("iPhone 17 Pro Max")
     .locator("..")
     .click();
+  await configurator
+    .getByLabel("Personal note")
+    .fill("Property of Dhruv");
   await expect(configurator.getByText("External · Wikimedia")).toBeVisible();
   await page.getByRole("button", { name: "Copy address" }).click();
 
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-    .toContain(
-      "/api/wallpaper?categories=science,history&theme=grid&size=max",
-    );
+    .toContain("note=Property+of+Dhruv");
+  const clipboardUrl = new URL(
+    await page.evaluate(() => navigator.clipboard.readText()),
+  );
+  expect(clipboardUrl.pathname).toBe("/api/wallpaper");
+  expect(clipboardUrl.searchParams.get("categories")).toBe(
+    "science,history",
+  );
+  expect(clipboardUrl.searchParams.get("theme")).toBe("grid");
+  expect(clipboardUrl.searchParams.get("size")).toBe("max");
+  expect(clipboardUrl.searchParams.get("note")).toBe("Property of Dhruv");
   await page.reload();
   await expect(page.getByLabel("Science")).toBeChecked();
   await expect(page.getByLabel("History")).toBeChecked();
   await expect(page.getByLabel("Vocabulary")).not.toBeChecked();
   await expect(page.getByLabel("Grid")).toBeChecked();
   await expect(page.getByLabel("iPhone 17 Pro Max")).toBeChecked();
+  await expect(page.getByLabel("Personal note")).toHaveValue(
+    "Property of Dhruv",
+  );
 });
 
 test("home and install have no serious accessibility violations", async ({

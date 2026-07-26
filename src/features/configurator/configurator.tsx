@@ -12,6 +12,7 @@ import {
   devicePresets,
   learningCategories,
   originalThemes,
+  PERSONAL_NOTE_MAX_LENGTH,
   photographicThemes,
   themeCadence,
   themeLabels,
@@ -39,12 +40,14 @@ type Selections = {
   theme: VisualTheme;
   size: DevicePreset;
   customBackground?: SavedCustomBackground;
+  personalNote: string;
 };
 
 const defaults: Selections = {
   categories: ["vocabulary"],
   theme: "nature",
   size: "standard",
+  personalNote: "",
 };
 
 type SourceStatus =
@@ -57,7 +60,8 @@ type SourceStatus =
     }
   | { state: "unavailable" };
 
-const storageKey = "wallcab:preferences:v2";
+const storageKey = "wallcab:preferences:v3";
+const legacyStorageKey = "wallcab:preferences:v2";
 
 const themeGroups = [
   {
@@ -74,9 +78,13 @@ const themeGroups = [
   },
 ] as const;
 
-function isSelections(value: unknown): value is Selections {
+type StoredSelections = Omit<Selections, "personalNote"> & {
+  personalNote?: string;
+};
+
+function isStoredSelections(value: unknown): value is StoredSelections {
   if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<Selections>;
+  const candidate = value as Partial<StoredSelections>;
   const custom = candidate.customBackground;
   const customIsValid =
     custom === undefined ||
@@ -95,6 +103,10 @@ function isSelections(value: unknown): value is Selections {
     ) &&
     visualThemes.includes(candidate.theme as VisualTheme) &&
     devicePresets.includes(candidate.size as DevicePreset) &&
+    (candidate.personalNote === undefined ||
+      (typeof candidate.personalNote === "string" &&
+        candidate.personalNote.length <= PERSONAL_NOTE_MAX_LENGTH &&
+        !/[\u0000-\u001f\u007f]/.test(candidate.personalNote))) &&
     customIsValid
   );
 }
@@ -114,6 +126,7 @@ export function Configurator({
     "idle" | "copied" | "failed"
   >("idle");
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>({
     state: "loading",
   });
@@ -131,12 +144,15 @@ export function Configurator({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
-        const stored = window.localStorage.getItem(storageKey);
+        const stored =
+          window.localStorage.getItem(storageKey) ??
+          window.localStorage.getItem(legacyStorageKey);
         const parsed: unknown = stored ? JSON.parse(stored) : null;
-        if (isSelections(parsed)) {
+        if (isStoredSelections(parsed)) {
           setSelections({
             ...parsed,
             categories: normalizeLearningCategories(parsed.categories),
+            personalNote: parsed.personalNote?.trim() ?? "",
           });
         }
       } catch {
@@ -205,13 +221,26 @@ export function Configurator({
     if (selections.customBackground?.active) {
       url.searchParams.set("background", selections.customBackground.id);
     }
+    const personalNote = selections.personalNote.trim();
+    if (personalNote) {
+      url.searchParams.set("note", personalNote);
+    }
     return url.toString().replaceAll("%2C", ",");
   }, [hydrated, selections, siteOrigin]);
 
   const statusUrl = useMemo(() => {
     const url = new URL(apiUrl);
     url.pathname = "/api/wallpaper/status";
+    url.searchParams.delete("note");
     return url.toString();
+  }, [apiUrl]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPreviewUrl(apiUrl);
+      setPreviewFailed(false);
+    }, 350);
+    return () => window.clearTimeout(timer);
   }, [apiUrl]);
 
   const resolvedCategory = hydrated
@@ -376,9 +405,8 @@ export function Configurator({
         throw new Error("Deletion is temporarily unavailable.");
       }
       setSelections((current) => ({
-        categories: current.categories,
-        theme: current.theme,
-        size: current.size,
+        ...current,
+        customBackground: undefined,
       }));
       setDeleteStatus("idle");
       setDeleteMessage("The upload was deleted.");
@@ -652,6 +680,40 @@ export function Configurator({
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend>
+            <span>04</span>
+            Add something personal
+          </legend>
+          <label className="personal-note-field" htmlFor="personal-note">
+            <span>Personal note</span>
+            <input
+              id="personal-note"
+              name="personalNote"
+              type="text"
+              value={selections.personalNote}
+              maxLength={PERSONAL_NOTE_MAX_LENGTH}
+              autoComplete="off"
+              placeholder="Property of Dhruv…"
+              aria-describedby="personal-note-help personal-note-count"
+              onChange={(event) =>
+                setSelections((current) => ({
+                  ...current,
+                  personalNote: event.target.value,
+                }))
+              }
+            />
+            <span className="personal-note-meta">
+              <small id="personal-note-help">
+                Optional. Leave this blank to remove the section completely.
+              </small>
+              <small id="personal-note-count" aria-live="polite">
+                {selections.personalNote.length}/{PERSONAL_NOTE_MAX_LENGTH}
+              </small>
+            </span>
+          </label>
+        </fieldset>
+
         <div className="api-output">
           <p>Your personal wallpaper address</p>
           <code>{apiUrl}</code>
@@ -678,7 +740,15 @@ export function Configurator({
             {selections.customBackground?.active
               ? " private background"
               : " theme"}
-            , and one size. No account or personal information is attached.
+            , one size
+            {selections.personalNote.trim()
+              ? ", and your personal note"
+              : ""}
+            .{" "}
+            {selections.personalNote.trim()
+              ? "Avoid sensitive information because the note is visible in the URL. "
+              : ""}
+            No account is attached.
           </small>
         </div>
       </div>
@@ -705,8 +775,8 @@ export function Configurator({
               </div>
             ) : !previewFailed ? (
               <Image
-                key={apiUrl}
-                src={apiUrl}
+                key={previewUrl || apiUrl}
+                src={previewUrl || apiUrl}
                 alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
                   selections.customBackground?.active
                     ? "your custom background"

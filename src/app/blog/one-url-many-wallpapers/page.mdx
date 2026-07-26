@@ -22,7 +22,7 @@ export const metadata = {
   readingTime="7 min read"
 />
 
-WallCab’s public interface is intentionally dull: selected interests, a visual choice, and a size go in; a PNG comes out. The machinery behind it has a harder job. It must make provider-driven content feel stable, source-aware photography feel safe, optional private uploads feel controlled, and full-resolution image composition feel immediate.
+WallCab’s public interface is intentionally dull: selected interests, a visual choice, a size, and an optional personal note go in; a PNG comes out. The machinery behind it has a harder job. It must make provider-driven content feel stable, source-aware photography feel safe, optional private uploads feel controlled, and full-resolution image composition feel immediate.
 
 ## One lesson, many presentations
 
@@ -59,6 +59,11 @@ The encoder tries a descending sequence of indexed palettes. The first output be
 A Cloudflare Worker and KV store generated variants for the active day. The public asset URL is signed and short-lived. Private cache reads and writes use an HMAC over the request method, path, timestamp, and body hash.
 
 This is an optimization boundary, not a correctness boundary. On a cache miss, Next.js renders the image and returns it immediately, then uploads it in the background. If the Worker is down, the caller still gets the wallpaper.
+
+Personal notes change that final step. The renderer escapes and bounds the
+text, then returns the personalized image directly without putting that final
+PNG in the shared Worker cache. The daily lesson and background can still use
+their ordinary active-day caches.
 
 That principle appears throughout WallCab: every external service can improve the result, but none should have the power to leave the lock screen empty.
 

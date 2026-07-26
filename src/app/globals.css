@@ -981,6 +981,63 @@ label {
   color: var(--paper);
 }
 
+.personal-note-field {
+  display: grid;
+  min-width: 0;
+  gap: .7rem;
+}
+
+.personal-note-field > span:first-child {
+  color: var(--paper-muted);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.personal-note-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), transparent 55%),
+    #0c0c0a;
+  color: var(--paper);
+  padding: 1rem;
+  font-family: var(--sans);
+  font-size: 1rem;
+}
+
+.personal-note-field input::placeholder {
+  color: #716e67;
+}
+
+.personal-note-field input:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+
+.personal-note-meta {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #928e85;
+  font-size: .65rem;
+  line-height: 1.5;
+}
+
+.personal-note-meta small:first-child {
+  min-width: 0;
+}
+
+.personal-note-meta small:last-child {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
 .api-output {
   display: grid;
   grid-template-columns: 1fr auto;

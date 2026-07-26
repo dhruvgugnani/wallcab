@@ -1,4 +1,7 @@
-import { visualThemes } from "@/features/wallpaper/types";
+import {
+  PERSONAL_NOTE_MAX_LENGTH,
+  visualThemes,
+} from "@/features/wallpaper/types";
 
 const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const categoryValues = [
@@ -56,15 +59,26 @@ const wallpaperParameters = [
       pattern: "^[A-Za-z0-9_-]{22}$",
     },
   },
+  {
+    name: "note",
+    in: "query",
+    description:
+      "Optional text rendered under PERSONAL NOTE. Blank values remove the section. Because it is part of the URL, do not use sensitive information.",
+    schema: {
+      type: "string",
+      minLength: 1,
+      maxLength: PERSONAL_NOTE_MAX_LENGTH,
+    },
+  },
 ] as const;
 
 const specification = {
   openapi: "3.1.0",
   info: {
     title: "WallCab Wallpaper API",
-    version: "2.1.0",
+    version: "2.2.0",
     description:
-      "Choose one or more learning interests and generate one deterministic, source-credited daily wallpaper.",
+      "Choose one or more learning interests, optionally add a personal note, and generate one deterministic, source-credited daily wallpaper.",
     license: {
       name: "MIT (code only)",
       url: "https://github.com/dhruvgugnani/wallcab/blob/main/LICENSE",
@@ -95,6 +109,12 @@ const specification = {
                 schema: {
                   type: "string",
                   enum: ["custom", "daily-photo", "fixed-design"],
+                },
+              },
+              "X-WallCab-Cache": {
+                schema: {
+                  type: "string",
+                  enum: ["HIT", "MISS", "BYPASS"],
                 },
               },
             },

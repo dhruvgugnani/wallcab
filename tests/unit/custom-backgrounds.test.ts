@@ -53,6 +53,32 @@ describe("custom backgrounds", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("accepts a bounded personal note and omits an empty one", () => {
+    const withNote = parseWallpaperSearchParams(
+      new URLSearchParams("note=Property+of+Dhruv"),
+    );
+    const withoutNote = parseWallpaperSearchParams(
+      new URLSearchParams("note=+++"),
+    );
+
+    expect(withNote).toMatchObject({
+      success: true,
+      value: { personalNote: "Property of Dhruv" },
+    });
+    expect(withoutNote).toMatchObject({
+      success: true,
+      value: { personalNote: undefined },
+    });
+  });
+
+  it("rejects personal notes that exceed the wallpaper limit", () => {
+    const parsed = parseWallpaperSearchParams(
+      new URLSearchParams({ note: "x".repeat(81) }),
+    );
+
+    expect(parsed.success).toBe(false);
+  });
+
   it("normalizes an image to a private metadata-free WebP", async () => {
     const source = await sharp({
       create: {

@@ -28,7 +28,7 @@ Apple Shortcut / browser
                     |
               PNG response now
                     |
-            background KV upload
+          shared-image KV upload
 ```
 
 ## Deterministic daily content
@@ -63,7 +63,7 @@ The Node.js renderer uses Sharp with an SVG overlay:
 - the clock and Dynamic Island zone remains quiet;
 - the lesson occupies the middle and lower fields;
 - vocabulary terms include a bounded IPA pronunciation line;
-- titles, definitions, quotations, and facts have separate hard line and block bounds;
+- titles, definitions, quotations, and optional personal notes have separate hard line and block bounds;
 - a contrast gradient protects readability;
 - lesson and image credits are always visible;
 - adaptive indexed-palette compression targets 2.2 MiB.
@@ -76,6 +76,12 @@ The Cloudflare Worker exposes a signed public `GET` and `HEAD` endpoint. Private
 
 On a hit, the Next.js route returns a temporary `307` to the signed Worker URL. On a miss, Next.js sends the newly rendered image immediately and schedules the cache upload after the response. If the Worker is unavailable, image generation still succeeds. Active-day lesson and background records reduce repeated upstream requests even when a complete rollover manifest is unavailable.
 
+Personalized requests are intentionally different. The optional note is
+validated to 80 characters and changes only the SVG text layer. Its raw value
+never appears in an internal cache key, and the completed personalized PNG
+bypasses the shared Worker image cache. Daily lesson and background inputs can
+still use their normal active-day caches.
+
 Custom-object routes share the same timestamped HMAC boundary and expose
 private KV data only to the renderer. Separate KV metadata records creation
 time, a hash of the deletion token, and a daily-bounded last-use timestamp. A
@@ -85,6 +91,6 @@ variants.
 
 ## Trust boundaries
 
-Provider data and uploads are untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. User query values are enumerated before they reach the renderer. Turnstile tokens are verified server-side against the exact action and hostname. The Shortcut URL contains only an unguessable custom ID; the deletion token remains in browser storage and the fragment of a private deletion link.
+Provider data, uploads, and personal notes are untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. Enumerated query values are validated before they reach the renderer; notes are bounded, control characters are rejected, and text is escaped before SVG composition. Turnstile tokens are verified server-side against the exact action and hostname. The Shortcut URL contains an unguessable custom ID and, when chosen, the personal note; the deletion token remains in browser storage and the fragment of a private deletion link. Users are warned not to put sensitive information in a URL-visible note.
 
 </DocsLayout>

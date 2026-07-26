@@ -226,6 +226,39 @@ describe("wallpaper route", () => {
     );
   });
 
+  it("renders personal notes without reading or writing the shared image cache", async () => {
+    const { GET } = await route();
+    const response = await GET(
+      new Request(
+        "http://localhost/api/wallpaper?categories=science&theme=grid&size=standard&note=Property+of+Dhruv",
+        { headers: { "x-real-ip": "192.0.2.29" } },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-wallcab-cache")).toBe("BYPASS");
+    expect(cacheMocks.getCachedWallpaperUrl).not.toHaveBeenCalled();
+    expect(cacheMocks.putCacheValue).not.toHaveBeenCalled();
+    expect(afterMock).not.toHaveBeenCalled();
+    expect(rendererMocks.renderWallpaper).toHaveBeenCalledWith(
+      expect.objectContaining({ personalNote: "Property of Dhruv" }),
+      expect.any(Date),
+      expect.any(Object),
+    );
+  });
+
+  it("rejects a personal note longer than 80 characters", async () => {
+    const { GET } = await route();
+    const url = new URL("http://localhost/api/wallpaper");
+    url.searchParams.set("note", "x".repeat(81));
+    const response = await GET(
+      new Request(url, { headers: { "x-real-ip": "192.0.2.30" } }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(rendererMocks.renderWallpaper).not.toHaveBeenCalled();
+  });
+
   it("reports the resolved daily category and provider provenance", async () => {
     const { GET } = await statusRoute();
     const response = await GET(
