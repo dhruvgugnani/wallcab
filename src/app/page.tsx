@@ -56,15 +56,25 @@ export default function Home() {
             </svg>
           </a>
         </div>
-        <div className="hero-cabinet" aria-hidden="true">
-          <span className="hero-cabinet-orbit" />
-          <BrandMark variant="cabinet" />
-          <span className="hero-cabinet-monogram">W / C</span>
-          <span className="hero-cabinet-status">
-            <i />
-            Daily edition
-          </span>
-          <span className="hero-cabinet-time">00:00 UTC</span>
+        <div className="hero-edition" aria-hidden="true">
+          <div className="hero-edition-frame">
+            <div className="hero-edition-topline">
+              <span>09:41</span>
+              <span>Daily wallpaper</span>
+            </div>
+            <span className="hero-edition-island" />
+            <div className="hero-edition-word">
+              <span>Vocabulary / 01</span>
+              <strong>Liminal</strong>
+              <em>/ˈlɪm.ɪ.nəl/</em>
+              <i />
+              <p>At the threshold between one state and another.</p>
+            </div>
+            <div className="hero-edition-footer">
+              <BrandMark />
+              <span>New lesson<br />00:00 UTC</span>
+            </div>
+          </div>
         </div>
       </section>
 
