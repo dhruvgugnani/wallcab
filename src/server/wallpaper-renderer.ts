@@ -18,7 +18,7 @@ import {
 } from "@/server/daily-manifest";
 import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
-export const RENDERER_VERSION = "v7";
+export const RENDERER_VERSION = "v8";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
 
 function getRendererFontFiles(): string[] {

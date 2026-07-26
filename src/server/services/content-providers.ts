@@ -324,7 +324,6 @@ async function fetchVocabularyLesson(
     md: "dpsrf",
     ipa: "1",
     max: "500",
-    v: "enwiki",
   });
   const words = datamuseSchema
     .parse(
@@ -357,16 +356,22 @@ async function fetchVocabularyLesson(
     );
   }
 
-  const payload = dictionarySchema.parse(
-    await fetchProviderJson(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(selected.word.toLowerCase())}`,
-    ),
-  );
+  let payload: z.infer<typeof dictionarySchema> = [];
+  try {
+    payload = dictionarySchema.parse(
+      await fetchProviderJson(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(selected.word.toLowerCase())}`,
+      ),
+    );
+  } catch {
+    // Datamuse already supplies a definition and IPA for valid candidates.
+    // Free Dictionary is useful enrichment, but rare words often return 404.
+  }
   const dictionaryDefinitions = payload[0]?.meanings
     .flatMap((meaning) =>
       meaning.definitions.map((item) => item.definition),
     )
-    .filter((definition) => isUsableProviderText(definition, 8));
+    .filter((definition) => isUsableProviderText(definition, 8)) ?? [];
   const definition =
     dictionaryDefinitions?.[0] ?? splitDefinition(selected.defs[0]);
   const relatedSense =
@@ -376,9 +381,13 @@ async function fetchVocabularyLesson(
     entry.phonetic,
     ...(entry.phonetics?.map((phonetic) => phonetic.text) ?? []),
   ]);
-  const datamusePronunciation = selected.tags
-    ?.find((tag) => tag.startsWith("pron:"))
-    ?.slice("pron:".length);
+  const datamusePronunciation =
+    selected.tags
+      ?.find((tag) => tag.startsWith("ipa_pron:"))
+      ?.slice("ipa_pron:".length) ??
+    selected.tags
+      ?.find((tag) => tag.startsWith("pron:"))
+      ?.slice("pron:".length);
   const pronunciation = normalizePronunciation(
     ...dictionaryPronunciations,
     datamusePronunciation,
@@ -392,6 +401,13 @@ async function fetchVocabularyLesson(
   const sourceUrl =
     safeSourceUrl(payload[0]?.sourceUrls) ??
     `https://en.wiktionary.org/wiki/${encodeURIComponent(selected.word)}`;
+  const dictionaryEnriched =
+    dictionaryDefinitions.length > 0 ||
+    dictionaryPronunciations.some(Boolean) ||
+    Boolean(safeSourceUrl(payload[0]?.sourceUrls));
+  const provider = dictionaryEnriched
+    ? "Datamuse + Free Dictionary API"
+    : "Datamuse";
 
   return {
     ...fallback,
@@ -403,15 +419,15 @@ async function fetchVocabularyLesson(
       : `Datamuse connected this word to today’s theme of curiosity and learning.`,
     sources: [
       {
-        label: "Datamuse + Free Dictionary API",
+        label: provider,
         url: sourceUrl,
-        license: "Wiktionary / WordNet source licenses apply",
+        license: "Datamuse / Wiktionary / WordNet source licenses apply",
       },
       ...fallback.sources.slice(1),
     ],
     provenance: {
       mode: "external",
-      provider: "Datamuse + Free Dictionary API",
+      provider,
     },
   };
 }

@@ -26,7 +26,7 @@ describe("daily wallpaper matrix", () => {
     }
 
     expect(keys.size).toBe(8 * 11 * 3);
-    expect([...keys][0]).toContain("/v7/");
+    expect([...keys][0]).toContain("/v8/");
     expect(photographicThemes).toHaveLength(5);
     expect(originalThemes).toHaveLength(6);
   });

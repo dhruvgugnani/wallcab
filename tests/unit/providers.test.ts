@@ -20,7 +20,12 @@ describe("API-first daily lessons", () => {
           {
             word: "perspicacious",
             defs: ["adj\tHaving a ready insight into things"],
-            tags: ["adj", "f:0.08", "pron:pɜː.spɪˈkeɪ.ʃəs"],
+            tags: [
+              "adj",
+              "f:0.08",
+              "pron:P ER S P IH K EY SH AH S",
+              "ipa_pron:pɜː.spɪˈkeɪ.ʃəs",
+            ],
             numSyllables: 4,
           },
         ]),
@@ -59,6 +64,7 @@ describe("API-first daily lessons", () => {
     const datamuseUrl = new URL(fetchMock.mock.calls[0]![0] as string);
     expect(datamuseUrl.searchParams.get("md")).toBe("dpsrf");
     expect(datamuseUrl.searchParams.get("ipa")).toBe("1");
+    expect(datamuseUrl.searchParams.has("v")).toBe(false);
   });
 
   it("selects a non-vocabulary concept from Wikimedia", async () => {
@@ -117,6 +123,90 @@ describe("API-first daily lessons", () => {
       provider: "WallCab reviewed catalog",
       fallbackReason: "provider_unavailable",
     });
+  });
+
+  it("uses Datamuse IPA when Free Dictionary has no pronunciation", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            word: "perspicacious",
+            defs: ["adj\tHaving a ready insight into things"],
+            tags: [
+              "adj",
+              "f:0.08",
+              "pron:P ER S P IH K EY SH AH S",
+              "ipa_pron:pɜː.spɪˈkeɪ.ʃəs",
+            ],
+            numSyllables: 4,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            meanings: [
+              {
+                definitions: [
+                  { definition: "Having a ready insight into things." },
+                ],
+              },
+            ],
+          },
+        ]),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const lesson = await getHybridDailyLesson(
+      "vocabulary",
+      new Date("2026-07-25T00:00:00Z"),
+    );
+
+    expect(lesson.provenance.mode).toBe("external");
+    expect(lesson.pronunciation).toBe("/pɜː.spɪˈkeɪ.ʃəs/");
+  });
+
+  it("keeps valid Datamuse content when a rare word is missing from Free Dictionary", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            word: "lexigraphy",
+            defs: ["n\tThe representation of words in writing."],
+            tags: [
+              "n",
+              "f:0.000000",
+              "ipa_pron:ɫˈɛksɪgrʌfi",
+            ],
+            numSyllables: 4,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          { title: "No Definitions Found" },
+          { status: 404 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const lesson = await getHybridDailyLesson(
+      "vocabulary",
+      new Date("2026-07-26T00:00:00Z"),
+    );
+
+    expect(lesson).toMatchObject({
+      term: "Lexigraphy",
+      pronunciation: "/ɫˈɛksɪgrʌfi/",
+      definition: "The representation of words in writing.",
+      provenance: {
+        mode: "external",
+        provider: "Datamuse",
+      },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("uses an advanced fallback when pronunciation metadata is missing", async () => {

@@ -58,7 +58,7 @@ const lessonSchema = z.object({
 });
 
 const manifestSchema = z.object({
-  version: z.literal(4),
+  version: z.literal(5),
   date: z.string(),
   lessons: z.record(z.enum(learningCategories), lessonSchema),
   backgrounds: z.record(z.enum(visualThemes), attributionSchema),
@@ -67,14 +67,14 @@ const manifestSchema = z.object({
 export type DailyManifest = z.infer<typeof manifestSchema>;
 
 export function manifestCacheKey(dateKey: string): string {
-  return `manifest/v4/${dateKey}.json`;
+  return `manifest/v5/${dateKey}.json`;
 }
 
 export function lessonCacheKey(
   dateKey: string,
   category: LearningCategory,
 ): string {
-  return `lesson/v3/${dateKey}/${category}.json`;
+  return `lesson/v4/${dateKey}/${category}.json`;
 }
 
 export function backgroundCacheKey(
@@ -185,7 +185,7 @@ export async function prepareDailyManifest(
     backgroundEntries.map(([theme, asset]) => [theme, asset.attribution]),
   ) as Record<VisualTheme, BackgroundAttribution>;
   const manifest: DailyManifest = {
-    version: 4,
+    version: 5,
     date: dateKey,
     lessons,
     backgrounds,
