@@ -1151,12 +1151,16 @@ label {
 }
 
 .preview-loading {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
   display: flex;
-  height: 100%;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 1rem;
+  background: rgba(5, 5, 5, .76);
+  backdrop-filter: blur(3px);
   color: var(--paper-muted);
   font-size: .66rem;
   letter-spacing: .08em;

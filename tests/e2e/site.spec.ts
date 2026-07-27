@@ -71,6 +71,7 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   expect(clipboardUrl.searchParams.get("theme")).toBe("grid");
   expect(clipboardUrl.searchParams.get("size")).toBe("max");
   expect(clipboardUrl.searchParams.get("note")).toBe("Property of Dhruv");
+  expect(clipboardUrl.searchParams.has("preview")).toBe(false);
   await page.reload();
   await expect(page.getByLabel("Science")).toBeChecked();
   await expect(page.getByLabel("History")).toBeChecked();
@@ -80,6 +81,44 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   await expect(page.getByLabel("Personal note")).toHaveValue(
     "Property of Dhruv",
   );
+});
+
+test("starts the lightweight preview without waiting for source status", async ({
+  page,
+}) => {
+  let releaseStatus: (() => void) | undefined;
+  const statusBlocked = new Promise<void>((resolve) => {
+    releaseStatus = resolve;
+  });
+  let previewUrl = "";
+
+  await page.route("**/api/wallpaper**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/status")) {
+      await statusBlocked;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          resolvedCategory: "vocabulary",
+          content: { mode: "external", provider: "Dictionary API" },
+        }),
+      });
+      return;
+    }
+
+    previewUrl = url.toString();
+    await route.fulfill({
+      contentType: "image/svg+xml",
+      body: previewSvg,
+    });
+  });
+
+  await page.goto("/");
+  await page.locator(".phone-frame").scrollIntoViewIfNeeded();
+  await expect.poll(() => previewUrl).not.toBe("");
+  expect(new URL(previewUrl).searchParams.get("preview")).toBe("1");
+  await expect(page.locator(".phone-frame img")).toBeVisible();
+  releaseStatus?.();
 });
 
 test("home and install have no serious accessibility violations", async ({

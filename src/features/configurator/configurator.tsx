@@ -126,6 +126,7 @@ export function Configurator({
     "idle" | "copied" | "failed"
   >("idle");
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState("");
   const [sourceStatus, setSourceStatus] = useState<SourceStatus>({
     state: "loading",
@@ -235,13 +236,20 @@ export function Configurator({
     return url.toString();
   }, [apiUrl]);
 
+  const previewRequestUrl = useMemo(() => {
+    const url = new URL(apiUrl);
+    url.searchParams.set("preview", "1");
+    return url.toString().replaceAll("%2C", ",");
+  }, [apiUrl]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setPreviewUrl(apiUrl);
+      setPreviewLoading(true);
+      setPreviewUrl(previewRequestUrl);
       setPreviewFailed(false);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [apiUrl]);
+  }, [previewRequestUrl]);
 
   const resolvedCategory = hydrated
     ? selectDailyCategory(selections.categories)
@@ -251,39 +259,44 @@ export function Configurator({
     if (!hydrated) return;
 
     const controller = new AbortController();
-    void fetch(statusUrl, {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Status unavailable");
-        }
-        return response.json() as Promise<{
-          resolvedCategory: LearningCategory;
-          content: {
-            mode: "external" | "fallback";
-            provider: string;
-          };
-        }>;
+    const timer = window.setTimeout(() => {
+      void fetch(statusUrl, {
+        cache: "no-store",
+        signal: controller.signal,
       })
-      .then((status) => {
-        setSourceStatus({
-          state: "ready",
-          category: status.resolvedCategory,
-          mode: status.content.mode,
-          provider: status.content.provider,
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Status unavailable");
+          }
+          return response.json() as Promise<{
+            resolvedCategory: LearningCategory;
+            content: {
+              mode: "external" | "fallback";
+              provider: string;
+            };
+          }>;
+        })
+        .then((status) => {
+          setSourceStatus({
+            state: "ready",
+            category: status.resolvedCategory,
+            mode: status.content.mode,
+            provider: status.content.provider,
+          });
+        })
+        .catch((error: unknown) => {
+          if (
+            !(error instanceof DOMException && error.name === "AbortError")
+          ) {
+            setSourceStatus({ state: "unavailable" });
+          }
         });
-      })
-      .catch((error: unknown) => {
-        if (
-          !(error instanceof DOMException && error.name === "AbortError")
-        ) {
-          setSourceStatus({ state: "unavailable" });
-        }
-      });
+    }, 350);
 
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [hydrated, statusUrl]);
 
   async function copyUrl() {
@@ -768,30 +781,44 @@ export function Configurator({
           </div>
           <div className="phone-frame">
             <div className="phone-island" aria-hidden="true" />
-            {sourceStatus.state === "loading" ? (
-              <div className="preview-loading" role="status">
-                <span />
-                <p>Choosing today&apos;s lesson</p>
-              </div>
-            ) : !previewFailed ? (
-              <Image
-                key={previewUrl || apiUrl}
-                src={previewUrl || apiUrl}
-                alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${selections.customBackground?.active
-                  ? "your custom background"
-                  : `the ${themeLabels[selections.theme]} theme`
+            {!previewFailed ? (
+              <>
+                <Image
+                  key={previewUrl || previewRequestUrl}
+                  src={previewUrl || previewRequestUrl}
+                  alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
+                    selections.customBackground?.active
+                      ? "your custom background"
+                      : `the ${themeLabels[selections.theme]} theme`
                   }`}
-                width={deviceDimensions[selections.size].width}
-                height={deviceDimensions[selections.size].height}
-                sizes="(max-width: 800px) 78vw, 31vw"
-                unoptimized
-                onError={() => setPreviewFailed(true)}
-              />
+                  width={deviceDimensions[selections.size].width}
+                  height={deviceDimensions[selections.size].height}
+                  sizes="(max-width: 800px) 78vw, 31vw"
+                  unoptimized
+                  onLoad={() => setPreviewLoading(false)}
+                  onError={() => {
+                    setPreviewLoading(false);
+                    setPreviewFailed(true);
+                  }}
+                />
+                {previewLoading ? (
+                  <div className="preview-loading" role="status">
+                    <span aria-hidden="true" />
+                    <p>Preparing fast preview&hellip;</p>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <div className="preview-error">
                 <strong>Preview paused</strong>
                 <p>The wallpaper service is temporarily unavailable.</p>
-                <button type="button" onClick={() => setPreviewFailed(false)}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewLoading(true);
+                    setPreviewFailed(false);
+                  }}
+                >
                   Try again
                 </button>
               </div>

@@ -20,6 +20,17 @@ import { resolveCustomBackground } from "@/server/custom-backgrounds";
 
 export const RENDERER_VERSION = "v11";
 export const MAX_WALLPAPER_BYTES = Math.floor(2.2 * 1024 * 1024);
+export const PREVIEW_WIDTH = 480;
+
+type RenderContext = {
+  manifest: DailyManifest | null;
+  lesson?: DailyLesson;
+};
+
+type WallpaperDetails = Omit<
+  WallpaperOutput,
+  "bytes" | "etag" | "byteLength" | "key"
+>;
 
 function getRendererFontFiles(): string[] {
   const fontDirectory = join(process.cwd(), "src", "server", "fonts");
@@ -251,14 +262,14 @@ export function rasterizeSvgWithBundledFonts(svg: Buffer | string): Buffer {
   return Buffer.from(renderer.render().asPng());
 }
 
-export async function renderWallpaper(
+async function resolveWallpaperInputs(
   request: ResolvedWallpaperRequest,
-  date = new Date(),
-  context?: {
-    manifest: DailyManifest | null;
-    lesson?: DailyLesson;
-  },
-): Promise<WallpaperOutput> {
+  date: Date,
+  context?: RenderContext,
+): Promise<{
+  backgroundBytes: Uint8Array;
+  details: WallpaperDetails;
+}> {
   const dateKey = toUtcDateKey(date);
   const manifest = context
     ? context.manifest
@@ -274,20 +285,37 @@ export async function renderWallpaper(
         )
       : resolveBackground(request.theme, date, manifest),
   ]);
-  const dimensions = deviceDimensions[request.size];
-  const details = {
+  const details: WallpaperDetails = {
     ...request,
     date: dateKey,
     lesson,
     background: background.attribution,
   };
+
+  return {
+    backgroundBytes: background.bytes,
+    details,
+  };
+}
+
+export async function renderWallpaper(
+  request: ResolvedWallpaperRequest,
+  date = new Date(),
+  context?: RenderContext,
+): Promise<WallpaperOutput> {
+  const { backgroundBytes, details } = await resolveWallpaperInputs(
+    request,
+    date,
+    context,
+  );
+  const dimensions = deviceDimensions[request.size];
   const overlaySvg = createWallpaperOverlay(
     details,
     dimensions.width,
     dimensions.height,
   );
   const overlay = rasterizeSvgWithBundledFonts(overlaySvg);
-  const pipeline = sharp(background.bytes)
+  const pipeline = sharp(backgroundBytes)
     .rotate()
     .resize(dimensions.width, dimensions.height, {
       fit: "cover",
@@ -322,6 +350,48 @@ export async function renderWallpaper(
     bytes,
     etag,
     byteLength: bytes.byteLength,
-    key: wallpaperCacheKey(request, dateKey),
+    key: wallpaperCacheKey(request, details.date),
+  };
+}
+
+export async function renderWallpaperPreview(
+  request: ResolvedWallpaperRequest,
+  date = new Date(),
+  context?: RenderContext,
+): Promise<WallpaperOutput> {
+  const { backgroundBytes, details } = await resolveWallpaperInputs(
+    request,
+    date,
+    context,
+  );
+  const fullDimensions = deviceDimensions[request.size];
+  const width = PREVIEW_WIDTH;
+  const height = Math.round(
+    fullDimensions.height * (width / fullDimensions.width),
+  );
+  const overlay = rasterizeSvgWithBundledFonts(
+    createWallpaperOverlay(details, width, height),
+  );
+  const bytes = await sharp(backgroundBytes)
+    .rotate()
+    .resize(width, height, {
+      fit: "cover",
+      position: "attention",
+    })
+    .composite([{ input: overlay, blend: "over" }])
+    .webp({
+      quality: 76,
+      effort: 3,
+      smartSubsample: true,
+    })
+    .toBuffer();
+  const etag = sha256Hex(bytes);
+
+  return {
+    ...details,
+    bytes,
+    etag,
+    byteLength: bytes.byteLength,
+    key: `preview/${RENDERER_VERSION}/${details.date}/${request.category}/${request.theme}/${request.size}.webp`,
   };
 }

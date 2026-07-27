@@ -10,8 +10,10 @@ import {
   createWallpaperOverlay,
   fitWallpaperText,
   MAX_WALLPAPER_BYTES,
+  PREVIEW_WIDTH,
   rasterizeSvgWithBundledFonts,
   renderWallpaper,
+  renderWallpaperPreview,
   wrapText,
 } from "@/server/wallpaper-renderer";
 
@@ -243,6 +245,31 @@ describe("wallpaper renderer", () => {
         height: deviceDimensions.standard.height,
       });
       expect(wallpaper.byteLength).toBeLessThanOrEqual(MAX_WALLPAPER_BYTES);
+    },
+    60_000,
+  );
+
+  it(
+    "renders a lightweight WebP for the live configurator preview",
+    async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
+      );
+      const preview = await renderWallpaperPreview(
+        { category: "science", theme: "grid", size: "max" },
+        new Date("2026-07-25T12:00:00Z"),
+      );
+      const metadata = await sharp(preview.bytes).metadata();
+
+      expect(metadata).toMatchObject({
+        format: "webp",
+        width: PREVIEW_WIDTH,
+      });
+      expect(metadata.height).toBeLessThan(
+        deviceDimensions.max.height,
+      );
+      expect(preview.byteLength).toBeLessThan(350_000);
     },
     60_000,
   );

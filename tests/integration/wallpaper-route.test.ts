@@ -7,6 +7,7 @@ const cacheMocks = vi.hoisted(() => ({
 
 const rendererMocks = vi.hoisted(() => ({
   renderWallpaper: vi.fn(),
+  renderWallpaperPreview: vi.fn(),
   wallpaperCacheKey: vi.fn(
     (
       request: { category: string; theme: string; size: string },
@@ -66,6 +67,18 @@ beforeEach(() => {
     lesson: {},
     background: {},
   });
+  rendererMocks.renderWallpaperPreview.mockResolvedValue({
+    bytes: pngBytes,
+    byteLength: pngBytes.byteLength,
+    key: "preview/v11/2026-07-25/science/space/max.webp",
+    date: "2026-07-25",
+    category: "science",
+    theme: "space",
+    size: "max",
+    etag: "fixture-preview-etag",
+    lesson: {},
+    background: {},
+  });
 });
 
 async function route() {
@@ -99,6 +112,27 @@ describe("wallpaper route", () => {
     expect(response.headers.get("x-wallcab-size")).toBe("max");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(pngBytes);
+  });
+
+  it("renders a small WebP preview without reading or writing shared cache", async () => {
+    const { GET } = await route();
+    const response = await GET(
+      new Request(
+        "http://localhost/api/wallpaper?categories=science&theme=space&size=max&preview=1",
+        { headers: { "x-real-ip": "192.0.2.31" } },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    expect(response.headers.get("cache-control")).toBe(
+      "private, max-age=300",
+    );
+    expect(response.headers.get("x-wallcab-preview")).toBe("true");
+    expect(cacheMocks.getCachedWallpaperUrl).not.toHaveBeenCalled();
+    expect(cacheMocks.putCacheValue).not.toHaveBeenCalled();
+    expect(rendererMocks.renderWallpaper).not.toHaveBeenCalled();
+    expect(rendererMocks.renderWallpaperPreview).toHaveBeenCalledOnce();
   });
 
   it("supports HEAD without returning an image body", async () => {

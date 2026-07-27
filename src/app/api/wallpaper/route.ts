@@ -24,6 +24,7 @@ import {
 import { checkRateLimit } from "@/server/rate-limit";
 import {
   renderWallpaper,
+  renderWallpaperPreview,
   wallpaperCacheKey,
 } from "@/server/wallpaper-renderer";
 
@@ -116,7 +117,9 @@ async function handleWallpaper(
     );
   }
 
-  const parsed = parseWallpaperSearchParams(new URL(request.url).searchParams);
+  const requestUrl = new URL(request.url);
+  const previewMode = requestUrl.searchParams.get("preview") === "1";
+  const parsed = parseWallpaperSearchParams(requestUrl.searchParams);
   if (!parsed.success) {
     return Response.json(
       {
@@ -152,7 +155,8 @@ async function handleWallpaper(
   const lesson = await resolveDailyLesson(category, now, manifest);
   const provenanceHeaders = contentHeaders(parsed.value, lesson);
   const key = wallpaperCacheKey(resolvedRequest, dateKey);
-  const bypassSharedCache = Boolean(parsed.value.personalNote);
+  const bypassSharedCache =
+    previewMode || Boolean(parsed.value.personalNote);
   const cachedUrl = bypassSharedCache
     ? null
     : await getCachedWallpaperUrl(key);
@@ -180,10 +184,15 @@ async function handleWallpaper(
   }
 
   try {
-    const wallpaper = await renderWallpaper(resolvedRequest, now, {
-      manifest,
-      lesson,
-    });
+    const wallpaper = previewMode
+      ? await renderWallpaperPreview(resolvedRequest, now, {
+          manifest,
+          lesson,
+        })
+      : await renderWallpaper(resolvedRequest, now, {
+          manifest,
+          lesson,
+        });
     if (!bypassSharedCache) {
       after(async () => {
         await putCacheValue(
@@ -195,19 +204,24 @@ async function handleWallpaper(
       });
     }
     const cacheStatus = bypassSharedCache ? "BYPASS" : "MISS";
+    const contentType = previewMode ? "image/webp" : "image/png";
+    const extension = previewMode ? "webp" : "png";
 
     const responseHeaders: HeadersInit = {
       ...throttlingHeaders,
       ...provenanceHeaders,
-      "Cache-Control": "private, no-store",
-      "Content-Disposition": `inline; filename="wallcab-${dateKey}-${wallpaper.category}-${wallpaper.theme}-${wallpaper.size}.png"`,
+      "Cache-Control": previewMode
+        ? "private, max-age=300"
+        : "private, no-store",
+      "Content-Disposition": `inline; filename="wallcab-${dateKey}-${wallpaper.category}-${wallpaper.theme}-${wallpaper.size}.${extension}"`,
       "Content-Length": String(wallpaper.byteLength),
-      "Content-Type": "image/png",
+      "Content-Type": contentType,
       ETag: `"${wallpaper.etag}"`,
       Link: '</sources>; rel="describedby"',
       "X-Request-Id": requestId,
       "X-WallCab-Cache": cacheStatus,
       "X-WallCab-Date": dateKey,
+      "X-WallCab-Preview": previewMode ? "true" : "false",
       "X-WallCab-Size": wallpaper.size,
       "X-WallCab-Theme": wallpaper.theme,
     };
