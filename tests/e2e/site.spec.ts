@@ -98,6 +98,43 @@ test("home and install have no serious accessibility violations", async ({
   }
 });
 
+test("shows the complete illustrated iPhone installation guide", async ({
+  page,
+}) => {
+  await page.goto("/install");
+
+  await expect(
+    page.getByRole("heading", {
+      name: "Build it on your iPhone, tap by tap.",
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".install-shot")).toHaveCount(6);
+  await expect(
+    page.getByAltText(
+      "Apple Shortcuts Personal Automation screen with Time of Day at the top",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Choose the Lock Screen and test it",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Turn Legibility Blur off.")).toBeVisible();
+  const screenshots = page.locator(".install-shot img");
+  for (const screenshot of await screenshots.all()) {
+    await screenshot.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        screenshot.evaluate(
+          (image) =>
+            (image as HTMLImageElement).complete &&
+            (image as HTMLImageElement).naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+  }
+});
+
 test("launch routes render and mobile navigation is operable", async ({
   page,
 }, testInfo) => {
@@ -158,14 +195,16 @@ test("does not overflow horizontally on narrow phone screens", async ({
 }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await mockWallpaperApi(page);
-  await page.goto("/");
 
-  const width = await page.evaluate(() => ({
-    viewport: document.documentElement.clientWidth,
-    content: document.documentElement.scrollWidth,
-  }));
+  for (const path of ["/", "/install"]) {
+    await page.goto(path);
+    const width = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      content: document.documentElement.scrollWidth,
+    }));
 
-  expect(width.content).toBe(width.viewport);
+    expect(width.content).toBe(width.viewport);
+  }
 });
 
 test("keeps the live phone visible through the address builder", async ({

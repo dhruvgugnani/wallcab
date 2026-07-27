@@ -1582,6 +1582,277 @@ label {
 .art-wallpaper .shortcut-screen { background: linear-gradient(150deg, #526451, #111711 60%); }
 .art-clock .shortcut-screen > span { border-radius: 50%; background: #e36555; color: white; }
 
+.install-overview,
+.install-guide-intro,
+.install-finish {
+  display: grid;
+  grid-template-columns: minmax(160px, .55fr) minmax(0, 1.45fr);
+  gap: clamp(3rem, 8vw, 9rem);
+  padding-top: clamp(5rem, 9vw, 9rem);
+  padding-bottom: clamp(5rem, 9vw, 9rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.install-overview h2,
+.install-guide-intro h2,
+.install-finish h2,
+.install-troubleshooting h2 {
+  max-width: 900px;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(3rem, 6vw, 6.5rem);
+  font-weight: 380;
+  line-height: .92;
+  letter-spacing: -.06em;
+  text-wrap: balance;
+}
+
+.install-overview > div > p,
+.install-guide-intro > div > p {
+  max-width: 680px;
+  margin: 2rem 0 0;
+  color: var(--paper-muted);
+  font-size: 1.08rem;
+}
+
+.install-before {
+  display: grid;
+  grid-template-columns: minmax(140px, .45fr) minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 760px;
+  margin-top: 3rem;
+  padding: 1.4rem;
+  border: 1px solid var(--line-strong);
+  background:
+    linear-gradient(135deg, rgba(168,184,154,.08), transparent 58%),
+    #0c0c0a;
+}
+
+.install-before > strong {
+  color: var(--moss);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.install-before ol {
+  display: grid;
+  gap: .75rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--paper-muted);
+}
+
+.install-before a {
+  color: var(--paper);
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.install-manual {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: clamp(5rem, 9vw, 9rem);
+  list-style: none;
+}
+
+.install-manual > li {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(320px, 1.15fr);
+  align-items: center;
+  gap: clamp(3rem, 8vw, 10rem);
+  min-height: 760px;
+  padding-block: clamp(4rem, 8vw, 8rem);
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 6rem;
+}
+
+.install-manual-copy {
+  min-width: 0;
+}
+
+.install-manual-copy > span {
+  color: var(--moss);
+  font-size: .65rem;
+  font-weight: 750;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.install-manual-copy h2 {
+  margin: 1.2rem 0 1.5rem;
+  font-family: var(--display);
+  font-size: clamp(2.7rem, 5vw, 5rem);
+  font-weight: 380;
+  line-height: .96;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+
+.install-manual-copy > p {
+  max-width: 580px;
+  color: var(--paper-muted);
+  font-size: 1.05rem;
+}
+
+.install-manual-copy > ol {
+  display: grid;
+  gap: .8rem;
+  max-width: 600px;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: install-instruction;
+}
+
+.install-manual-copy > ol > li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: .8rem;
+  color: #c5c0b6;
+  line-height: 1.6;
+  counter-increment: install-instruction;
+}
+
+.install-manual-copy > ol > li::before {
+  content: counter(install-instruction, decimal-leading-zero);
+  padding-top: .05rem;
+  color: #77736b;
+  font-size: .62rem;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+
+.install-note {
+  max-width: 600px;
+  margin-top: 2rem;
+  padding: 1.1rem 1.2rem;
+  border-left: 2px solid var(--moss);
+  background: rgba(168,184,154,.065);
+}
+
+.install-note strong {
+  color: var(--moss);
+  font-size: .62rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.install-note p {
+  margin: .45rem 0 0;
+  color: #aaa69d;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.install-shot {
+  min-width: 0;
+  margin: 0;
+}
+
+.install-shot > div {
+  width: min(100%, 420px);
+  margin-inline: auto;
+  padding: 7px;
+  overflow: hidden;
+  border: 1px solid #464540;
+  border-radius: 48px;
+  background: #050505;
+  box-shadow:
+    0 45px 90px rgba(0,0,0,.45),
+    0 0 0 12px rgba(255,255,255,.018);
+}
+
+.install-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 40px;
+}
+
+.install-shot figcaption {
+  max-width: 420px;
+  margin: 1.2rem auto 0;
+  color: #77736b;
+  font-size: .68rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.install-finish {
+  border-top: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(168,184,154,.13), transparent 55%),
+    #0d0e0b;
+}
+
+.install-finish ul {
+  display: grid;
+  gap: 0;
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: final-check;
+}
+
+.install-finish li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--line);
+  color: #c5c0b6;
+  counter-increment: final-check;
+}
+
+.install-finish li::before {
+  content: "0" counter(final-check);
+  color: var(--moss);
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+}
+
+.install-troubleshooting {
+  padding-top: clamp(5rem, 9vw, 9rem);
+  padding-bottom: clamp(5rem, 9vw, 9rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.install-troubleshooting h2 {
+  margin-top: 1.5rem;
+}
+
+.install-troubleshooting > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 4rem;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.install-troubleshooting article {
+  min-width: 0;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.install-troubleshooting h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.45rem, 2.5vw, 2.2rem);
+  font-weight: 420;
+  line-height: 1.05;
+}
+
+.install-troubleshooting article p {
+  margin: 1.1rem 0 0;
+  color: var(--paper-muted);
+  font-size: .86rem;
+  line-height: 1.65;
+}
+
 .step-copy > span {
   color: var(--moss);
   font-size: .65rem;
@@ -2205,6 +2476,23 @@ label {
     gap: 2.5rem;
   }
 
+  .install-overview,
+  .install-guide-intro,
+  .install-finish {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .install-manual > li {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+    min-height: auto;
+  }
+
+  .install-shot > div {
+    width: min(82vw, 420px);
+  }
+
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2364,6 +2652,11 @@ label {
     flex-direction: column;
   }
 
+  .install-before {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
   .install-steps > li {
     grid-template-columns: 1fr;
     min-height: auto;
@@ -2375,6 +2668,18 @@ label {
 
   .shortcut-illustration {
     min-height: 480px;
+  }
+
+  .install-troubleshooting > div {
+    grid-template-columns: 1fr;
+  }
+
+  .install-shot > div {
+    border-radius: 38px;
+  }
+
+  .install-shot img {
+    border-radius: 31px;
   }
 
   .faq {

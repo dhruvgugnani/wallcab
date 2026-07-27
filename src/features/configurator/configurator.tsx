@@ -53,11 +53,11 @@ const defaults: Selections = {
 type SourceStatus =
   | { state: "loading" }
   | {
-      state: "ready";
-      category: LearningCategory;
-      mode: "external" | "fallback";
-      provider: string;
-    }
+    state: "ready";
+    category: LearningCategory;
+    mode: "external" | "fallback";
+    provider: string;
+  }
   | { state: "unavailable" };
 
 const storageKey = "wallcab:preferences:v3";
@@ -327,11 +327,11 @@ export function Configurator({
       });
       const result = (await response.json().catch(() => null)) as
         | {
-            backgroundId?: string;
-            deleteToken?: string;
-            deletionUrl?: string;
-            message?: string;
-          }
+          backgroundId?: string;
+          deleteToken?: string;
+          deletionUrl?: string;
+          message?: string;
+        }
         | null;
 
       if (
@@ -441,7 +441,7 @@ export function Configurator({
                 updateSelections({
                   categories:
                     selections.categories.length ===
-                    learningCategories.length
+                      learningCategories.length
                       ? ["vocabulary"]
                       : [...learningCategories],
                 })
@@ -694,7 +694,7 @@ export function Configurator({
               value={selections.personalNote}
               maxLength={PERSONAL_NOTE_MAX_LENGTH}
               autoComplete="off"
-              placeholder="Property of Dhruv…"
+              placeholder="Something Of Your Own..."
               aria-describedby="personal-note-help personal-note-count"
               onChange={(event) =>
                 setSelections((current) => ({
@@ -777,11 +777,10 @@ export function Configurator({
               <Image
                 key={previewUrl || apiUrl}
                 src={previewUrl || apiUrl}
-                alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${
-                  selections.customBackground?.active
-                    ? "your custom background"
-                    : `the ${themeLabels[selections.theme]} theme`
-                }`}
+                alt={`Today’s ${categoryLabels[resolvedCategory]} wallpaper using ${selections.customBackground?.active
+                  ? "your custom background"
+                  : `the ${themeLabels[selections.theme]} theme`
+                  }`}
                 width={deviceDimensions[selections.size].width}
                 height={deviceDimensions[selections.size].height}
                 sizes="(max-width: 800px) 78vw, 31vw"
