@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_URL } from "@/lib/site-config";
 
 const backgroundMocks = vi.hoisted(() => ({
   storeCustomBackground: vi.fn(),
@@ -84,7 +85,7 @@ describe("custom background routes", () => {
     expect(body).toEqual({
       backgroundId: id,
       deleteToken,
-      deletionUrl: `https://wallcab.example/custom-background/delete#${id}.${deleteToken}`,
+      deletionUrl: `${SITE_URL}/custom-background/delete#${id}.${deleteToken}`,
       inactiveDays: 30,
     });
   });

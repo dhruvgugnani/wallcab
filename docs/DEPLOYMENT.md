@@ -85,7 +85,7 @@ npx.cmd vercel whoami
 Link only this repository directory, not its parent workspace. Configure:
 
 ```text
-NEXT_PUBLIC_SITE_URL=<preview origin while validating>
+NEXT_PUBLIC_SITE_URL=https://wallcab.dhruvdev.me
 CACHE_WORKER_URL=<exact Worker origin>
 CACHE_WORKER_SECRET=<same private HMAC value>
 CACHE_SIGNING_SECRET=<same public URL signing value>
@@ -93,19 +93,18 @@ CRON_SECRET=<independent high-entropy value>
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Turnstile public site key>
 TURNSTILE_SECRET=<Turnstile server secret>
 TURNSTILE_HOSTNAMES=wallcab.vercel.app,wallcab.dhruvdev.me
+NEXT_PUBLIC_SHORTCUT_URL=https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37
 ```
 
 Optional:
 
 ```text
-NEXT_PUBLIC_SHORTCUT_URL=<published iCloud Shortcut>
 NEXT_PUBLIC_CF_ANALYTICS_TOKEN=<Cloudflare Web Analytics token>
 ```
 
-The Shortcut and analytics values may remain empty during preview. No
-content-provider billing credentials are required. Do not upload `.env.local`
-to Vercel; add each value to the project environment settings so secrets do
-not enter Git or a deployment archive.
+Analytics may remain empty. No content-provider billing credentials are
+required. Do not upload `.env.local` to Vercel; add each value to the project
+environment settings so secrets do not enter Git or a deployment archive.
 
 ## 5. Preview acceptance
 
@@ -131,9 +130,15 @@ Verify:
 
 ## 6. Production promotion
 
-After explicit preview approval, attach `wallcab.dhruvdev.me`, set `NEXT_PUBLIC_SITE_URL` to that canonical origin, redeploy, and verify Open Graph, sitemap, robots, RSS, OpenAPI, security headers, cron authentication, and signed cache URLs.
+After explicit preview approval, attach `wallcab.dhruvdev.me`, keep
+`NEXT_PUBLIC_SITE_URL` set to that canonical origin, redeploy, and verify Open
+Graph, sitemap, robots, RSS, OpenAPI, security headers, cron authentication,
+and signed cache URLs.
 
-Production launch also requires the final `NEXT_PUBLIC_SHORTCUT_URL`. Until it is set, the installation page intentionally presents the complete manual guide and a disabled download state.
+The published Shortcut currently points to
+`https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37`.
+The installation page also keeps the complete manual guide available if Apple
+changes a label or a user prefers to inspect every action.
 
 ## Rollback
 

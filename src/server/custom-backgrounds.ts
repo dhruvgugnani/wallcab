@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import sharp from "sharp";
 import type { BackgroundAsset } from "@/features/wallpaper/types";
+import { SITE_URL } from "@/lib/site-config";
 import {
   getCustomBackground,
   putCustomBackground,
@@ -88,16 +89,12 @@ export async function resolveCustomBackground(
     return null;
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
-    "https://wallcab.vercel.app";
-
   return {
     bytes,
     contentType: "image/webp",
     attribution: {
       label: "Your custom background",
-      url: `${siteUrl}/privacy`,
+      url: `${SITE_URL}/privacy`,
       license: "User supplied",
       source: "User upload",
     },

@@ -3,12 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { PageIntro } from "@/components/page-intro";
 import { StructuredData } from "@/components/structured-data";
+import {
+  SITE_URL,
+  absoluteUrl,
+  getShortcutUrl,
+} from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "Install",
+  title: "Install WallCab on iPhone",
   description:
-    "Follow real iPhone screenshots to set up WallCab as a daily lock-screen automation.",
-  alternates: { canonical: "/install" },
+    "Install the free WallCab Shortcut or follow real iPhone screenshots to automate a sourced daily learning wallpaper on your Lock Screen.",
+  alternates: { canonical: absoluteUrl("/install") },
 };
 
 const steps = [
@@ -187,7 +192,7 @@ const troubleshooting = [
 ] as const;
 
 export default function InstallPage() {
-  const shortcutUrl = process.env.NEXT_PUBLIC_SHORTCUT_URL;
+  const shortcutUrl = getShortcutUrl();
   const faq = [
     {
       question: "Does WallCab need an app?",
@@ -200,9 +205,9 @@ export default function InstallPage() {
         "The URL includes your selected learning interests, visual choice, device size, and any personal note you add. A custom background adds an unguessable image ID, never its deletion secret. Do not put sensitive information in the optional note because it is visible in the URL.",
     },
     {
-      question: "What if the download button is unavailable?",
+      question: "Why does every person get a different wallpaper address?",
       answer:
-        "Use the detailed screenshot guide on this page. It builds the same two-action automation directly in Apple Shortcuts.",
+        "Your address stores only your chosen interests, visual style, iPhone size, and optional note. Copy it from the configurator and paste it into the Shortcut when asked.",
     },
     {
       question: "Why should Legibility Blur be off?",
@@ -242,7 +247,7 @@ export default function InstallPage() {
             "@type": "HowToStep",
             name: step.title,
             text: [step.intro, ...step.instructions].join(" "),
-            url: `/install#install-step-${step.number}`,
+            url: `${SITE_URL}/install#install-step-${step.number}`,
           })),
         }}
       />
@@ -254,17 +259,16 @@ export default function InstallPage() {
       />
 
       <section className="install-actions section-shell">
-        {shortcutUrl ? (
-          <a className="button button-light" href={shortcutUrl}>
-            Get the WallCab Shortcut
-          </a>
-        ) : (
-          <span className="button button-disabled" aria-disabled="true">
-            Shortcut download coming soon
-          </span>
-        )}
+        <a
+          className="button button-light"
+          href={shortcutUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Install WallCab Shortcut
+        </a>
         <Link className="text-link" href="/#make-yours">
-          Create my wallpaper address
+          Create &amp; copy my address
         </Link>
       </section>
 
@@ -274,12 +278,45 @@ export default function InstallPage() {
       >
         <p className="eyebrow">The short version</p>
         <div>
-          <h2 id="install-overview-title">The complete setup at a glance.</h2>
+          <h2 id="install-overview-title">Your address makes it yours.</h2>
           <p>
-            You will create one personal automation with only two actions:
-            download today&apos;s WallCab image, then set it as your Lock
-            Screen. The detailed screens below walk through every tap.
+            The shared Shortcut is the same for everyone. Your copied WallCab
+            address tells it which lessons, visual style, and iPhone size to
+            use.
           </p>
+          <ol className="shortcut-quickstart">
+            <li>
+              <span>01</span>
+              <p>
+                <Link href="/#make-yours">Create your wallpaper address</Link>{" "}
+                and tap <strong>Copy Address</strong>.
+              </p>
+            </li>
+            <li>
+              <span>02</span>
+              <p>
+                Open the{" "}
+                <a href={shortcutUrl} target="_blank" rel="noreferrer">
+                  WallCab Shortcut
+                </a>{" "}
+                and add it to Apple Shortcuts.
+              </p>
+            </li>
+            <li>
+              <span>03</span>
+              <p>
+                Paste your copied address when the Shortcut asks for the
+                wallpaper URL.
+              </p>
+            </li>
+            <li>
+              <span>04</span>
+              <p>
+                Create a daily automation. Use the illustrated manual setup
+                below if you want to check every action.
+              </p>
+            </li>
+          </ol>
         </div>
       </section>
 
@@ -304,6 +341,7 @@ export default function InstallPage() {
       </ol>
 
       <section
+        id="manual-setup"
         className="install-guide-intro section-shell"
         aria-labelledby="install-guide-title"
       >

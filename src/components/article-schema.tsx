@@ -1,4 +1,5 @@
 import { StructuredData } from "./structured-data";
+import { GITHUB_URL, SITE_URL } from "@/lib/site-config";
 
 export function ArticleSchema({
   title,
@@ -11,8 +12,7 @@ export function ArticleSchema({
   date: string;
   slug: string;
 }) {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const url = `${origin}/blog/${slug}`;
+  const url = `${SITE_URL}/blog/${slug}`;
 
   return (
     <StructuredData
@@ -24,10 +24,23 @@ export function ArticleSchema({
           description,
           datePublished: date,
           dateModified: date,
-          author: { "@type": "Person", name: "Dhruv Gugnani" },
-          publisher: { "@type": "Organization", name: "WallCab" },
+          inLanguage: "en",
+          author: {
+            "@type": "Person",
+            name: "Dhruv Gugnani",
+            url: GITHUB_URL,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "WallCab",
+            url: SITE_URL,
+            logo: {
+              "@type": "ImageObject",
+              url: `${SITE_URL}/icon.svg`,
+            },
+          },
           mainEntityOfPage: url,
-          image: `${origin}/opengraph-image`,
+          image: `${SITE_URL}/opengraph-image`,
         },
         {
           "@context": "https://schema.org",
@@ -37,13 +50,13 @@ export function ArticleSchema({
               "@type": "ListItem",
               position: 1,
               name: "WallCab",
-              item: origin,
+              item: SITE_URL,
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Journal",
-              item: `${origin}/blog`,
+              item: `${SITE_URL}/blog`,
             },
             {
               "@type": "ListItem",

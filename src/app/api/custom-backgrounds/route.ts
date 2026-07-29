@@ -1,4 +1,5 @@
 import { storeCustomBackground } from "@/server/custom-backgrounds";
+import { SITE_URL } from "@/lib/site-config";
 import {
   hasTurnstileConfiguration,
   verifyTurnstileToken,
@@ -121,10 +122,7 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
-      new URL(request.url).origin;
-    const deletionUrl = `${origin}/custom-background/delete#${stored.id}.${stored.deleteToken}`;
+    const deletionUrl = `${SITE_URL}/custom-background/delete#${stored.id}.${stored.deleteToken}`;
 
     console.info(
       JSON.stringify({

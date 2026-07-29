@@ -2,8 +2,8 @@ import {
   PERSONAL_NOTE_MAX_LENGTH,
   visualThemes,
 } from "@/features/wallpaper/types";
+import { SITE_URL } from "@/lib/site-config";
 
-const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const categoryValues = [
   "vocabulary",
   "coding",
@@ -84,7 +84,7 @@ const specification = {
       url: "https://github.com/dhruvgugnani/wallcab/blob/main/LICENSE",
     },
   },
-  servers: [{ url: origin }],
+  servers: [{ url: SITE_URL }],
   paths: {
     "/api/wallpaper": {
       get: {

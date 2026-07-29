@@ -1,33 +1,30 @@
 import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/lib/site-config";
 
 const routes = [
-  "",
-  "/install",
-  "/gallery",
-  "/roadmap",
-  "/blog",
-  "/blog/build-the-wallcab-shortcut",
-  "/blog/one-url-many-wallpapers",
-  "/blog/designing-for-the-lock-screen",
-  "/blog/why-wallcab-exists",
-  "/docs",
-  "/docs/api",
-  "/docs/architecture",
-  "/docs/self-hosting",
-  "/docs/contributing",
-  "/sources",
-  "/privacy",
+  { path: "", changed: "2026-07-30", frequency: "daily", priority: 1 },
+  { path: "/install", changed: "2026-07-30", frequency: "monthly", priority: .9 },
+  { path: "/gallery", changed: "2026-07-30", frequency: "daily", priority: .85 },
+  { path: "/roadmap", changed: "2026-07-25", frequency: "monthly", priority: .65 },
+  { path: "/blog", changed: "2026-07-30", frequency: "weekly", priority: .75 },
+  { path: "/blog/build-the-wallcab-shortcut", changed: "2026-07-25", frequency: "monthly", priority: .7 },
+  { path: "/blog/one-url-many-wallpapers", changed: "2026-07-24", frequency: "monthly", priority: .65 },
+  { path: "/blog/designing-for-the-lock-screen", changed: "2026-07-23", frequency: "monthly", priority: .65 },
+  { path: "/blog/why-wallcab-exists", changed: "2026-07-22", frequency: "monthly", priority: .65 },
+  { path: "/docs", changed: "2026-07-30", frequency: "monthly", priority: .8 },
+  { path: "/docs/api", changed: "2026-07-30", frequency: "monthly", priority: .8 },
+  { path: "/docs/architecture", changed: "2026-07-30", frequency: "monthly", priority: .7 },
+  { path: "/docs/self-hosting", changed: "2026-07-30", frequency: "monthly", priority: .7 },
+  { path: "/docs/contributing", changed: "2026-07-30", frequency: "monthly", priority: .7 },
+  { path: "/sources", changed: "2026-07-30", frequency: "monthly", priority: .75 },
+  { path: "/privacy", changed: "2026-07-30", frequency: "yearly", priority: .55 },
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const lastModified = new Date("2026-07-25T00:00:00.000Z");
-
   return routes.map((route) => ({
-    url: `${origin}${route}`,
-    lastModified,
-    changeFrequency:
-      route === "" || route === "/gallery" ? "daily" : "monthly",
-    priority: route === "" ? 1 : route.startsWith("/blog/") ? 0.65 : 0.8,
+    url: absoluteUrl(route.path || "/"),
+    lastModified: new Date(`${route.changed}T00:00:00.000Z`),
+    changeFrequency: route.frequency,
+    priority: route.priority,
   }));
 }

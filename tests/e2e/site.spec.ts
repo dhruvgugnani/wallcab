@@ -4,6 +4,8 @@ import type { Page } from "@playwright/test";
 
 const previewSvg =
   '<svg xmlns="http://www.w3.org/2000/svg" width="1206" height="2622"><rect width="100%" height="100%" fill="#17221a"/></svg>';
+const shortcutUrl =
+  "https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37";
 
 async function mockWallpaperApi(page: Page) {
   await page.route("**/api/wallpaper**", async (route) => {
@@ -72,6 +74,12 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
   expect(clipboardUrl.searchParams.get("size")).toBe("max");
   expect(clipboardUrl.searchParams.get("note")).toBe("Property of Dhruv");
   expect(clipboardUrl.searchParams.has("preview")).toBe(false);
+  await expect(
+    configurator.getByRole("link", { name: "Install WallCab Shortcut" }),
+  ).toHaveAttribute("href", shortcutUrl);
+  await expect(
+    configurator.getByRole("link", { name: "Follow the manual setup" }),
+  ).toHaveAttribute("href", "/install#manual-setup");
   await page.reload();
   await expect(page.getByLabel("Science")).toBeChecked();
   await expect(page.getByLabel("History")).toBeChecked();
@@ -159,6 +167,9 @@ test("shows the complete illustrated iPhone installation guide", async ({
     }),
   ).toBeVisible();
   await expect(page.getByText("Turn Legibility Blur off.")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Install WallCab Shortcut" }),
+  ).toHaveAttribute("href", shortcutUrl);
   const screenshots = page.locator(".install-shot img");
   for (const screenshot of await screenshots.all()) {
     await screenshot.scrollIntoViewIfNeeded();
@@ -208,7 +219,56 @@ test("launch routes render and mobile navigation is operable", async ({
     await expect(
       page.getByRole("navigation", { name: "Mobile navigation" }),
     ).toBeVisible();
+    const panelBounds = await page.locator(".mobile-menu-panel").evaluate(
+      (element) => element.getBoundingClientRect().toJSON(),
+    );
+    expect(panelBounds.top).toBe(76);
+    expect(panelBounds.bottom).toBe(page.viewportSize()?.height);
+    const skipLinkWidth = await page
+      .locator(".skip-link")
+      .evaluate((element) => element.getBoundingClientRect().width);
+    expect(skipLinkWidth).toBeLessThanOrEqual(1);
+    await expect(
+      page
+        .getByRole("navigation", { name: "Mobile navigation" })
+        .getByRole("link", { name: /GitHub/ }),
+    ).toHaveAttribute("href", "https://github.com/dhruvgugnani/wallcab");
+    await expect(page.getByLabel("Close navigation")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("navigation", { name: "Mobile navigation" }),
+    ).toBeHidden();
   }
+});
+
+test("publishes canonical SEO discovery routes on the custom domain", async ({
+  page,
+}) => {
+  await mockWallpaperApi(page);
+  await page.goto("/");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://wallcab.dhruvdev.me",
+  );
+
+  await page.goto("/install");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://wallcab.dhruvdev.me/install",
+  );
+
+  const robotsResponse = await page.request.get("/robots.txt");
+  expect(await robotsResponse.text()).toContain(
+    "Sitemap: https://wallcab.dhruvdev.me/sitemap.xml",
+  );
+
+  const sitemapResponse = await page.request.get("/sitemap.xml");
+  const sitemapBody = await sitemapResponse.text();
+  expect(sitemapBody).toContain("<loc>https://wallcab.dhruvdev.me/</loc>");
+  expect(sitemapBody).toContain(
+    "<loc>https://wallcab.dhruvdev.me/install</loc>",
+  );
+  expect(sitemapBody).not.toContain("wallcab.vercel.app");
 });
 
 test("shows a recovery state when wallpaper generation fails", async ({

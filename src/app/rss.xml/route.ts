@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/site-config";
+
 const posts = [
   {
     slug: "build-the-wallcab-shortcut",
@@ -37,13 +39,12 @@ function escapeXml(value: string): string {
 }
 
 export function GET() {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const items = posts
     .map(
       (post) => `<item>
   <title>${escapeXml(post.title)}</title>
-  <link>${origin}/blog/${post.slug}</link>
-  <guid isPermaLink="true">${origin}/blog/${post.slug}</guid>
+  <link>${SITE_URL}/blog/${post.slug}</link>
+  <guid isPermaLink="true">${SITE_URL}/blog/${post.slug}</guid>
   <pubDate>${new Date(post.date).toUTCString()}</pubDate>
   <description>${escapeXml(post.description)}</description>
 </item>`,
@@ -54,7 +55,7 @@ export function GET() {
 <rss version="2.0">
 <channel>
   <title>WallCab Journal</title>
-  <link>${origin}/blog</link>
+  <link>${SITE_URL}/blog</link>
   <description>Notes on quieter learning, wallpaper design, and the WallCab system.</description>
   <language>en</language>
   <lastBuildDate>${new Date(posts[0].date).toUTCString()}</lastBuildDate>

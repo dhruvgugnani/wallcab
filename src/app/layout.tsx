@@ -5,11 +5,10 @@ import "@fontsource-variable/manrope";
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { GITHUB_URL, SITE_URL, absoluteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "WallCab — Learn something every time you unlock",
     template: "%s — WallCab",
@@ -17,18 +16,31 @@ export const metadata: Metadata = {
   description:
     "A free daily learning wallpaper for iPhone, delivered automatically with Apple Shortcuts.",
   applicationName: "WallCab",
-  authors: [{ name: "Dhruv Gugnani", url: siteUrl }],
+  authors: [{ name: "Dhruv Gugnani", url: GITHUB_URL }],
   creator: "Dhruv Gugnani",
   publisher: "WallCab",
-  alternates: { canonical: "/" },
+  category: "education",
+  alternates: { canonical: absoluteUrl("/") },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
     type: "website",
     siteName: "WallCab",
     title: "WallCab — Your lock screen, made useful",
     description:
       "One sourced idea, beautifully composed for your iPhone every day.",
-    url: "/",
+    url: SITE_URL,
     images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
@@ -40,6 +52,11 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
+  },
+  formatDetection: {
+    address: false,
+    email: false,
+    telephone: false,
   },
 };
 

@@ -26,11 +26,13 @@
 html {
   background: var(--ink);
   color-scheme: dark;
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
+  overflow-x: clip;
   background:
     linear-gradient(90deg, transparent 49.94%, rgba(255,255,255,.025) 50%, transparent 50.06%),
     var(--ink);
@@ -94,14 +96,22 @@ label {
   z-index: 100;
   top: 1rem;
   left: 1rem;
-  transform: translateY(-200%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
   background: var(--paper);
   color: var(--ink);
-  padding: .75rem 1rem;
 }
 
-.skip-link:focus {
-  transform: translateY(0);
+.skip-link:focus-visible {
+  width: auto;
+  height: auto;
+  padding: .75rem 1rem;
+  overflow: visible;
+  clip-path: none;
 }
 
 .site-frame {
@@ -167,6 +177,12 @@ label {
 
 .mobile-menu {
   display: none;
+}
+
+.mobile-menu-toggle {
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .section-shell {
@@ -1092,6 +1108,62 @@ label {
   color: #928e85;
 }
 
+.shortcut-next {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--line-strong);
+  background:
+    linear-gradient(135deg, rgba(168, 184, 154, .1), transparent 58%),
+    #0d0d0b;
+}
+
+.shortcut-next > div:first-child {
+  min-width: 0;
+}
+
+.shortcut-next span {
+  display: block;
+  color: var(--moss);
+  font-size: .62rem;
+  font-weight: 750;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.shortcut-next strong {
+  display: block;
+  margin-top: .45rem;
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 2.4vw, 2.35rem);
+  font-weight: 420;
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.shortcut-next p {
+  max-width: 610px;
+  margin: .75rem 0 0;
+  color: var(--paper-muted);
+}
+
+.shortcut-next-actions {
+  display: flex;
+  min-width: min(100%, 235px);
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shortcut-next-actions .text-link {
+  align-self: center;
+  text-align: center;
+}
+
 .preview-panel {
   position: relative;
   min-width: 0;
@@ -1349,6 +1421,60 @@ label {
   text-transform: uppercase;
 }
 
+.resource-links {
+  display: grid;
+  grid-template-columns: minmax(180px, .55fr) minmax(0, 1.45fr);
+  gap: clamp(3rem, 8vw, 9rem);
+  padding-top: clamp(5rem, 9vw, 9rem);
+  padding-bottom: clamp(5rem, 9vw, 9rem);
+  border-top: 1px solid var(--line);
+}
+
+.resource-links h2 {
+  max-width: 520px;
+  margin: 1rem 0 0;
+  font-family: var(--display);
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  font-weight: 380;
+  line-height: .94;
+  letter-spacing: -.055em;
+}
+
+.resource-link-grid {
+  border-bottom: 1px solid var(--line);
+}
+
+.resource-link-grid a {
+  display: grid;
+  grid-template-columns: 42px minmax(170px, .55fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.3rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--paper-muted);
+}
+
+.resource-link-grid a:hover,
+.resource-link-grid a:focus-visible {
+  color: var(--paper);
+}
+
+.resource-link-grid span {
+  color: var(--moss);
+  font-size: .62rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.resource-link-grid strong {
+  color: var(--paper);
+  font-size: .86rem;
+}
+
+.resource-link-grid p {
+  margin: 0;
+  font-size: .8rem;
+}
+
 .closing-cta {
   padding-top: clamp(6rem, 12vw, 12rem);
   padding-bottom: clamp(6rem, 12vw, 12rem);
@@ -1597,6 +1723,10 @@ label {
   border-bottom: 1px solid var(--line);
 }
 
+.install-guide-intro {
+  scroll-margin-top: 6rem;
+}
+
 .install-overview h2,
 .install-guide-intro h2,
 .install-finish h2,
@@ -1617,6 +1747,45 @@ label {
   margin: 2rem 0 0;
   color: var(--paper-muted);
   font-size: 1.08rem;
+}
+
+.shortcut-quickstart {
+  display: grid;
+  gap: 0;
+  max-width: 760px;
+  margin: 3rem 0 0;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+  list-style: none;
+}
+
+.shortcut-quickstart li {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.shortcut-quickstart li > span {
+  color: var(--moss);
+  font-size: .64rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shortcut-quickstart p {
+  margin: 0;
+  color: var(--paper-muted);
+}
+
+.shortcut-quickstart a,
+.shortcut-quickstart strong {
+  color: var(--paper);
+}
+
+.shortcut-quickstart a {
+  text-decoration: underline;
+  text-underline-offset: .2rem;
 }
 
 .install-before {
@@ -2401,6 +2570,10 @@ label {
 }
 
 @media (max-width: 900px) {
+  .site-header {
+    backdrop-filter: none;
+  }
+
   .desktop-nav {
     display: none;
   }
@@ -2409,44 +2582,111 @@ label {
     display: block;
   }
 
-  .mobile-menu summary {
+  .mobile-menu-toggle {
+    position: relative;
+    z-index: 2;
     display: grid;
     width: 42px;
     height: 42px;
     place-content: center;
     gap: 6px;
     cursor: pointer;
-    list-style: none;
   }
 
-  .mobile-menu summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .mobile-menu summary span {
+  .mobile-menu-toggle span {
     display: block;
     width: 20px;
     height: 1px;
     background: var(--paper);
+    transform-origin: center;
+    transition: transform 180ms ease;
   }
 
-  .mobile-menu nav {
-    position: absolute;
+  .mobile-menu-toggle[aria-expanded="true"] span:first-child {
+    transform: translateY(3.5px) rotate(45deg);
+  }
+
+  .mobile-menu-toggle[aria-expanded="true"] span:last-child {
+    transform: translateY(-3.5px) rotate(-45deg);
+  }
+
+  .mobile-menu-panel {
+    position: fixed;
     top: 76px;
     right: 0;
+    bottom: 0;
     left: 0;
+    z-index: 1;
     display: flex;
-    padding: 1rem;
-    border-bottom: 1px solid var(--line);
-    background: var(--ink);
+    padding:
+      clamp(2rem, 8vw, 4rem)
+      max(1.25rem, env(safe-area-inset-right))
+      max(1.5rem, env(safe-area-inset-bottom))
+      max(1.25rem, env(safe-area-inset-left));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background:
+      radial-gradient(circle at 80% 15%, rgba(168, 184, 154, .1), transparent 30%),
+      var(--ink);
     flex-direction: column;
   }
 
-  .mobile-menu nav a {
-    padding: 1rem;
+  .mobile-menu-panel[hidden] {
+    display: none;
+  }
+
+  .mobile-menu-panel nav {
+    display: flex;
     border-bottom: 1px solid var(--line);
+    flex-direction: column;
+  }
+
+  .mobile-menu-panel nav a {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
     font-family: var(--display);
-    font-size: 1.5rem;
+    font-size: clamp(1.8rem, 9vw, 3.2rem);
+    font-weight: 380;
+    line-height: 1;
+    letter-spacing: -.04em;
+  }
+
+  .mobile-menu-panel nav a > span {
+    color: var(--moss);
+    font-family: var(--sans);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+  }
+
+  .mobile-menu-panel nav a > span:last-child:not(:first-child) {
+    color: var(--paper-muted);
+    font-size: .9rem;
+  }
+
+  .mobile-menu-cta {
+    display: flex;
+    min-height: 54px;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+    border: 1px solid var(--paper);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: .72rem;
+    font-weight: 750;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .mobile-menu-panel > p {
+    margin: 1rem 0 0;
+    color: #77746d;
+    font-size: .68rem;
+    text-align: center;
   }
 
   .manifesto-grid {
@@ -2455,8 +2695,17 @@ label {
   }
 
   .configurator,
-  .process {
+  .process,
+  .resource-links {
     grid-template-columns: 1fr;
+  }
+
+  .resource-link-grid a {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .resource-link-grid p {
+    grid-column: 2;
   }
 
   .preview-panel,
@@ -2617,6 +2866,15 @@ label {
   .api-output button {
     min-height: 48px;
     margin-top: .5rem;
+  }
+
+  .shortcut-next {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .shortcut-next-actions {
+    width: 100%;
   }
 
   .preview-note {

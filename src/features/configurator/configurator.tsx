@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   isCustomBackgroundDeleteToken,
@@ -115,9 +116,11 @@ type UploadStatus = "idle" | "preparing" | "uploading" | "failed";
 
 export function Configurator({
   siteOrigin,
+  shortcutUrl,
   turnstileSiteKey,
 }: {
   siteOrigin: string;
+  shortcutUrl: string;
   turnstileSiteKey: string;
 }) {
   const [selections, setSelections] = useState<Selections>(defaults);
@@ -211,9 +214,14 @@ export function Configurator({
   }
 
   const apiUrl = useMemo(() => {
-    const origin =
+    const browserOrigin =
       hydrated && window.location.origin !== "null"
         ? window.location.origin
+        : "";
+    const origin =
+      browserOrigin.startsWith("http://localhost") ||
+      browserOrigin.startsWith("http://127.0.0.1")
+        ? browserOrigin
         : siteOrigin;
     const url = new URL("/api/wallpaper", origin);
     url.searchParams.set("categories", selections.categories.join(","));
@@ -763,6 +771,29 @@ export function Configurator({
               : ""}
             No account is attached.
           </small>
+          <div className="shortcut-next">
+            <div>
+              <span>Next step</span>
+              <strong>Put this address inside Apple Shortcuts.</strong>
+              <p>
+                Copy the address above, install WallCab, then paste the address
+                when the Shortcut asks for your wallpaper URL.
+              </p>
+            </div>
+            <div className="shortcut-next-actions">
+              <a
+                className="button button-light"
+                href={shortcutUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Install WallCab Shortcut
+              </a>
+              <Link className="text-link" href="/install#manual-setup">
+                Follow the manual setup
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 

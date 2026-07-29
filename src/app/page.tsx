@@ -3,8 +3,12 @@ import { BrandMark } from "@/components/brand-mark";
 import { Configurator } from "@/features/configurator/configurator";
 import { StructuredData } from "@/components/structured-data";
 import { categoryLabels, learningCategories } from "@/features/wallpaper/types";
+import {
+  GITHUB_URL,
+  SITE_URL,
+  getShortcutUrl,
+} from "@/lib/site-config";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const turnstileSiteKey =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
@@ -13,9 +17,21 @@ const homeSchemas = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "WallCab",
-    url: siteUrl,
-    logo: `${siteUrl}/icon.svg`,
-    founder: { "@type": "Person", name: "Dhruv Gugnani" },
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon.svg`,
+    sameAs: [GITHUB_URL],
+    founder: {
+      "@type": "Person",
+      name: "Dhruv Gugnani",
+      url: GITHUB_URL,
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "WallCab",
+    url: SITE_URL,
+    inLanguage: "en",
   },
   {
     "@context": "https://schema.org",
@@ -23,14 +39,23 @@ const homeSchemas = [
     name: "WallCab",
     applicationCategory: "EducationalApplication",
     operatingSystem: "iOS",
-    url: siteUrl,
+    url: SITE_URL,
+    isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     description:
       "A free daily learning wallpaper service for iPhone and Apple Shortcuts.",
+    featureList: [
+      "Daily sourced lessons",
+      "Multiple learning interests",
+      "iPhone wallpaper automation",
+      "No account required",
+    ],
   },
 ];
 
 export default function Home() {
+  const shortcutUrl = getShortcutUrl();
+
   return (
     <>
       <StructuredData data={homeSchemas} />
@@ -118,7 +143,8 @@ export default function Home() {
           </p>
         </div>
         <Configurator
-          siteOrigin={siteUrl}
+          siteOrigin={SITE_URL}
+          shortcutUrl={shortcutUrl}
           turnstileSiteKey={turnstileSiteKey}
         />
       </section>
@@ -157,6 +183,38 @@ export default function Home() {
           </ol>
           <Link className="text-link" href="/install">
             See the five-minute setup <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+      </section>
+
+      <section
+        className="resource-links section-shell"
+        aria-labelledby="resource-links-title"
+      >
+        <div>
+          <p className="eyebrow">Explore WallCab</p>
+          <h2 id="resource-links-title">From first setup to every source.</h2>
+        </div>
+        <div className="resource-link-grid">
+          <Link href="/install">
+            <span>01</span>
+            <strong>Install on iPhone</strong>
+            <p>Use the Shortcut or follow every setup screen by hand.</p>
+          </Link>
+          <Link href="/gallery">
+            <span>02</span>
+            <strong>Browse the gallery</strong>
+            <p>See today’s live combinations and WallCab Originals.</p>
+          </Link>
+          <Link href="/docs/api">
+            <span>03</span>
+            <strong>Read the API guide</strong>
+            <p>Understand the stable address that powers each wallpaper.</p>
+          </Link>
+          <Link href="/sources">
+            <span>04</span>
+            <strong>Check every source</strong>
+            <p>Review content providers, image licenses, and fallbacks.</p>
           </Link>
         </div>
       </section>

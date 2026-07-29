@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "./brand-mark";
+import { GITHUB_URL } from "@/lib/site-config";
 
 export function SiteFooter() {
   return (
@@ -15,6 +16,7 @@ export function SiteFooter() {
       <div className="footer-links">
         <div>
           <p>Explore</p>
+          <Link href="/install">Install</Link>
           <Link href="/gallery">Gallery</Link>
           <Link href="/roadmap">Roadmap</Link>
           <Link href="/blog">Journal</Link>
@@ -29,6 +31,9 @@ export function SiteFooter() {
           <p>Details</p>
           <Link href="/sources">Sources</Link>
           <Link href="/privacy">Privacy</Link>
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+            GitHub ↗
+          </a>
           <a href="/rss.xml">RSS</a>
         </div>
       </div>
