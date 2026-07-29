@@ -8,8 +8,8 @@
   --line: rgba(240, 237, 228, 0.18);
   --line-strong: rgba(240, 237, 228, 0.36);
   --moss: #a8b89a;
-  --display: "Fraunces Variable", Georgia, serif;
-  --sans: "Manrope Variable", Arial, sans-serif;
+  --display: var(--font-fraunces), Georgia, serif;
+  --sans: var(--font-manrope), Arial, sans-serif;
 }
 
 @theme inline {

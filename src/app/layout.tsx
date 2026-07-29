@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/manrope";
 import "./globals.css";
+import { fraunces, manrope } from "./fonts";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { GITHUB_URL, SITE_URL, absoluteUrl } from "@/lib/site-config";
@@ -75,7 +74,7 @@ export default function RootLayout({
   const analyticsToken = process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN;
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
       <body>
         <a className="skip-link" href="#main-content">
           Skip to content
