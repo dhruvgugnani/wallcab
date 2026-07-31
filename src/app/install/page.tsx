@@ -312,8 +312,10 @@ export default function InstallPage() {
             <li>
               <span>04</span>
               <p>
-                Create a daily automation. Use the illustrated manual setup
-                below if you want to check every action.
+                Open Shortcuts → Automation → + → Time of Day. Choose your
+                time, select <strong>Daily</strong> and{" "}
+                <strong>Run Immediately</strong>, tap Next, then choose
+                WallCab.
               </p>
             </li>
           </ol>

@@ -772,13 +772,36 @@ export function Configurator({
             No account is attached.
           </small>
           <div className="shortcut-next">
-            <div>
-              <span>Next step</span>
-              <strong>Put this address inside Apple Shortcuts.</strong>
-              <p>
-                Copy the address above, install WallCab, then paste the address
-                when the Shortcut asks for your wallpaper URL.
-              </p>
+            <div className="shortcut-next-copy">
+              <span>Complete setup</span>
+              <strong>Install it, then schedule it.</strong>
+              <ol className="shortcut-next-steps">
+                <li>
+                  <span>01</span>
+                  <p>Copy the wallpaper address above.</p>
+                </li>
+                <li>
+                  <span>02</span>
+                  <p>
+                    Install WallCab and paste the address when the Shortcut
+                    asks.
+                  </p>
+                </li>
+                <li>
+                  <span>03</span>
+                  <p>
+                    Open Shortcuts → Automation → + → Time of Day.
+                  </p>
+                </li>
+                <li>
+                  <span>04</span>
+                  <p>
+                    Choose your time, select <strong>Daily</strong> and{" "}
+                    <strong>Run Immediately</strong>, tap Next, then choose
+                    WallCab.
+                  </p>
+                </li>
+              </ol>
             </div>
             <div className="shortcut-next-actions">
               <a
@@ -790,7 +813,7 @@ export function Configurator({
                 Install WallCab Shortcut
               </a>
               <Link className="text-link" href="/install#manual-setup">
-                Follow the manual setup
+                See every setup screen
               </Link>
             </div>
           </div>

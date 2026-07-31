@@ -78,8 +78,12 @@ test("configures, persists, and copies the exact wallpaper URL", async ({
     configurator.getByRole("link", { name: "Install WallCab Shortcut" }),
   ).toHaveAttribute("href", shortcutUrl);
   await expect(
-    configurator.getByRole("link", { name: "Follow the manual setup" }),
+    configurator.getByRole("link", { name: "See every setup screen" }),
   ).toHaveAttribute("href", "/install#manual-setup");
+  await expect(
+    configurator.getByText("Open Shortcuts → Automation → + → Time of Day."),
+  ).toBeVisible();
+  await expect(configurator.getByText("Run Immediately")).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("Science")).toBeChecked();
   await expect(page.getByLabel("History")).toBeChecked();
