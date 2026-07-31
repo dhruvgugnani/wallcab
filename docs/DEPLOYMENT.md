@@ -93,7 +93,7 @@ CRON_SECRET=<independent high-entropy value>
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Turnstile public site key>
 TURNSTILE_SECRET=<Turnstile server secret>
 TURNSTILE_HOSTNAMES=wallcab.vercel.app,wallcab.dhruvdev.me
-NEXT_PUBLIC_SHORTCUT_URL=https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37
+NEXT_PUBLIC_SHORTCUT_URL=https://www.icloud.com/shortcuts/1ca82c739d3f44ffb448ca2f44b4869b
 ```
 
 Optional:
@@ -136,7 +136,7 @@ Graph, sitemap, robots, RSS, OpenAPI, security headers, cron authentication,
 and signed cache URLs.
 
 The published Shortcut currently points to
-`https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37`.
+`https://www.icloud.com/shortcuts/1ca82c739d3f44ffb448ca2f44b4869b`.
 The installation page also keeps the complete manual guide available if Apple
 changes a label or a user prefers to inspect every action.
 

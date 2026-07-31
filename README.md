@@ -1,6 +1,6 @@
 # WallCab
 
-[Website](https://wallcab.dhruvdev.me) · [Install the iPhone Shortcut](https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37) · [Installation guide](https://wallcab.dhruvdev.me/install) · [API documentation](https://wallcab.dhruvdev.me/docs/api)
+[Website](https://wallcab.dhruvdev.me) · [Install the iPhone Shortcut](https://www.icloud.com/shortcuts/1ca82c739d3f44ffb448ca2f44b4869b) · [Installation guide](https://wallcab.dhruvdev.me/install) · [API documentation](https://wallcab.dhruvdev.me/docs/api)
 
 WallCab turns an iPhone lock screen into one calm, source-credited lesson a day. A user chooses one or more learning interests, a visual theme or private custom background, a device size, and optionally a short personal note; one stable API URL then works with a universal Apple Shortcut.
 
@@ -102,7 +102,7 @@ docs/                    deployment and architectural decisions
 Read [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) before creating Worker or Vercel resources. The application works without the cache, which makes it safe to validate Vercel first, but the intended rollout order is Worker/KV, Vercel preview, preview approval, then the production domain.
 
 The public iCloud Shortcut is configured by default. Keep
-`NEXT_PUBLIC_SHORTCUT_URL=https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37`
+`NEXT_PUBLIC_SHORTCUT_URL=https://www.icloud.com/shortcuts/1ca82c739d3f44ffb448ca2f44b4869b`
 in Vercel so a later Shortcut revision can be promoted without changing the
 interface code.
 

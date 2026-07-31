@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
 const previewSvg =
   '<svg xmlns="http://www.w3.org/2000/svg" width="1206" height="2622"><rect width="100%" height="100%" fill="#17221a"/></svg>';
 const shortcutUrl =
-  "https://www.icloud.com/shortcuts/b5728a902dd249fcbaed472311f6da37";
+  "https://www.icloud.com/shortcuts/1ca82c739d3f44ffb448ca2f44b4869b";
 
 async function mockWallpaperApi(page: Page) {
   await page.route("**/api/wallpaper**", async (route) => {
