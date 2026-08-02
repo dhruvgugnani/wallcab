@@ -53,6 +53,12 @@ retains Analytics Engine events for three months. See the current
 [Analytics Engine pricing](https://developers.cloudflare.com/analytics/analytics-engine/pricing/)
 and [retention limits](https://developers.cloudflare.com/analytics/analytics-engine/limits/).
 
+Before the first deployment with this binding, open Workers & Pages,
+Analytics Engine in the Cloudflare dashboard and select Enable. Without this
+one-time account toggle, Wrangler stops with error code 10089. Cloudflare's
+current pricing page states that Analytics Engine usage is not presently
+billed; review that page again if Cloudflare changes its announced policy.
+
 Generate two independent high-entropy values, then store them:
 
 ```powershell
