@@ -12,6 +12,8 @@ import { selectDailyCategory } from "@/features/wallpaper/preferences";
 import {
   getCachedWallpaperUrl,
   putCacheValue,
+  recordWallpaperRun,
+  type WallpaperRunEvent,
 } from "@/server/cache/client";
 import {
   getNextUtcRollover,
@@ -90,6 +92,14 @@ function logWallpaperResponse(
   );
 }
 
+function scheduleWallpaperRun(
+  event: WallpaperRunEvent,
+): void {
+  after(async () => {
+    await recordWallpaperRun(event);
+  });
+}
+
 async function handleWallpaper(
   request: Request,
   includeBody: boolean,
@@ -162,6 +172,18 @@ async function handleWallpaper(
     : await getCachedWallpaperUrl(key);
 
   if (cachedUrl) {
+    if (includeBody && !previewMode) {
+      scheduleWallpaperRun({
+        requestId,
+        outcome: "success",
+        delivery: "cache_hit",
+        contentMode: lesson.provenance.mode,
+        category: lesson.category,
+        theme: parsed.value.theme,
+        size: parsed.value.size,
+        status: 307,
+      });
+    }
     logWallpaperResponse(
       requestId,
       parsed.value,
@@ -229,6 +251,18 @@ async function handleWallpaper(
     const body = includeBody
       ? Uint8Array.from(wallpaper.bytes).buffer
       : null;
+    if (includeBody && !previewMode) {
+      scheduleWallpaperRun({
+        requestId,
+        outcome: "success",
+        delivery: cacheStatus === "MISS" ? "generated" : "bypass",
+        contentMode: lesson.provenance.mode,
+        category: lesson.category,
+        theme: wallpaper.theme,
+        size: wallpaper.size,
+        status: 200,
+      });
+    }
     logWallpaperResponse(
       requestId,
       parsed.value,
@@ -240,6 +274,18 @@ async function handleWallpaper(
       headers: responseHeaders,
     });
   } catch {
+    if (includeBody && !previewMode) {
+      scheduleWallpaperRun({
+        requestId,
+        outcome: "failure",
+        delivery: "error",
+        contentMode: lesson.provenance.mode,
+        category: lesson.category,
+        theme: parsed.value.theme,
+        size: parsed.value.size,
+        status: 502,
+      });
+    }
     return Response.json(
       {
         code: "WALLPAPER_GENERATION_FAILED",

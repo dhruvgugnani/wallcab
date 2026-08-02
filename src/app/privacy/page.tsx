@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         eyebrow="Privacy"
         title="Nothing personal is required."
         description="WallCab is designed to work without an account, profile, database, advertising identifier, or cross-device tracking."
-        meta="Effective July 26, 2026"
+        meta="Effective August 1, 2026"
       />
       <article className="legal prose section-shell">
         <h2>What stays on your device</h2>
@@ -60,7 +60,26 @@ export default function PrivacyPage() {
           completed personalized PNG in the shared Worker image cache.
         </p>
 
-        <h2>Optional privacy-first analytics</h2>
+        <h2>Anonymous wallpaper-run counters</h2>
+        <p>
+          WallCab counts valid wallpaper image requests so the maintainer can
+          understand whether daily automations are running. Website previews,
+          source-status checks, HEAD requests, invalid requests, and internal
+          jobs are excluded.
+        </p>
+        <p>
+          Each accepted event contains a new random request ID, its timestamp,
+          success or failure, cache delivery mode, external or fallback content
+          mode, resolved category, theme, device-size preset, and response
+          status. It does not contain an IP address, user agent, full URL,
+          selected-interest list, personal note, custom-background ID, phone
+          identifier, or account identifier. Events cannot be joined into a
+          user history and are retained by Cloudflare Analytics Engine for up
+          to three months. Reporting access is limited to a separately
+          protected private administration service.
+        </p>
+
+        <h2>Optional privacy-first website analytics</h2>
         <p>
           A production deployment may enable Cloudflare Web Analytics to
           understand aggregate page traffic. It uses no cookies and WallCab

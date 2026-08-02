@@ -59,6 +59,9 @@ beforeAll(async () => {
     modules: true,
     script,
     kvNamespaces: ["WALLPAPERS"],
+    analyticsEngineDatasets: {
+      USAGE_ANALYTICS: { dataset: "wallcab_usage" },
+    },
     bindings: {
       CACHE_WORKER_SECRET: serviceSecret,
       CACHE_SIGNING_SECRET: signingSecret,
@@ -76,6 +79,65 @@ describe("Cloudflare Worker cache", () => {
   const privatePath = `/v1/cache/${encodeURIComponent(key)}`;
   const publicPath = `/v1/wallpapers/${encodeURIComponent(key)}`;
   const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  it("accepts only authenticated anonymous wallpaper-run events", async () => {
+    const pathname = "/v1/analytics/runs";
+    const event = {
+      requestId: "4c1f8f78-cc9d-4d4a-a9dd-31f9cf311c7a",
+      outcome: "success",
+      delivery: "cache_hit",
+      contentMode: "external",
+      category: "vocabulary",
+      theme: "nature",
+      size: "standard",
+      status: 307,
+    };
+    const body = JSON.stringify(event);
+    const accepted = await worker.dispatchFetch(
+      "https://worker.example" + pathname,
+      {
+        method: "POST",
+        headers: {
+          ...privateHeaders("POST", pathname, body),
+          "content-type": "application/json",
+        },
+        body,
+      },
+    );
+    expect(accepted.status).toBe(202);
+    await expect(accepted.json()).resolves.toEqual({ accepted: true });
+
+    const unauthenticated = await worker.dispatchFetch(
+      "https://worker.example" + pathname,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      },
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const eventWithPersonalData = JSON.stringify({
+      ...event,
+      note: "must never be accepted",
+    });
+    const rejected = await worker.dispatchFetch(
+      "https://worker.example" + pathname,
+      {
+        method: "POST",
+        headers: {
+          ...privateHeaders(
+            "POST",
+            pathname,
+            eventWithPersonalData,
+          ),
+          "content-type": "application/json",
+        },
+        body: eventWithPersonalData,
+      },
+    );
+    expect(rejected.status).toBe(400);
+  });
 
   it("rejects unauthenticated private writes", async () => {
     const response = await worker.dispatchFetch(

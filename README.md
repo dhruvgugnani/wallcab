@@ -19,6 +19,7 @@ The production interface is always dark, account-free, and deliberately small. E
   Sharp, stored in Workers KV, and removed after 30 inactive days;
 - Sharp-rendered, indexed-palette PNGs capped at 2.2 MiB;
 - signed Cloudflare Worker/KV cache with direct-generation fallback;
+- anonymous Analytics Engine counters for valid automation runs;
 - complete Apple Shortcuts guide, public API docs, gallery, journal, sources, privacy, roadmap, RSS, OpenAPI, and SEO metadata.
 
 ## Stack
@@ -26,7 +27,8 @@ The production interface is always dark, account-free, and deliberately small. E
 - Next.js 16.2.11 and React 19
 - strict TypeScript and Tailwind CSS v4
 - Sharp for image composition
-- Cloudflare Workers and KV for active-day caching and private uploads
+- Cloudflare Workers, KV, and Analytics Engine for caching, private uploads,
+  and anonymous run counters
 - Vitest, Miniflare, Playwright, axe, and Lighthouse CI
 - Vercel as the primary deployment target
 
@@ -85,13 +87,20 @@ theme. Existing URLs remain unchanged.
 
 A wallpaper miss returns `200 image/png`; a hit may return a temporary `307` to a signed Worker asset. Personalized notes return `200` with `X-WallCab-Cache: BYPASS`. See the human-readable [API reference](src/app/docs/api/page.mdx) or `/openapi.json`.
 
+Valid wallpaper GET requests emit one anonymous run event after the response.
+Preview, status, HEAD, invalid, rate-limited, cron, and internal cache traffic
+is excluded. Events contain operational enums and a random per-request ID, not
+an IP address, user agent, complete URL, note, custom-background ID, or
+persistent client identifier. Analytics read credentials and reporting UI
+belong only to the separate private wallcab-admin deployment.
+
 ## Repository map
 
 ```text
 src/app/                 routes, metadata, docs, and journal
 src/features/wallpaper/  shared taxonomy and reviewed fallback catalog
 src/server/              providers, renderer, signing, cache client, cron
-worker/                  Cloudflare Worker, KV, and cleanup implementation
+worker/                  Worker cache, uploads, analytics ingest, and cleanup
 tests/                   unit, integration, Miniflare, E2E, and visual checks
 public/showcase/         permanent optimized WebP gallery studies
 docs/                    deployment and architectural decisions

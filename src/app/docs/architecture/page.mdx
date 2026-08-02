@@ -89,6 +89,24 @@ Worker cron removes items after 30 inactive days and cleans old orphaned keys.
 User deletion removes the source object, metadata, and matching active-day PNG
 variants.
 
+## Anonymous run analytics
+
+Only valid image-body requests from the public wallpaper route produce usage
+events. The lightweight website preview, source-status route, HEAD requests,
+invalid input, rate-limited traffic, cron work, and cache probes are excluded.
+The Next.js route schedules the event after its response and sends it through
+the existing timestamped HMAC boundary to a write-only Analytics Engine
+binding.
+
+Each event is a standalone run record: timestamp, random per-request ID,
+success or failure, cache delivery mode, external or fallback content mode,
+resolved category, theme, device preset, and response status. The strict Worker
+schema rejects extra fields. IP addresses, user agents, complete URLs,
+selected-interest lists, notes, custom-background IDs, and persistent client
+identifiers never enter the analytics dataset. Read credentials belong only to
+a separate private administration deployment and are not present in this
+repository or the public runtime.
+
 ## Trust boundaries
 
 Provider data, uploads, and personal notes are untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. Enumerated query values are validated before they reach the renderer; notes are bounded, control characters are rejected, and text is escaped before SVG composition. Turnstile tokens are verified server-side against the exact action and hostname. The Shortcut URL contains an unguessable custom ID and, when chosen, the personal note; the deletion token remains in browser storage and the fragment of a private deletion link. Users are warned not to put sensitive information in a URL-visible note.

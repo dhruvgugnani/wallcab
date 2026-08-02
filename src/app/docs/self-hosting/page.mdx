@@ -10,13 +10,13 @@ export const metadata = {
 
 # Self-hosting
 
-The MVP deployment uses Vercel for Next.js, a Cloudflare Worker with KV for generated image caching and private optional user backgrounds, and Turnstile for upload verification. Built-in wallpapers can run without the Worker, but custom uploads cannot.
+The MVP deployment uses Vercel for Next.js, a Cloudflare Worker with KV for generated image caching and private optional user backgrounds, Analytics Engine for anonymous run counters, and Turnstile for upload verification. Built-in wallpapers can run without the Worker, but custom uploads and run counters cannot.
 
 ## Requirements
 
 - Node.js 24.x and npm
 - a Vercel account
-- a Cloudflare account with Workers, KV, and Turnstile
+- a Cloudflare account with Workers, KV, Analytics Engine, and Turnstile
 - Git
 
 No application database or content-provider key is required for the MVP.
@@ -63,6 +63,11 @@ if your deployment policy requires it. No R2 subscription or database is
 needed. On the Workers Free plan, KV operations fail after a free allowance is
 exhausted rather than becoming usage charges.
 
+The configured wallcab_usage Analytics Engine dataset is created automatically
+when the first accepted run event is written. The public deployment has a
+write-only binding and does not need a Cloudflare API token. Keep any Account
+Analytics Read token exclusively in a separate private reporting application.
+
 Create a managed Turnstile widget restricted to the real WallCab hostnames.
 The client action is `custom_background_upload`; the server rejects another
 action or hostname. Use Cloudflare's documented test keys only on localhost.
@@ -79,6 +84,12 @@ deletion, API redirect, source credits, and Shortcut flow.
 Every wallpaper response includes `X-WallCab-Content-Mode` and `X-WallCab-Content-Provider`. The configurator reads `/api/wallpaper/status` to show the same result beside its live preview.
 
 Vercel Runtime Logs receive structured `wallcab.content` and `wallcab.wallpaper` events with the UTC date, resolved category, provider, and fallback reason. They contain no IP address or user preference identifier.
+
+Valid wallpaper GET requests also emit one anonymous Analytics Engine event
+after the response. Preview, status, HEAD, invalid, rate-limited, cron, and
+internal cache requests are not counted. The event includes only operational
+enums and a new random request ID; it excludes complete URLs, notes, custom
+background IDs, IP addresses, user agents, and persistent client identifiers.
 
 For an authenticated snapshot of every category already prepared or lazily generated today:
 

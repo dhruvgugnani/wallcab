@@ -1,6 +1,6 @@
 # Deployment runbook
 
-WallCab uses Cloudflare Workers KV for the active-day image cache and private optional user backgrounds, and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise cache and upload paths.
+WallCab uses Cloudflare Workers KV for the active-day image cache and private optional user backgrounds, Analytics Engine for anonymous automation-run counters, and Vercel for the website, provider pipeline, renderer, and scheduled rollover. The Worker should be deployed first so a Vercel preview can exercise cache, upload, and analytics paths.
 
 Creating external resources changes account state. Run these commands only in the intended Cloudflare and Vercel accounts.
 
@@ -15,7 +15,7 @@ npm.cmd run test:e2e
 
 The installed Node version must be 24.x. Do not deploy when the lockfile audit, Worker type check, image ceiling, build, or browser tests fail.
 
-## 2. Create Workers KV
+## 2. Create Workers KV and usage analytics
 
 Confirm the active Cloudflare identity:
 
@@ -42,6 +42,16 @@ limit is reached instead of creating usage charges. Current limits are listed
 in the [Workers KV pricing documentation](https://developers.cloudflare.com/kv/platform/pricing/).
 The Worker schedules a cleanup at 03:17 UTC and removes uploads after 30 days
 without a wallpaper read.
+
+The wallcab_usage Analytics Engine binding is declared in the Worker
+configuration and is created automatically on its first accepted write. It
+records only standalone operational run events. The public Worker has no
+analytics read token, and the separate private reporting deployment is the
+only place that receives Account Analytics Read access. Cloudflare currently
+includes 100,000 writes and 10,000 read queries per day on Workers Free and
+retains Analytics Engine events for three months. See the current
+[Analytics Engine pricing](https://developers.cloudflare.com/analytics/analytics-engine/pricing/)
+and [retention limits](https://developers.cloudflare.com/analytics/analytics-engine/limits/).
 
 Generate two independent high-entropy values, then store them:
 
@@ -126,6 +136,8 @@ Verify:
 - all three dimensions and the 2.2 MiB ceiling hold;
 - the wallpaper includes lesson and image attribution;
 - provider and Worker outages still return the reviewed fallback image;
+- valid wallpaper GET requests write one anonymous run event while previews,
+  HEAD, status, invalid, rate-limited, cron, and internal requests write none;
 - Apple Shortcut runs once manually and through an automation.
 
 ## 6. Production promotion

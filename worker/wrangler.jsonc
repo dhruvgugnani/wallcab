@@ -15,6 +15,12 @@
       "id": "f6d3f15691394b879a3ef11d3300abe6"
     }
   ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "USAGE_ANALYTICS",
+      "dataset": "wallcab_usage"
+    }
+  ],
   "triggers": {
     "crons": ["17 3 * * *"]
   },

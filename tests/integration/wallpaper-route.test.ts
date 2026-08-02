@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const cacheMocks = vi.hoisted(() => ({
   getCachedWallpaperUrl: vi.fn(),
   putCacheValue: vi.fn(),
+  recordWallpaperRun: vi.fn(),
 }));
 
 const rendererMocks = vi.hoisted(() => ({
@@ -36,6 +37,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   cacheMocks.getCachedWallpaperUrl.mockResolvedValue(null);
   cacheMocks.putCacheValue.mockResolvedValue(true);
+  cacheMocks.recordWallpaperRun.mockResolvedValue(true);
+  afterMock.mockImplementation((callback: () => void | Promise<void>) => {
+    void callback();
+  });
   manifestMocks.getPreparedManifest.mockResolvedValue(null);
   manifestMocks.resolveDailyLesson.mockImplementation(
     (category: string) => ({
@@ -112,6 +117,17 @@ describe("wallpaper route", () => {
     expect(response.headers.get("x-wallcab-size")).toBe("max");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(pngBytes);
+    expect(cacheMocks.recordWallpaperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "success",
+        delivery: "generated",
+        contentMode: "external",
+        category: "science",
+        theme: "space",
+        size: "max",
+        status: 200,
+      }),
+    );
   });
 
   it("renders a small WebP preview without reading or writing shared cache", async () => {
@@ -131,6 +147,7 @@ describe("wallpaper route", () => {
     expect(response.headers.get("x-wallcab-preview")).toBe("true");
     expect(cacheMocks.getCachedWallpaperUrl).not.toHaveBeenCalled();
     expect(cacheMocks.putCacheValue).not.toHaveBeenCalled();
+    expect(cacheMocks.recordWallpaperRun).not.toHaveBeenCalled();
     expect(rendererMocks.renderWallpaper).not.toHaveBeenCalled();
     expect(rendererMocks.renderWallpaperPreview).toHaveBeenCalledOnce();
   });
@@ -147,6 +164,7 @@ describe("wallpaper route", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
     expect((await response.arrayBuffer()).byteLength).toBe(0);
+    expect(cacheMocks.recordWallpaperRun).not.toHaveBeenCalled();
   });
 
   it("returns allowed values for invalid parameters", async () => {
@@ -203,12 +221,16 @@ describe("wallpaper route", () => {
     expect(response.headers.get("location")).toContain("cache.example");
     expect(response.headers.get("x-wallcab-cache")).toBe("HIT");
     expect(rendererMocks.renderWallpaper).not.toHaveBeenCalled();
+    expect(cacheMocks.recordWallpaperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "success",
+        delivery: "cache_hit",
+        status: 307,
+      }),
+    );
   });
 
   it("returns the first image when background cache upload is unavailable", async () => {
-    afterMock.mockImplementation((callback: () => Promise<void>) => {
-      void callback();
-    });
     cacheMocks.putCacheValue.mockResolvedValue(false);
     const { GET } = await route();
     const response = await GET(
@@ -235,6 +257,13 @@ describe("wallpaper route", () => {
     expect(response.status).toBe(502);
     expect(body.code).toBe("WALLPAPER_GENERATION_FAILED");
     expect(body.requestId).toBeTruthy();
+    expect(cacheMocks.recordWallpaperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "failure",
+        delivery: "error",
+        status: 502,
+      }),
+    );
   });
 
   it("passes an opaque custom background through to the renderer and cache", async () => {
@@ -273,7 +302,13 @@ describe("wallpaper route", () => {
     expect(response.headers.get("x-wallcab-cache")).toBe("BYPASS");
     expect(cacheMocks.getCachedWallpaperUrl).not.toHaveBeenCalled();
     expect(cacheMocks.putCacheValue).not.toHaveBeenCalled();
-    expect(afterMock).not.toHaveBeenCalled();
+    expect(cacheMocks.recordWallpaperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "success",
+        delivery: "bypass",
+        status: 200,
+      }),
+    );
     expect(rendererMocks.renderWallpaper).toHaveBeenCalledWith(
       expect.objectContaining({ personalNote: "Property of Dhruv" }),
       expect.any(Date),

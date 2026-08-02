@@ -23,14 +23,69 @@ type CustomBackgroundObjectMetadata = {
   etag: string;
 };
 
+type WallpaperRunEvent = {
+  requestId: string;
+  outcome: "success" | "failure";
+  delivery: "cache_hit" | "generated" | "bypass" | "error";
+  contentMode: "external" | "fallback";
+  category: string;
+  theme: string;
+  size: string;
+  status: number;
+};
+
 const MAX_CACHE_BYTES = 5 * 1024 * 1024;
 const MAX_CUSTOM_BACKGROUND_BYTES = 4 * 1024 * 1024;
+const MAX_ANALYTICS_BODY_BYTES = 2 * 1024;
 const MAX_AUTH_SKEW_SECONDS = 300;
 const PUBLIC_LINK_MAX_SECONDS = 600;
+const ANALYTICS_EVENT_PATH = "/v1/analytics/runs";
 const CUSTOM_METADATA_PREFIX = "custom-background/v1/";
 const CUSTOM_OBJECT_PREFIX = "custom/";
 const CUSTOM_INACTIVE_SECONDS = 30 * 24 * 60 * 60;
 const CUSTOM_METADATA_TTL_SECONDS = 40 * 24 * 60 * 60;
+const analyticsOutcomes = new Set(["success", "failure"]);
+const analyticsDeliveries = new Set([
+  "cache_hit",
+  "generated",
+  "bypass",
+  "error",
+]);
+const analyticsContentModes = new Set(["external", "fallback"]);
+const analyticsEventKeys = [
+  "requestId",
+  "outcome",
+  "delivery",
+  "contentMode",
+  "category",
+  "theme",
+  "size",
+  "status",
+] as const;
+const analyticsCategories = new Set([
+  "vocabulary",
+  "coding",
+  "finance",
+  "stoicism",
+  "science",
+  "history",
+  "psychology",
+  "productivity",
+]);
+const analyticsThemes = new Set([
+  "nature",
+  "mountains",
+  "ocean",
+  "forest",
+  "space",
+  "amoled",
+  "minimal",
+  "abstract",
+  "gradient",
+  "monochrome",
+  "grid",
+]);
+const analyticsSizes = new Set(["standard", "air", "max"]);
 const allowedContentTypes = new Set([
   "application/json",
   "image/jpeg",
@@ -144,6 +199,96 @@ async function verifyServiceRequest(
   const canonical = `${request.method.toUpperCase()}\n${new URL(request.url).pathname}\n${timestamp}\n${bodyHash}`;
   const expected = await hmac(canonical, env.CACHE_WORKER_SECRET);
   return constantTimeEqual(signature, expected);
+}
+
+function isWallpaperRunEvent(value: unknown): value is WallpaperRunEvent {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const keys = Object.keys(value);
+  if (
+    keys.length !== analyticsEventKeys.length ||
+    analyticsEventKeys.some((key) => !keys.includes(key))
+  ) {
+    return false;
+  }
+  const event = value as Partial<WallpaperRunEvent>;
+  return Boolean(
+    event.requestId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        event.requestId,
+      ) &&
+      event.outcome &&
+      analyticsOutcomes.has(event.outcome) &&
+      event.delivery &&
+      analyticsDeliveries.has(event.delivery) &&
+      event.contentMode &&
+      analyticsContentModes.has(event.contentMode) &&
+      event.category &&
+      analyticsCategories.has(event.category) &&
+      event.theme &&
+      analyticsThemes.has(event.theme) &&
+      event.size &&
+      analyticsSizes.has(event.size) &&
+      Number.isInteger(event.status) &&
+      Number(event.status) >= 200 &&
+      Number(event.status) <= 599,
+  );
+}
+
+async function handleUsageEvent(
+  request: Request,
+  env: WorkerEnv,
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return json(request, env, { code: "METHOD_NOT_ALLOWED" }, 405);
+  }
+
+  const declaredLength = Number(
+    request.headers.get("content-length") ?? 0,
+  );
+  if (declaredLength > MAX_ANALYTICS_BODY_BYTES) {
+    return json(request, env, { code: "INVALID_ANALYTICS_SIZE" }, 413);
+  }
+
+  const body = await request.arrayBuffer();
+  if (
+    body.byteLength === 0 ||
+    body.byteLength > MAX_ANALYTICS_BODY_BYTES
+  ) {
+    return json(request, env, { code: "INVALID_ANALYTICS_SIZE" }, 413);
+  }
+
+  const bodyHash = await sha256(body);
+  if (!(await verifyServiceRequest(request, env, bodyHash))) {
+    return json(request, env, { code: "UNAUTHORIZED" }, 401);
+  }
+
+  let candidate: unknown;
+  try {
+    candidate = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return json(request, env, { code: "INVALID_ANALYTICS_EVENT" }, 400);
+  }
+  if (!isWallpaperRunEvent(candidate)) {
+    return json(request, env, { code: "INVALID_ANALYTICS_EVENT" }, 400);
+  }
+
+  env.USAGE_ANALYTICS.writeDataPoint({
+    indexes: [candidate.requestId],
+    blobs: [
+      "wallpaper_run",
+      candidate.outcome,
+      candidate.delivery,
+      candidate.contentMode,
+      candidate.category,
+      candidate.theme,
+      candidate.size,
+    ],
+    doubles: [1, candidate.status],
+  });
+
+  return json(request, env, { accepted: true }, 202);
 }
 
 async function readCache(
@@ -678,13 +823,18 @@ export default {
           ...corsHeaders(request, env),
           "Access-Control-Allow-Headers":
             "Content-Type, X-WallCab-Body-Sha256, X-WallCab-Delete-Token-Sha256, X-WallCab-Expiration, X-WallCab-Signature, X-WallCab-Timestamp",
-          "Access-Control-Allow-Methods": "DELETE, GET, HEAD, PUT, OPTIONS",
+          "Access-Control-Allow-Methods":
+            "DELETE, GET, HEAD, POST, PUT, OPTIONS",
           "Access-Control-Max-Age": "86400",
         },
       });
     }
 
     const pathname = new URL(request.url).pathname;
+    if (pathname === ANALYTICS_EVENT_PATH) {
+      return handleUsageEvent(request, env);
+    }
+
     const customBackgroundId = parseCustomBackgroundId(pathname);
     if (customBackgroundId) {
       return handleCustomBackground(

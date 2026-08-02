@@ -3,9 +3,26 @@ import {
   signPublicCacheKey,
   signServiceRequest,
 } from "@/server/cache/signing";
+import type {
+  DevicePreset,
+  LearningCategory,
+  VisualTheme,
+} from "@/features/wallpaper/types";
 
 const CACHE_TIMEOUT_MS = 2_500;
 const CUSTOM_BACKGROUND_TIMEOUT_MS = 8_000;
+const ANALYTICS_TIMEOUT_MS = 2_500;
+
+export type WallpaperRunEvent = {
+  requestId: string;
+  outcome: "success" | "failure";
+  delivery: "cache_hit" | "generated" | "bypass" | "error";
+  contentMode: "external" | "fallback";
+  category: LearningCategory;
+  theme: VisualTheme;
+  size: DevicePreset;
+  status: number;
+};
 
 type CacheConfiguration = {
   baseUrl: string;
@@ -60,6 +77,40 @@ function cachePath(key: string): string {
 
 function customBackgroundPath(id: string): string {
   return `/v1/custom-backgrounds/${encodeURIComponent(id)}`;
+}
+
+export async function recordWallpaperRun(
+  event: WallpaperRunEvent,
+): Promise<boolean> {
+  const config = getCacheConfiguration();
+  if (!config) {
+    return false;
+  }
+
+  const url = new URL("/v1/analytics/runs", config.baseUrl);
+  const body = JSON.stringify(event);
+  const bodyHash = sha256Hex(body);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...privateHeaders(
+          "POST",
+          url,
+          bodyHash,
+          config.serviceSecret,
+        ),
+        "content-type": "application/json",
+      },
+      body,
+      signal: AbortSignal.timeout(ANALYTICS_TIMEOUT_MS),
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export function createPublicCacheUrl(
