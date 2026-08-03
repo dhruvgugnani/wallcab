@@ -3,6 +3,9 @@ import { parseSupportUrl } from "@/server/support";
 
 describe("support URL configuration", () => {
   it("accepts published Razorpay Payment Page URLs", () => {
+    expect(parseSupportUrl("https://rzp.io/rzp/wallcab")).toBe(
+      "https://rzp.io/rzp/wallcab",
+    );
     expect(parseSupportUrl("https://rzp.io/l/wallcab-support")).toBe(
       "https://rzp.io/l/wallcab-support",
     );
@@ -16,8 +19,8 @@ describe("support URL configuration", () => {
   });
 
   it("removes fragments from a supported page", () => {
-    expect(parseSupportUrl("https://rzp.io/l/wallcab#payment")).toBe(
-      "https://rzp.io/l/wallcab",
+    expect(parseSupportUrl("https://rzp.io/rzp/wallcab#payment")).toBe(
+      "https://rzp.io/rzp/wallcab",
     );
   });
 
@@ -32,6 +35,7 @@ describe("support URL configuration", () => {
     ).toBeNull();
     expect(parseSupportUrl("https://example.com/wallcab")).toBeNull();
     expect(parseSupportUrl("https://rzp.io")).toBeNull();
+    expect(parseSupportUrl("https://rzp.io/rzp/wallcab/extra")).toBeNull();
     expect(parseSupportUrl("https://rzp.io/not-a-page")).toBeNull();
     expect(parseSupportUrl("not a url")).toBeNull();
   });

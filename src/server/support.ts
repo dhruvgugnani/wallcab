@@ -1,4 +1,4 @@
-const shortPaymentPagePath = /^\/l\/[A-Za-z0-9_-]+$/;
+const shortPaymentPagePath = /^\/(?:l|rzp)\/[A-Za-z0-9_-]+$/;
 const longPaymentPagePath = /^\/pl_[A-Za-z0-9]+\/view$/;
 
 export function parseSupportUrl(value: string | undefined): string | null {

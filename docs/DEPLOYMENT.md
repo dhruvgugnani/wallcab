@@ -133,7 +133,8 @@ account-wide webhook limited to WallCab support payments.
    Amount**, a sensible minimum such as ₹20, the default required email and
    phone fields, no additional name field, no expiry, and a success redirect
    to `https://wallcab.dhruvdev.me`.
-3. Publish it and copy its `https://rzp.io/l/...` URL.
+3. Publish it and copy its `https://rzp.io/rzp/...` URL. Legacy
+   `https://rzp.io/l/...` Payment Page URLs are also supported.
 4. Create a free Resend account, add `wallcab.dhruvdev.me` as the sending
    domain, and add the SPF and DKIM records it supplies to Cloudflare DNS.
    Keep the records DNS-only. Wait until Resend reports the domain as verified.
@@ -149,7 +150,7 @@ account-wide webhook limited to WallCab support payments.
 Add these values to Vercel Production and Preview, never to Git:
 
 ```text
-SUPPORT_URL=https://rzp.io/l/<your-live-page>
+SUPPORT_URL=https://rzp.io/rzp/<your-live-page>
 RAZORPAY_ACCOUNT_ID=acc_<your-merchant-account>
 RAZORPAY_WEBHOOK_SECRET=<independent-random-secret>
 RESEND_API_KEY=re_<restricted-send-key>
