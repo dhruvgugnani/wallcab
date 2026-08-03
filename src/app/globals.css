@@ -1607,6 +1607,84 @@ label {
   color: var(--paper);
 }
 
+.support-callout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(2rem, 7vw, 7rem);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(110deg, rgba(168, 184, 154, .075), transparent 45%),
+    #0d0e0b;
+}
+
+.support-callout::after {
+  position: absolute;
+  top: 50%;
+  right: clamp(11rem, 22vw, 24rem);
+  width: clamp(9rem, 18vw, 18rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(238, 234, 220, .09);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.support-callout-footer {
+  margin-bottom: 4rem;
+  padding: clamp(1.8rem, 4vw, 3.2rem);
+}
+
+.support-callout-roadmap {
+  margin-bottom: clamp(5rem, 9vw, 9rem);
+  padding-top: clamp(2.5rem, 5vw, 5rem);
+  padding-bottom: clamp(2.5rem, 5vw, 5rem);
+  border-right: 0;
+  border-left: 0;
+}
+
+.support-callout .eyebrow {
+  margin: 0 0 .8rem;
+  color: var(--moss);
+}
+
+.support-callout h2 {
+  max-width: 760px;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 5.2rem);
+  font-weight: 380;
+  letter-spacing: -.045em;
+  line-height: .94;
+}
+
+.support-callout a {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  min-width: 210px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.support-callout a:hover {
+  border-color: var(--moss);
+  background: var(--moss);
+}
+
 .footer-meta {
   padding-top: 1.3rem;
   border-top: 1px solid var(--line);
@@ -2942,6 +3020,22 @@ label {
   .footer-meta {
     gap: .6rem;
     flex-direction: column;
+  }
+
+  .support-callout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .support-callout::after {
+    right: -4rem;
+    bottom: -5rem;
+    top: auto;
+    transform: none;
+  }
+
+  .support-callout a {
+    width: 100%;
   }
 
   .install-actions {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageIntro } from "@/components/page-intro";
+import { SupportCallout } from "@/components/support-callout";
 
 export const metadata: Metadata = {
   title: "Roadmap",
@@ -66,6 +67,7 @@ export default function RoadmapPage() {
           </article>
         ))}
       </section>
+      <SupportCallout placement="roadmap" />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "./brand-mark";
+import { SupportCallout } from "./support-callout";
 import { GITHUB_URL } from "@/lib/site-config";
 
 export function SiteFooter() {
@@ -37,6 +38,7 @@ export function SiteFooter() {
           <a href="/rss.xml">RSS</a>
         </div>
       </div>
+      <SupportCallout placement="footer" />
       <div className="footer-meta">
         <span>© {new Date().getUTCFullYear()} WallCab</span>
         <span>Designed and built by Dhruv Gugnani</span>
