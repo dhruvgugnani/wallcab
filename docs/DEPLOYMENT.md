@@ -122,7 +122,48 @@ Analytics may remain empty. No content-provider billing credentials are
 required. Do not upload `.env.local` to Vercel; add each value to the project
 environment settings so secrets do not enter Git or a deployment archive.
 
-## 5. Preview acceptance
+## 5. Optional Razorpay support and thank-you email
+
+Use a dedicated Razorpay merchant account for WallCab. This keeps the
+account-wide webhook limited to WallCab support payments.
+
+1. Complete Razorpay live-mode KYC as an individual or the correct business
+   type.
+2. Create a Payment Page titled `Support WallCab` with INR, **Customer Decides
+   Amount**, a sensible minimum such as ₹20, the default required email and
+   phone fields, no additional name field, no expiry, and a success redirect
+   to `https://wallcab.dhruvdev.me`.
+3. Publish it and copy its `https://rzp.io/l/...` URL.
+4. Create a free Resend account, add `wallcab.dhruvdev.me` as the sending
+   domain, and add the SPF and DKIM records it supplies to Cloudflare DNS.
+   Keep the records DNS-only. Wait until Resend reports the domain as verified.
+5. Create a Resend API key restricted to sending email.
+6. Generate an independent webhook secret with at least 32 random characters.
+7. In Razorpay Live mode, open Account & Settings, Webhooks, add
+   `https://wallcab.dhruvdev.me/api/webhooks/razorpay`, choose only
+   `payment.captured`, enter the same webhook secret, and set a private alert
+   email for delivery failures.
+8. Copy the merchant `account_id` in `acc_...` form from the Razorpay account
+   or its signed test webhook payload.
+
+Add these values to Vercel Production and Preview, never to Git:
+
+```text
+SUPPORT_URL=https://rzp.io/l/<your-live-page>
+RAZORPAY_ACCOUNT_ID=acc_<your-merchant-account>
+RAZORPAY_WEBHOOK_SECRET=<independent-random-secret>
+RESEND_API_KEY=re_<restricted-send-key>
+SUPPORT_EMAIL_FROM=WallCab <thanks@wallcab.dhruvdev.me>
+```
+
+Redeploy after saving them. Make one small live payment and verify the custom
+thank-you in the recipient inbox, one successful `204` delivery in Razorpay's
+webhook history, and one message in Resend. Razorpay may also send its required
+transaction receipt; the WallCab message is a separate thank-you. A Resend
+failure returns `503`, which asks Razorpay to retry. The Razorpay payment ID is
+the Resend idempotency key, preventing a retry from sending another message.
+
+## 6. Preview acceptance
 
 Verify:
 
@@ -145,8 +186,12 @@ Verify:
 - valid wallpaper GET requests write one anonymous run event while previews,
   HEAD, status, invalid, rate-limited, cron, and internal requests write none;
 - Apple Shortcut runs once manually and through an automation.
+- the support section is absent when `SUPPORT_URL` is empty and links only to
+  the configured live Razorpay page when enabled;
+- a small live support payment produces one custom WallCab thank-you without
+  writing supporter contact details to Vercel application logs.
 
-## 6. Production promotion
+## 7. Production promotion
 
 After explicit preview approval, attach `wallcab.dhruvdev.me`, keep
 `NEXT_PUBLIC_SITE_URL` set to that canonical origin, redeploy, and verify Open

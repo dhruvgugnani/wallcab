@@ -107,8 +107,23 @@ identifiers never enter the analytics dataset. Read credentials belong only to
 a separate private administration deployment and are not present in this
 repository or the public runtime.
 
+## Optional support email
+
+The support button is rendered only when `SUPPORT_URL` is a validated live
+Razorpay Payment Page. Payment UI, mandatory contact collection, receipts, and
+settlement remain on Razorpay.
+
+After capture, Razorpay sends a signed webhook to a Node Route Handler. The
+handler bounds the raw body before reading it, verifies the HMAC before JSON
+parsing, and accepts only `payment.captured` for the configured merchant
+account, domestic INR, and a fully captured payment. It passes the validated
+email, amount, and payment ID directly to Resend. The payment ID becomes the
+idempotency key, so a Razorpay retry cannot create a second thank-you within
+the provider retry window. No supporter database or application log is
+created; a provider failure returns `503` so Razorpay can retry.
+
 ## Trust boundaries
 
-Provider data, uploads, and personal notes are untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. Enumerated query values are validated before they reach the renderer; notes are bounded, control characters are rejected, and text is escaped before SVG composition. Turnstile tokens are verified server-side against the exact action and hostname. The Shortcut URL contains an unguessable custom ID and, when chosen, the personal note; the deletion token remains in browser storage and the fragment of a private deletion link. Users are warned not to put sensitive information in a URL-visible note.
+Provider data, uploads, personal notes, and webhook bodies are untrusted input. Remote image fetches use an explicit hostname allowlist, bounded redirects, media and size validation, timeouts, and Sharp decoding. Enumerated query values are validated before they reach the renderer; notes are bounded, control characters are rejected, and text is escaped before SVG composition. Turnstile tokens are verified server-side against the exact action and hostname. Razorpay webhook signatures use a private HMAC secret and the untouched bounded body. The Shortcut URL contains an unguessable custom ID and, when chosen, the personal note; the deletion token remains in browser storage and the fragment of a private deletion link. Users are warned not to put sensitive information in a URL-visible note.
 
 </DocsLayout>

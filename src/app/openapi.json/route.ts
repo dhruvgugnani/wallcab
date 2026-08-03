@@ -76,7 +76,7 @@ const specification = {
   openapi: "3.1.0",
   info: {
     title: "WallCab Wallpaper API",
-    version: "2.2.0",
+    version: "2.3.0",
     description:
       "Choose one or more learning interests, optionally add a personal note, and generate one deterministic, source-credited daily wallpaper.",
     license: {
@@ -287,8 +287,40 @@ const specification = {
         },
       },
     },
+    "/api/webhooks/razorpay": {
+      post: {
+        operationId: "receiveRazorpaySupportPayment",
+        summary: "Receive a signed Razorpay support event",
+        description:
+          "Private provider callback. Only captured domestic INR payments for the configured merchant can queue a thank-you email.",
+        security: [{ RazorpayWebhookSignature: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { type: "object" },
+            },
+          },
+        },
+        responses: {
+          "204": { description: "Event accepted or safely ignored" },
+          "400": { description: "Signed payload is malformed" },
+          "401": { description: "Webhook signature is invalid" },
+          "413": { description: "Webhook body exceeds 64 KiB" },
+          "415": { description: "Webhook is not JSON" },
+          "503": { description: "Email configuration or provider unavailable" },
+        },
+      },
+    },
   },
   components: {
+    securitySchemes: {
+      RazorpayWebhookSignature: {
+        type: "apiKey",
+        in: "header",
+        name: "X-Razorpay-Signature",
+      },
+    },
     schemas: {
       WallpaperStatus: {
         type: "object",

@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         eyebrow="Privacy"
         title="Nothing personal is required."
         description="WallCab is designed to work without an account, profile, database, advertising identifier, or cross-device tracking."
-        meta="Effective August 1, 2026"
+        meta="Effective August 3, 2026"
       />
       <article className="legal prose section-shell">
         <h2>What stays on your device</h2>
@@ -85,6 +85,25 @@ export default function PrivacyPage() {
           understand aggregate page traffic. It uses no cookies and WallCab
           sends no custom personal identifiers. The analytics script is absent
           when no public analytics token is configured.
+        </p>
+
+        <h2>Optional project support</h2>
+        <p>
+          If you choose to support WallCab, Razorpay hosts the payment page
+          and processes the amount, email address, phone number, payment
+          method, receipt, and settlement under its own privacy terms. WallCab
+          does not receive card, bank, UPI credential, or complete payment
+          instrument details.
+        </p>
+        <p>
+          After a successful payment, Razorpay sends WallCab a signed event
+          containing the payment reference, amount, currency, email address,
+          and standard payment metadata. WallCab validates it and passes the
+          email address, amount, and payment reference directly to Resend to
+          deliver one transactional thank-you. WallCab does not write the
+          supporter email, phone number, webhook body, or payment reference to
+          its database or application logs. Resend retains delivery records
+          according to its plan and privacy terms.
         </p>
 
         <h2>Third-party requests</h2>

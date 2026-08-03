@@ -20,6 +20,8 @@ The production interface is always dark, account-free, and deliberately small. E
 - Sharp-rendered, indexed-palette PNGs capped at 2.2 MiB;
 - signed Cloudflare Worker/KV cache with direct-generation fallback;
 - anonymous Analytics Engine counters for valid automation runs;
+- optional Razorpay project support with a signed, database-free Resend
+  thank-you email;
 - complete Apple Shortcuts guide, public API docs, gallery, journal, sources, privacy, roadmap, RSS, OpenAPI, and SEO metadata.
 
 ## Stack
@@ -94,12 +96,28 @@ an IP address, user agent, complete URL, note, custom-background ID, or
 persistent client identifier. Analytics read credentials and reporting UI
 belong only to the separate private wallcab-admin deployment.
 
+## Optional project support
+
+WallCab can link to a live INR Razorpay Payment Page. After a successful
+payment, Razorpay signs a `payment.captured` webhook and the server sends one
+branded thank-you through Resend. The Razorpay payment ID is used as Resend's
+24-hour idempotency key, matching Razorpay's retry window without adding a
+database.
+
+The payment page URL, account ID, webhook secret, Resend key, and sender are
+server-only Vercel environment values. The webhook validates the untouched
+request body, expected merchant account, captured state, domestic flag, INR
+currency, amount, payment ID, and supporter email before sending. WallCab does
+not log or store the email address or phone number. The support interface stays
+absent when `SUPPORT_URL` is empty or invalid. See
+[the deployment runbook](docs/DEPLOYMENT.md) for the exact setup.
+
 ## Repository map
 
 ```text
 src/app/                 routes, metadata, docs, and journal
 src/features/wallpaper/  shared taxonomy and reviewed fallback catalog
-src/server/              providers, renderer, signing, cache client, cron
+src/server/              providers, renderer, signing, support email, cache, cron
 worker/                  Worker cache, uploads, analytics ingest, and cleanup
 tests/                   unit, integration, Miniflare, E2E, and visual checks
 public/showcase/         permanent optimized WebP gallery studies

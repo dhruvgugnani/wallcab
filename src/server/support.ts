@@ -1,9 +1,5 @@
-const supportedHosts = new Set([
-  "buymeacoffee.com",
-  "www.buymeacoffee.com",
-  "ko-fi.com",
-  "www.ko-fi.com",
-]);
+const shortPaymentPagePath = /^\/l\/[A-Za-z0-9_-]+$/;
+const longPaymentPagePath = /^\/pl_[A-Za-z0-9]+\/view$/;
 
 export function parseSupportUrl(value: string | undefined): string | null {
   const candidate = value?.trim();
@@ -17,8 +13,8 @@ export function parseSupportUrl(value: string | undefined): string | null {
       url.protocol !== "https:" ||
       url.username ||
       url.password ||
-      !supportedHosts.has(url.hostname.toLowerCase()) ||
-      url.pathname === "/"
+      url.search ||
+      !isRazorpayPaymentPage(url)
     ) {
       return null;
     }
@@ -27,6 +23,17 @@ export function parseSupportUrl(value: string | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+function isRazorpayPaymentPage(url: URL): boolean {
+  const hostname = url.hostname.toLowerCase();
+  if (hostname === "rzp.io") {
+    return shortPaymentPagePath.test(url.pathname);
+  }
+  if (hostname === "pages.razorpay.com") {
+    return longPaymentPagePath.test(url.pathname);
+  }
+  return false;
 }
 
 export function getSupportUrl(): string | null {

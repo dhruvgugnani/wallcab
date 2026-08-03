@@ -17,6 +17,7 @@ The MVP deployment uses Vercel for Next.js, a Cloudflare Worker with KV for gene
 - Node.js 24.x and npm
 - a Vercel account
 - a Cloudflare account with Workers, KV, Analytics Engine, and Turnstile
+- optional Razorpay and Resend accounts for project support
 - Git
 
 No application database or content-provider key is required for the MVP.
@@ -47,6 +48,11 @@ Open `http://localhost:3000`. Without cache environment variables, the wallpaper
 | `TURNSTILE_SECRET` | for uploads | Server-side Turnstile verification secret |
 | `TURNSTILE_HOSTNAMES` | for uploads | Exact comma-separated production hostnames |
 | `CRON_SECRET` | for cron | Protects the rollover route |
+| `SUPPORT_URL` | for support | Published `https://rzp.io/l/...` Payment Page |
+| `RAZORPAY_ACCOUNT_ID` | for support email | Expected `acc_...` merchant account |
+| `RAZORPAY_WEBHOOK_SECRET` | for support email | HMAC secret configured in Razorpay |
+| `RESEND_API_KEY` | for support email | Restricted transactional sending key |
+| `SUPPORT_EMAIL_FROM` | for support email | Verified WallCab sender identity |
 
 Generate long, independent random values for each secret. Never prefix a secret with `NEXT_PUBLIC_`.
 
@@ -78,6 +84,21 @@ Import the GitHub repository, keep the framework preset on Next.js, select Node.
 
 Promote a preview only after exercising the configurator, custom upload and
 deletion, API redirect, source credits, and Shortcut flow.
+
+## Optional project support
+
+Create a live Razorpay Payment Page in INR with **Customer Decides Amount**,
+email and phone only, no expiry, and a post-payment redirect to WallCab. Use a
+dedicated Razorpay merchant account for WallCab so its account-wide
+`payment.captured` webhook cannot include unrelated payments.
+
+Verify `wallcab.dhruvdev.me` as a sending domain in Resend and create a
+send-only API key. Configure the production webhook URL as
+`https://your-domain.example/api/webhooks/razorpay`, select only
+`payment.captured`, and use a unique secret of at least 32 characters. The
+endpoint accepts only signed domestic INR captures for the configured
+`RAZORPAY_ACCOUNT_ID`. Resend receives the supporter email only to send the
+transactional thank-you; WallCab does not persist it.
 
 ## Provider diagnostics
 
