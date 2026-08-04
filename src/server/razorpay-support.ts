@@ -277,7 +277,7 @@ export function buildSupportThankYouEmail(
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                               <tr>
                                 <td style="color:#f4f0e3;font-size:11px;font-weight:700;">09:41</td>
-                                <td align="right" style="color:#b6b8af;font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Daily edition</td>
+                                <td align="right" style="color:#b6b8af;font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Payment receipt</td>
                               </tr>
                             </table>
                           </td>
@@ -287,10 +287,22 @@ export function buildSupportThankYouEmail(
                         </tr>
                         <tr>
                           <td height="238" valign="bottom" style="height:238px;padding:0 20px 22px;">
-                            <div style="color:#aebf91;font-size:7px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;">Vocabulary / 01</div>
-                            <div style="padding-top:7px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1;letter-spacing:-1px;">Liminal</div>
-                            <div style="padding-top:7px;color:#aeb1a7;font-family:Georgia,'Times New Roman',serif;font-size:10px;font-style:italic;">/ lim-in-al /</div>
-                            <div style="margin-top:16px;border-top:1px solid rgba(238,234,221,.22);padding-top:14px;color:#d1cfc5;font-size:9px;line-height:1.55;">At the threshold between one state and another.</div>
+                            <div style="color:#aebf91;font-size:7px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;">WallCab support / confirmed</div>
+                            <div style="padding-top:8px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:1;letter-spacing:-1px;">${amount}</div>
+                            <div style="padding-top:9px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.15;">Payment received.</div>
+                            <div style="padding-top:5px;color:#aeb1a7;font-family:Georgia,'Times New Roman',serif;font-size:9px;font-style:italic;line-height:1.45;">You kept WallCab moving.</div>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:15px;border-top:1px solid rgba(238,234,221,.22);">
+                              <tr>
+                                <td valign="top" style="padding-top:11px;">
+                                  <div style="color:#777d73;font-size:6px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Status</div>
+                                  <div style="padding-top:4px;color:#bcd57c;font-size:7px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;">Received</div>
+                                </td>
+                                <td align="right" valign="top" style="padding-top:11px;">
+                                  <div style="color:#777d73;font-size:6px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Reference</div>
+                                  <div style="padding-top:4px;color:#d5d2c8;font-size:7px;font-weight:700;letter-spacing:.8px;">${reference}</div>
+                                </td>
+                              </tr>
+                            </table>
                           </td>
                         </tr>
                         <tr>
@@ -298,7 +310,7 @@ export function buildSupportThankYouEmail(
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                               <tr>
                                 <td style="color:#f4f0e3;font-size:7px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;">WallCab</td>
-                                <td align="right" style="color:#858a80;font-size:6px;letter-spacing:.8px;text-transform:uppercase;">New lesson<br>00:00 UTC</td>
+                                <td align="right" style="color:#858a80;font-size:6px;letter-spacing:.8px;text-transform:uppercase;">One-time support<br>Thank you</td>
                               </tr>
                             </table>
                           </td>

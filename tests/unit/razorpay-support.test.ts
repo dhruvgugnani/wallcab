@@ -137,7 +137,11 @@ describe("Razorpay support webhook", () => {
 
     expect(email.subject).toBe("Thank you for supporting WallCab");
     expect(email.text).toContain("₹250");
-    expect(email.html).toContain("Vocabulary / 01");
+    expect(email.html).toContain("Payment receipt");
+    expect(email.html).toContain("Payment received.");
+    expect(email.html).toContain("You kept WallCab moving.");
+    expect(email.html).not.toContain("Vocabulary / 01");
+    expect(email.html).not.toContain("Liminal");
     expect(email.html).toContain("A note from Dhruv");
     expect(email.html).toContain("Contribution");
     expect(email.html).toContain("Status");
