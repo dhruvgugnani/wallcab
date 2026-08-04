@@ -231,26 +231,25 @@ export function buildSupportThankYouEmail(
     <meta name="color-scheme" content="dark">
     <meta name="supported-color-schemes" content="dark">
     <style>
-      @media only screen and (max-width: 640px) {
-        .email-shell { width: 100% !important; }
-        .email-pad { padding-left: 24px !important; padding-right: 24px !important; }
-        .stack-column { display: block !important; width: 100% !important; }
-        .phone-column { padding: 8px 0 38px !important; }
-        .copy-column { padding: 0 24px 40px !important; }
-        .receipt-cell { display: block !important; width: auto !important; border-left: 0 !important; border-top: 1px solid #30332d !important; }
-        .receipt-cell:first-child { border-top: 0 !important; }
-        .headline { font-size: 39px !important; }
+      @media only screen and (min-width: 641px) {
+        .email-pad { padding-left: 34px !important; padding-right: 34px !important; }
+        .stack-column { display: table-cell !important; box-sizing: content-box !important; }
+        .phone-column { width: 300px !important; padding: 48px 20px 48px 34px !important; }
+        .copy-column { width: 380px !important; padding: 48px 40px 48px 24px !important; }
+        .receipt-cell { display: table-cell !important; width: 33.33% !important; border-top: 0 !important; }
+        .receipt-middle, .receipt-last { border-left: 1px solid #30332d !important; }
+        .headline { font-size: 44px !important; }
       }
     </style>
   </head>
-  <body style="margin:0;padding:0;background:#080907;color:#eeeadd;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <body style="margin:0;padding:0;background:#080907;color:#eeeadd;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Your contribution reached WallCab. Here is your receipt and a note from Dhruv.</div>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#080907" style="width:100%;background:#080907;">
       <tr>
         <td align="center" style="padding:32px 14px;">
-          <table class="email-shell" role="presentation" width="680" cellspacing="0" cellpadding="0" border="0" bgcolor="#0d0e0b" style="width:100%;max-width:680px;border:1px solid #30332c;background:#0d0e0b;">
+          <table class="email-shell" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#0d0e0b" style="width:100%;max-width:680px;border:1px solid #30332c;background:#0d0e0b;">
             <tr>
-              <td class="email-pad" style="padding:25px 34px;border-bottom:1px solid #30332c;">
+              <td class="email-pad" style="padding:24px;border-bottom:1px solid #30332c;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td valign="middle">
@@ -270,7 +269,7 @@ export function buildSupportThankYouEmail(
               <td>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td class="stack-column phone-column" width="300" align="center" valign="middle" style="width:300px;padding:48px 20px 48px 34px;">
+                    <td class="stack-column phone-column" width="100%" align="center" valign="middle" style="display:block;width:100%;max-width:100%;box-sizing:border-box;padding:8px 0 38px;">
                       <table role="presentation" width="218" cellspacing="0" cellpadding="0" border="0" bgcolor="#0b1510" style="width:218px;border:5px solid #3b3e38;border-radius:36px;background-color:#0b1510;background-image:linear-gradient(145deg,#344a3b 0%,#13221a 48%,#080a08 100%);box-shadow:0 22px 46px rgba(0,0,0,.46);">
                         <tr>
                           <td style="padding:15px 17px 0;">
@@ -317,9 +316,9 @@ export function buildSupportThankYouEmail(
                         </tr>
                       </table>
                     </td>
-                    <td class="stack-column copy-column" width="380" valign="middle" style="width:380px;padding:48px 40px 48px 24px;">
+                    <td class="stack-column copy-column" width="100%" valign="middle" style="display:block;width:100%;max-width:100%;box-sizing:border-box;padding:0 24px 40px;overflow-wrap:break-word;word-break:normal;">
                       <div style="color:#bcd57c;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">A note from Dhruv</div>
-                      <div class="headline" style="padding-top:15px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:44px;line-height:1.02;letter-spacing:-1.5px;">${escapedGreeting}</div>
+                      <div class="headline" style="max-width:100%;padding-top:15px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:38px;line-height:1.04;letter-spacing:-1.2px;overflow-wrap:break-word;word-break:normal;">${escapedGreeting}</div>
                       <div style="padding-top:23px;color:#c9c6ba;font-size:14px;line-height:1.72;">WallCab began as a small attempt to make the lock screen feel less disposable. Your support helps pay for the sources, infrastructure, and quiet hours behind each daily edition.</div>
                       <div style="margin-top:22px;padding-left:16px;border-left:1px solid #a8b89a;color:#9fa198;font-family:Georgia,'Times New Roman',serif;font-size:14px;font-style:italic;line-height:1.6;">Thank you for believing in a quieter way to learn.<br><span style="color:#f4f0e3;font-style:normal;">&mdash; Dhruv</span></div>
                       <div style="padding-top:28px;">
@@ -334,15 +333,15 @@ export function buildSupportThankYouEmail(
               <td style="border-top:1px solid #30332d;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td class="receipt-cell" width="33.33%" style="width:33.33%;padding:19px 24px;">
+                    <td class="receipt-cell" width="100%" style="display:block;width:auto;box-sizing:border-box;padding:19px 24px;">
                       <div style="color:#74786f;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">Contribution</div>
                       <div style="padding-top:6px;color:#f4f0e3;font-family:Georgia,'Times New Roman',serif;font-size:21px;">${amount}</div>
                     </td>
-                    <td class="receipt-cell" width="33.33%" style="width:33.33%;padding:19px 24px;border-left:1px solid #30332d;">
+                    <td class="receipt-cell receipt-middle" width="100%" style="display:block;width:auto;box-sizing:border-box;padding:19px 24px;border-top:1px solid #30332d;">
                       <div style="color:#74786f;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">Reference</div>
                       <div style="padding-top:8px;color:#d2cfc4;font-size:11px;font-weight:700;letter-spacing:1.1px;">${reference}</div>
                     </td>
-                    <td class="receipt-cell" width="33.33%" style="width:33.33%;padding:19px 24px;border-left:1px solid #30332d;">
+                    <td class="receipt-cell receipt-last" width="100%" style="display:block;width:auto;box-sizing:border-box;padding:19px 24px;border-top:1px solid #30332d;">
                       <div style="color:#74786f;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">Status</div>
                       <div style="padding-top:8px;color:#bcd57c;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">Received</div>
                     </td>
@@ -351,7 +350,7 @@ export function buildSupportThankYouEmail(
               </td>
             </tr>
             <tr>
-              <td class="email-pad" style="padding:22px 34px;border-top:1px solid #30332d;color:#73766d;font-size:10px;line-height:1.6;">This is a one-time transactional receipt. There is no subscription and nothing else you need to do. WallCab does not store your supporter profile.</td>
+              <td class="email-pad" style="padding:22px 24px;border-top:1px solid #30332d;color:#73766d;font-size:10px;line-height:1.6;overflow-wrap:break-word;word-break:normal;">This is a one-time transactional receipt. There is no subscription and nothing else you need to do. WallCab does not store your supporter profile.</td>
             </tr>
           </table>
         </td>

@@ -146,6 +146,18 @@ describe("Razorpay support webhook", () => {
     expect(email.html).toContain("Contribution");
     expect(email.html).toContain("Status");
     expect(email.html).toContain("Received");
+    expect(email.html).toContain(
+      "@media only screen and (min-width: 641px)",
+    );
+    expect(email.html).toContain(
+      'class="email-shell" role="presentation" width="100%"',
+    );
+    expect(email.html).not.toContain(
+      'class="email-shell" role="presentation" width="680"',
+    );
+    expect(email.html).toContain(
+      "display:block;width:100%;max-width:100%;box-sizing:border-box",
+    );
     expect(Buffer.byteLength(email.html, "utf8")).toBeLessThan(30_000);
     expect(email.html).not.toContain("<img");
     expect(email.html).not.toContain("data:");
