@@ -9,6 +9,7 @@ Send one branded WallCab thank-you email after a verified India-only Razorpay su
 - [x] Accept only published Razorpay Payment Page URLs in `SUPPORT_URL` -> Verify with URL unit tests.
 - [x] Add strict webhook signature and payload validation -> Verify invalid signatures, account envelopes, currencies, events, and oversized bodies are rejected or ignored.
 - [x] Send the thank-you through Resend with the Razorpay payment ID as the idempotency key -> Verify the mocked provider contract and failure retry response.
+- [x] Render an email-safe WallCab phone edition with an optional escaped supporter name -> Verify branded structure, generic fallback, and hostile-name escaping.
 - [x] Add a public `POST /api/webhooks/razorpay` route with no-cache responses and privacy-safe errors -> Verify integration tests never expose or log supporter data.
 - [x] Document the private environment contract, Razorpay webhook setup, Resend DNS setup, and privacy impact -> Verify README, deployment, self-hosting, and privacy pages agree.
 - [x] Run lint, strict types, unit/integration tests, audit, and production build -> Verify every required gate passes before commit and push.

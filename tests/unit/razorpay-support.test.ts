@@ -108,14 +108,56 @@ describe("Razorpay support webhook", () => {
     ).toEqual({ kind: "invalid" });
   });
 
-  it("builds a branded message without echoing the supporter address", () => {
+  it("uses a bounded supporter name when Razorpay supplies one", () => {
+    expect(
+      parseSupportWebhookPayload(
+        capturedBody({ notes: { supporter_name: "  Dhruv   Gugnani  " } }),
+      ),
+    ).toEqual({
+      kind: "captured",
+      payment: { ...payment, name: "Dhruv Gugnani" },
+    });
+    expect(
+      parseSupportWebhookPayload(
+        capturedBody({ card: { name: "Card Holder" } }),
+      ),
+    ).toEqual({
+      kind: "captured",
+      payment: { ...payment, name: "Card Holder" },
+    });
+    expect(
+      parseSupportWebhookPayload(
+        capturedBody({ notes: { name: "x" } }),
+      ),
+    ).toEqual({ kind: "captured", payment });
+  });
+
+  it("builds a branded phone edition without echoing the supporter address", () => {
     const email = buildSupportThankYouEmail(payment);
 
     expect(email.subject).toBe("Thank you for supporting WallCab");
     expect(email.text).toContain("₹250");
-    expect(email.html).toContain("tomorrow&rsquo;s lesson");
+    expect(email.html).toContain("Vocabulary / 01");
+    expect(email.html).toContain("A note from Dhruv");
+    expect(email.html).toContain("Contribution");
+    expect(email.html).toContain("Status");
+    expect(email.html).toContain("Received");
+    expect(Buffer.byteLength(email.html, "utf8")).toBeLessThan(30_000);
+    expect(email.html).not.toContain("<img");
+    expect(email.html).not.toContain("data:");
     expect(email.html).not.toContain(payment.email);
     expect(email.text).not.toContain(payment.email);
+  });
+
+  it("personalizes and escapes the supporter greeting", () => {
+    const email = buildSupportThankYouEmail({
+      ...payment,
+      name: "Dhruv <Supporter>",
+    });
+
+    expect(email.text).toContain("Thank you, Dhruv <Supporter>.");
+    expect(email.html).toContain("Thank you, Dhruv &lt;Supporter&gt;.");
+    expect(email.html).not.toContain("<Supporter>");
   });
 
   it("queues one idempotent Resend message", async () => {

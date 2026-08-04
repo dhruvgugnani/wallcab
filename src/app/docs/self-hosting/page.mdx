@@ -96,8 +96,8 @@ send-only API key. Configure the production webhook URL as
 `https://your-domain.example/api/webhooks/razorpay`, select only
 `payment.captured`, and use a unique secret of at least 32 characters. The
 endpoint accepts only HMAC-signed domestic INR captures with a valid Razorpay
-event envelope. Resend receives the supporter email only to send the
-transactional thank-you; WallCab does not persist it.
+event envelope. Resend receives the supporter email and an optional bounded
+name only to send the transactional thank-you; WallCab does not persist them.
 
 ## Provider diagnostics
 

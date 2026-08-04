@@ -292,7 +292,7 @@ const specification = {
         operationId: "receiveRazorpaySupportPayment",
         summary: "Receive a signed Razorpay support event",
         description:
-          "Private provider callback. Only captured domestic INR payments for the configured merchant can queue a thank-you email.",
+          "Private provider callback. Only HMAC-signed, captured domestic INR payments in a valid Razorpay event envelope can queue a thank-you email.",
         security: [{ RazorpayWebhookSignature: [] }],
         requestBody: {
           required: true,

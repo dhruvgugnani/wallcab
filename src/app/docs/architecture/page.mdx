@@ -115,12 +115,13 @@ settlement remain on Razorpay.
 
 After capture, Razorpay sends a signed webhook to a Node Route Handler. The
 handler bounds the raw body before reading it, verifies the HMAC before JSON
-parsing, and accepts only `payment.captured` for the configured merchant
-account, domestic INR, and a fully captured payment. It passes the validated
-email, amount, and payment ID directly to Resend. The payment ID becomes the
-idempotency key, so a Razorpay retry cannot create a second thank-you within
-the provider retry window. No supporter database or application log is
-created; a provider failure returns `503` so Razorpay can retry.
+parsing, and accepts only `payment.captured` with a valid Razorpay account
+envelope, domestic INR, and a fully captured payment. It passes the validated
+optional name, email, amount, and payment ID directly to Resend. The payment
+ID becomes the idempotency key, so a Razorpay retry cannot create a second
+thank-you within the provider retry window. No supporter database or
+application log is created; a provider failure returns `503` so Razorpay can
+retry.
 
 ## Trust boundaries
 

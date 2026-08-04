@@ -98,11 +98,12 @@ export default function PrivacyPage() {
         <p>
           After a successful payment, Razorpay sends WallCab a signed event
           containing the payment reference, amount, currency, email address,
-          and standard payment metadata. WallCab validates it and passes the
-          email address, amount, and payment reference directly to Resend to
-          deliver one transactional thank-you. WallCab does not write the
-          supporter email, phone number, webhook body, or payment reference to
-          its database or application logs. Resend retains delivery records
+          optional supporter name, and standard payment metadata. WallCab
+          validates it and passes the name when available, email address,
+          amount, and payment reference directly to Resend to deliver one
+          transactional thank-you. WallCab does not write the supporter name,
+          email, phone number, webhook body, or payment reference to its
+          database or application logs. Resend retains delivery records
           according to its plan and privacy terms.
         </p>
 
