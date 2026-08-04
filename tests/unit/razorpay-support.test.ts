@@ -19,7 +19,6 @@ const payment: CapturedSupportPayment = {
   email: "supporter@example.com",
 };
 const config: SupportEmailConfig = {
-  razorpayAccountId: accountId,
   razorpayWebhookSecret: secret,
   resendApiKey: "re_test_wallcab_123456789",
   from: "WallCab <thanks@wallcab.dhruvdev.me>",
@@ -48,7 +47,6 @@ describe("Razorpay support webhook", () => {
   it("requires a complete server-only configuration", () => {
     expect(
       getSupportEmailConfig({
-        RAZORPAY_ACCOUNT_ID: accountId,
         RAZORPAY_WEBHOOK_SECRET: secret,
         RESEND_API_KEY: config.resendApiKey,
         SUPPORT_EMAIL_FROM: config.from,
@@ -57,7 +55,6 @@ describe("Razorpay support webhook", () => {
     expect(getSupportEmailConfig({})).toBeNull();
     expect(
       getSupportEmailConfig({
-        RAZORPAY_ACCOUNT_ID: accountId,
         RAZORPAY_WEBHOOK_SECRET: "short",
         RESEND_API_KEY: config.resendApiKey,
         SUPPORT_EMAIL_FROM: config.from,
@@ -80,33 +77,33 @@ describe("Razorpay support webhook", () => {
     );
   });
 
-  it("accepts only captured domestic INR payments for the expected account", () => {
-    expect(parseSupportWebhookPayload(capturedBody(), accountId)).toEqual({
+  it("accepts only captured domestic INR payments in a valid Razorpay envelope", () => {
+    expect(parseSupportWebhookPayload(capturedBody())).toEqual({
       kind: "captured",
       payment,
     });
     expect(
-      parseSupportWebhookPayload(capturedBody(), "acc_Different12345"),
-    ).toEqual({ kind: "ignored" });
-    expect(
       parseSupportWebhookPayload(
         JSON.stringify({ event: "payment.failed" }),
-        accountId,
       ),
     ).toEqual({ kind: "ignored" });
+    const invalidAccount = JSON.parse(capturedBody()) as Record<
+      string,
+      unknown
+    >;
+    invalidAccount.account_id = "not-a-razorpay-account";
     expect(
-      parseSupportWebhookPayload(
-        capturedBody({ international: true }),
-        accountId,
-      ),
+      parseSupportWebhookPayload(JSON.stringify(invalidAccount)),
     ).toEqual({ kind: "invalid" });
     expect(
-      parseSupportWebhookPayload(capturedBody({ currency: "USD" }), accountId),
+      parseSupportWebhookPayload(capturedBody({ international: true })),
+    ).toEqual({ kind: "invalid" });
+    expect(
+      parseSupportWebhookPayload(capturedBody({ currency: "USD" })),
     ).toEqual({ kind: "invalid" });
     expect(
       parseSupportWebhookPayload(
         capturedBody({ email: "not-an-email" }),
-        accountId,
       ),
     ).toEqual({ kind: "invalid" });
   });

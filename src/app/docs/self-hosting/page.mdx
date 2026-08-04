@@ -49,7 +49,6 @@ Open `http://localhost:3000`. Without cache environment variables, the wallpaper
 | `TURNSTILE_HOSTNAMES` | for uploads | Exact comma-separated production hostnames |
 | `CRON_SECRET` | for cron | Protects the rollover route |
 | `SUPPORT_URL` | for support | Published `https://rzp.io/rzp/...` Payment Page (legacy `/l/...` URLs also work) |
-| `RAZORPAY_ACCOUNT_ID` | for support email | Expected `acc_...` merchant account |
 | `RAZORPAY_WEBHOOK_SECRET` | for support email | HMAC secret configured in Razorpay |
 | `RESEND_API_KEY` | for support email | Restricted transactional sending key |
 | `SUPPORT_EMAIL_FROM` | for support email | Verified WallCab sender identity |
@@ -96,8 +95,8 @@ Verify `wallcab.dhruvdev.me` as a sending domain in Resend and create a
 send-only API key. Configure the production webhook URL as
 `https://your-domain.example/api/webhooks/razorpay`, select only
 `payment.captured`, and use a unique secret of at least 32 characters. The
-endpoint accepts only signed domestic INR captures for the configured
-`RAZORPAY_ACCOUNT_ID`. Resend receives the supporter email only to send the
+endpoint accepts only HMAC-signed domestic INR captures with a valid Razorpay
+event envelope. Resend receives the supporter email only to send the
 transactional thank-you; WallCab does not persist it.
 
 ## Provider diagnostics

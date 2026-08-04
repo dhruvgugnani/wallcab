@@ -144,14 +144,10 @@ account-wide webhook limited to WallCab support payments.
    `https://wallcab.dhruvdev.me/api/webhooks/razorpay`, choose only
    `payment.captured`, enter the same webhook secret, and set a private alert
    email for delivery failures.
-8. Copy the merchant `account_id` in `acc_...` form from the Razorpay account
-   or its signed test webhook payload.
-
 Add these values to Vercel Production and Preview, never to Git:
 
 ```text
 SUPPORT_URL=https://rzp.io/rzp/<your-live-page>
-RAZORPAY_ACCOUNT_ID=acc_<your-merchant-account>
 RAZORPAY_WEBHOOK_SECRET=<independent-random-secret>
 RESEND_API_KEY=re_<restricted-send-key>
 SUPPORT_EMAIL_FROM=WallCab <thanks@wallcab.dhruvdev.me>

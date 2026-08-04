@@ -109,10 +109,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const payload = parseSupportWebhookPayload(
-    rawBody,
-    config.razorpayAccountId,
-  );
+  const payload = parseSupportWebhookPayload(rawBody);
   if (payload.kind === "ignored") {
     return new Response(null, { status: 204, headers: responseHeaders });
   }

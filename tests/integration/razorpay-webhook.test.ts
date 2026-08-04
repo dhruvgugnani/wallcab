@@ -12,7 +12,6 @@ vi.mock("@/server/razorpay-support", async (importOriginal) => ({
 }));
 
 const environment = {
-  RAZORPAY_ACCOUNT_ID: process.env.RAZORPAY_ACCOUNT_ID,
   RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   SUPPORT_EMAIL_FROM: process.env.SUPPORT_EMAIL_FROM,
@@ -56,7 +55,6 @@ function request(rawBody: string, signature = hmacHex(rawBody, secret)) {
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  process.env.RAZORPAY_ACCOUNT_ID = accountId;
   process.env.RAZORPAY_WEBHOOK_SECRET = secret;
   process.env.RESEND_API_KEY = "re_test_wallcab_123456789";
   process.env.SUPPORT_EMAIL_FROM =
@@ -92,7 +90,7 @@ describe("Razorpay support webhook route", () => {
         currency: "INR",
         email: "supporter@example.com",
       },
-      expect.objectContaining({ razorpayAccountId: accountId }),
+      expect.objectContaining({ razorpayWebhookSecret: secret }),
     );
   });
 

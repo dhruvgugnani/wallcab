@@ -18,7 +18,6 @@ export interface CapturedSupportPayment {
 }
 
 export interface SupportEmailConfig {
-  razorpayAccountId: string;
   razorpayWebhookSecret: string;
   resendApiKey: string;
   from: string;
@@ -44,14 +43,11 @@ function isEmail(value: unknown): value is string {
 export function getSupportEmailConfig(
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ): SupportEmailConfig | null {
-  const razorpayAccountId = environment.RAZORPAY_ACCOUNT_ID?.trim();
   const razorpayWebhookSecret = environment.RAZORPAY_WEBHOOK_SECRET?.trim();
   const resendApiKey = environment.RESEND_API_KEY?.trim();
   const from = environment.SUPPORT_EMAIL_FROM?.trim();
 
   if (
-    !razorpayAccountId ||
-    !accountIdPattern.test(razorpayAccountId) ||
     !razorpayWebhookSecret ||
     razorpayWebhookSecret.length < 32 ||
     !resendApiKey ||
@@ -63,7 +59,6 @@ export function getSupportEmailConfig(
   }
 
   return {
-    razorpayAccountId,
     razorpayWebhookSecret,
     resendApiKey,
     from,
@@ -83,7 +78,6 @@ export function verifyRazorpayWebhookSignature(
 
 export function parseSupportWebhookPayload(
   rawBody: string,
-  expectedAccountId: string,
 ): SupportWebhookPayload {
   let decoded: unknown;
   try {
@@ -98,8 +92,11 @@ export function parseSupportWebhookPayload(
   if (decoded.event !== "payment.captured") {
     return { kind: "ignored" };
   }
-  if (decoded.account_id !== expectedAccountId) {
-    return { kind: "ignored" };
+  if (
+    typeof decoded.account_id !== "string" ||
+    !accountIdPattern.test(decoded.account_id)
+  ) {
+    return { kind: "invalid" };
   }
 
   const payload = decoded.payload;
