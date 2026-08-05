@@ -12,12 +12,17 @@ import {
 const turnstileSiteKey =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
+const organizationId = `${SITE_URL}/#organization`;
+const websiteId = `${SITE_URL}/#website`;
+
 const homeSchemas = [
   {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": organizationId,
     name: "WallCab",
-    url: SITE_URL,
+    alternateName: "WallCab Daily",
+    url: `${SITE_URL}/`,
     logo: `${SITE_URL}/icon.svg`,
     sameAs: [GITHUB_URL],
     founder: {
@@ -29,9 +34,12 @@ const homeSchemas = [
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": websiteId,
     name: "WallCab",
-    url: SITE_URL,
+    alternateName: ["WallCab Daily", "WallCab Wallpapers"],
+    url: `${SITE_URL}/`,
     inLanguage: "en",
+    publisher: { "@id": organizationId },
   },
   {
     "@context": "https://schema.org",
